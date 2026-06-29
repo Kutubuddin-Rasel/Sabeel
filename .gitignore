@@ -1,0 +1,44 @@
+# Android
+/build
+/captures
+*.apk
+*.aar
+*.jks
+*.keystore
+*.hprof
+.externalNativeBuild
+.cxx
+local.properties
+
+# Custom
+.leankg
+/leankg
+/docs
+/agents
+/.agents
+leankg*
+.kotlin*
+
+# Gradle
+.gradle
+gradle*
+gradle-wrapper.jar
+!gradle-wrapper.jar
+
+# IntelliJ/Android Studio
+*.iml
+.idea/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+!.idea/copyright/
+!.idea/vcs.xml
+!.idea/runConfigurations/
+!.idea/modules.xml
+!.idea/gradle.xml
+!.idea/compiler.xml
+!.idea/jarRepositories.xml
+!.idea/deploymentTargetDropDown.xml
+
+# OS
+.DS_Store
+Thumbs.db
