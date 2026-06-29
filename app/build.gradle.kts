@@ -78,6 +78,10 @@ dependencies {
     // Media
     implementation(libs.androidx.media)
 
+    // Graphics Shapes & Google Fonts
+    implementation(libs.androidx.graphics.shapes)
+    implementation(libs.androidx.compose.ui.text.google.fonts)
+
     // Test dependencies
     testImplementation(libs.robolectric)
     testImplementation(libs.mockk)
