@@ -59,21 +59,23 @@ class HomeViewModel @Inject constructor(
 
         val (greeting, icon) = resolveGreeting()
 
+        val target = lastDhikr.defaultTarget
+
         val resume = if (lastCount > 0) {
             ResumeSession(
                 dhikrType = lastDhikr,
                 lastCount = lastCount,
-                target = lastDhikr.defaultTarget
+                target = target
             )
         } else null
 
         HomeState(
             todaysSessions = sessions,
-            totalToday     = totalToday,
+            totalToday     = displayedToday(totalToday, lastCount, target),
             dailyGoal      = dailyGoal,
-            currentStreak  = streak?.count ?: 0,
+            currentStreak  = displayedStreak(streak?.count ?: 0, lastCount),
             longestStreak  = streak?.longestStreak ?: 0,
-            totalAllTime   = totalAllTime,
+            totalAllTime   = displayedAllTime(totalAllTime, lastCount, target),
             totalSessionCount = totalSessions,
             resumeSession  = resume,
             greeting       = greeting,
@@ -84,6 +86,29 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = HomeState()
     )
+
+    companion object {
+        /**
+         * Today's total = saved (completed) sessions + the current in-progress
+         * round. The in-progress count is added ONLY while the round is unfinished
+         * (`activeCount < target`); once it completes a session is saved, so adding
+         * the still-live count would double-count (a finished 33 would read 66).
+         */
+        internal fun displayedToday(savedToday: Int, activeCount: Int, target: Int): Int =
+            savedToday + if (activeCount in 1 until target) activeCount else 0
+
+        /** Same guard as [displayedToday], applied to the all-time total. */
+        internal fun displayedAllTime(savedAllTime: Int, activeCount: Int, target: Int): Int =
+            savedAllTime + if (activeCount in 1 until target) activeCount else 0
+
+        /**
+         * Counting today (even an unfinished round) registers consistency. The
+         * persisted streak only advances on completion, so promote a zero streak
+         * to 1 while a session is actively in progress.
+         */
+        internal fun displayedStreak(streakCount: Int, activeCount: Int): Int =
+            if (streakCount == 0 && activeCount > 0) 1 else streakCount
+    }
 
     private fun resolveGreeting(): Pair<String, String> {
         val hour = LocalTime.now().hour

@@ -361,6 +361,9 @@ open class FakeTasbihRepository : TasbihRepository {
     val _isSmartFlowEnabled = kotlinx.coroutines.flow.MutableStateFlow(true)
     override val isSmartFlowEnabled: kotlinx.coroutines.flow.Flow<Boolean> = _isSmartFlowEnabled
 
+    val _smartFlowVariant = kotlinx.coroutines.flow.MutableStateFlow(com.kutubuddin.sabeel.domain.model.SmartFlowVariant.CLASSIC)
+    override val smartFlowVariant: kotlinx.coroutines.flow.Flow<com.kutubuddin.sabeel.domain.model.SmartFlowVariant> = _smartFlowVariant
+
     val _isPocketModeActive = kotlinx.coroutines.flow.MutableStateFlow(false)
     override val isPocketModeActive: kotlinx.coroutines.flow.Flow<Boolean> = _isPocketModeActive
 
@@ -380,9 +383,20 @@ open class FakeTasbihRepository : TasbihRepository {
         return _activeCount.value
     }
 
+    override suspend fun decrementCount(): Int {
+        if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
+        if (_activeCount.value > 0) _activeCount.value -= 1
+        return _activeCount.value
+    }
+
     override suspend fun resetCount() {
         if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
         _activeCount.value = 0
+    }
+
+    override suspend fun setSmartFlowVariant(variant: com.kutubuddin.sabeel.domain.model.SmartFlowVariant) {
+        if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
+        _smartFlowVariant.value = variant
     }
 
     override suspend fun setDhikr(dhikr: DhikrType) {

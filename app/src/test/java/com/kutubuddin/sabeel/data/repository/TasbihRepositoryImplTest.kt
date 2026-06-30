@@ -1,6 +1,7 @@
 package com.kutubuddin.sabeel.data.repository
 
 import com.kutubuddin.sabeel.data.local.datastore.CounterDataStore
+import com.kutubuddin.sabeel.data.local.db.dao.DhikrSessionDao
 import com.kutubuddin.sabeel.data.local.db.dao.SakinahDao
 import com.kutubuddin.sabeel.data.local.db.entity.DailyTargetEntity
 import com.kutubuddin.sabeel.data.local.db.entity.StreakEntity
@@ -19,6 +20,7 @@ class TasbihRepositoryImplTest {
 
     private val counterDataStore: CounterDataStore = mockk(relaxed = true)
     private val sakinahDao: SakinahDao = mockk(relaxed = true)
+    private val dhikrSessionDao: DhikrSessionDao = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var repository: TasbihRepositoryImpl
 
@@ -27,6 +29,7 @@ class TasbihRepositoryImplTest {
         repository = TasbihRepositoryImpl(
             counterDataStore = counterDataStore,
             sakinahDao = sakinahDao,
+            dhikrSessionDao = dhikrSessionDao,
             ioDispatcher = testDispatcher
         )
     }
