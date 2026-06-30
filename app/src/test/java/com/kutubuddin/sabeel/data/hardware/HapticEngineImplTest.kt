@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.os.Vibrator
 import androidx.test.core.app.ApplicationProvider
+import com.kutubuddin.sabeel.domain.haptic.SabeelVibrator
+import io.mockk.mockk
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -13,40 +15,40 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
 class HapticEngineImplTest {
 
     private lateinit var context: Context
     private lateinit var hapticEngine: HapticEngineImpl
     private lateinit var vibrator: Vibrator
+    private lateinit var sabeelVibrator: SabeelVibrator
 
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        hapticEngine = HapticEngineImpl(context)
+        sabeelVibrator = mockk(relaxed = true)
+        hapticEngine = HapticEngineImpl(context, sabeelVibrator)
         vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.Q])
     fun testPlayIncrementTick_legacySDK_vibratesOneShot() {
-        val shadowVibrator = shadowOf(vibrator)
         hapticEngine.playIncrementTick()
-        assertTrue(shadowVibrator.isVibrating)
+        io.mockk.verify(exactly = 1) { sabeelVibrator.vibrate(15L) }
     }
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.Q])
     fun testPlayMilestoneClick_legacySDK_vibratesOneShot() {
-        val shadowVibrator = shadowOf(vibrator)
         hapticEngine.playMilestoneClick()
-        assertTrue(shadowVibrator.isVibrating)
+        io.mockk.verify(exactly = 1) { sabeelVibrator.vibrate(45L) }
     }
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.Q])
     fun testPlayCompletionThud_legacySDK_vibratesWaveform() {
-        val shadowVibrator = shadowOf(vibrator)
         hapticEngine.playCompletionThud()
-        assertTrue(shadowVibrator.isVibrating)
+        io.mockk.verify(exactly = 1) { sabeelVibrator.vibratePattern(longArrayOf(0, 80, 50, 80)) }
     }
 }
