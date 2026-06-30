@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,10 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.model.DhikrItem
+import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
-import com.kutubuddin.sabeel.ui.i18n.localizeHadithRef
-import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.theme.arabicStyle
 
@@ -68,23 +66,24 @@ fun DhikrLibraryScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 state.categorized.forEach { (category, items) ->
-                    // Sticky category header. NOTE: LazyColumn shares ONE key
-                    // namespace across headers AND items, so a bare category.name
-                    // ("TAHLIL") collides with a dhikr key ("TAHLIL") and crashes.
-                    // Prefix to keep the two namespaces disjoint.
-                    stickyHeader(key = "header_${category.name}") {
+                    // Sticky category header
+                    stickyHeader(key = category.name) {
                         CategoryHeader(category.displayName)
                     }
-                    items(items, key = { "item_${it.key}" }) { item ->
+                    items(items, key = { it.key }) { item ->
                         DhikrCard(
                             item = item,
                             language = state.language,
                             isExpanded = state.expandedKey == item.key,
                             onToggle = { viewModel.onToggleExpand(item.key) },
                             onCountNow = {
-                                // Any catalog key is countable — the ViewModel resolves
-                                // it against the full catalog, no enum coercion needed.
-                                tasbihViewModel.processIntent(TasbihIntent.SetDhikr(item.key))
+                                // Resolve to DhikrType if it's a built-in key
+                                val dhikrType = try {
+                                    DhikrType.valueOf(item.key)
+                                } catch (e: Exception) {
+                                    DhikrType.SUBHANALLAH // fallback for custom/smart-flow
+                                }
+                                tasbihViewModel.processIntent(TasbihIntent.SetDhikr(dhikrType))
                                 onCountNow()
                             }
                         )
@@ -158,48 +157,38 @@ private fun DhikrCard(
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(onClick = onToggle)
     ) {
-        // ── Collapsed card ────────────────────────────────────────────────────
-        // Arabic spans the full width on top; the English name and target badge
-        // share the bottom baseline — no diagonal dead space.
-        Column(
+        // ── Collapsed row ─────────────────────────────────────────────────────
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Arabic — let the engine clip on a grapheme boundary (never .take(40),
-            // which cuts mid-ligature), RTL-aligned in both states.
-            // One Arabic source of truth: truncates to a single line collapsed,
-            // expands to the full (multi-line) text on tap — no duplicate below.
-            Text(
-                text = item.arabicText,
-                maxLines = if (isExpanded) Int.MAX_VALUE else 1,
-                overflow = TextOverflow.Ellipsis,
-                color = SabeelColors.ArabicText,
-                textAlign = TextAlign.End,
-                style = if (isExpanded) arabicStyle else arabicStyle.copy(fontSize = 20.sp, lineHeight = 32.sp),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // Arabic text — let the engine clip on a grapheme boundary (never
+                // .take(40), which cuts mid-ligature), RTL-aligned in both states.
                 Text(
-                    text = item.displayName,
-                    fontSize = 14.sp,
-                    color = SabeelColors.TextPrimary,
-                    fontWeight = FontWeight.Medium
+                    text = item.arabicText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = SabeelColors.ArabicText,
+                    textAlign = TextAlign.End,
+                    style = arabicStyle.copy(fontSize = 18.sp, lineHeight = 30.sp),
+                    modifier = Modifier.fillMaxWidth()
                 )
-                // Target badge
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SabeelColors.AccentTealSurface)
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                ) {
-                    Text("${item.defaultTarget.toLocalizedNumerals(language)}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
-                }
+                Spacer(Modifier.height(4.dp))
+                Text(item.displayName, fontSize = 13.sp, color = SabeelColors.TextSecondary)
+            }
+            Spacer(Modifier.width(12.dp))
+            // Target badge
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(SabeelColors.AccentTealSurface)
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Text("${item.defaultTarget}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -217,12 +206,18 @@ private fun DhikrCard(
             ) {
                 HorizontalDivider(color = SabeelColors.Divider)
 
-                // (Arabic is rendered once in the collapsed header, which expands
-                // to full multi-line text above — no duplicate here.)
+                // Full Arabic text — shared arabicStyle so diacritics never clip
+                Text(
+                    text = item.arabicText,
+                    color = SabeelColors.ArabicText,
+                    textAlign = TextAlign.End,
+                    style = arabicStyle,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 // Transliteration
                 item.transliteration?.let {
-                    Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary, fontStyle = FontStyle.Italic)
+                    Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
                 }
 
                 // Meaning in selected language
@@ -233,9 +228,8 @@ private fun DhikrCard(
                 }
                 Text(meaning, fontSize = 13.sp, color = SabeelColors.TextPrimary)
 
-                // Spiritual reward — localized to the selected language.
-                val reward = item.spiritualReward.get(language)
-                if (reward.isNotBlank()) {
+                // Spiritual reward
+                if (item.spiritualReward.isNotBlank()) {
                     Row(
                         verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -249,7 +243,7 @@ private fun DhikrCard(
                                 .size(14.dp)
                         )
                         Text(
-                            text = reward,
+                            text = item.spiritualReward,
                             fontSize = 12.sp,
                             color = SabeelColors.SageGreen,
                             lineHeight = 18.sp
@@ -260,7 +254,7 @@ private fun DhikrCard(
                 // Hadith reference — the trust anchor, so it must be legible.
                 if (item.hadithRef.isNotBlank()) {
                     Text(
-                        text = "Ref: ${localizeHadithRef(item.hadithRef, language)}",
+                        text = "Ref: ${item.hadithRef}",
                         fontSize = 12.sp,
                         color = SabeelColors.TextSecondary,
                         letterSpacing = 0.5.sp
