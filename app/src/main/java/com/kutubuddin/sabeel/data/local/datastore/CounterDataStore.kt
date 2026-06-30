@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.kutubuddin.sabeel.domain.model.DhikrType
+import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -20,6 +21,7 @@ class CounterDataStore @Inject constructor(
         val KEY_COUNTER_VALUE = intPreferencesKey("counter_value")
         val KEY_ACTIVE_DHIKR = stringPreferencesKey("active_dhikr")
         val KEY_SMART_FLOW_ENABLED = booleanPreferencesKey("smart_flow_enabled")
+        val KEY_SMART_FLOW_VARIANT = stringPreferencesKey("smart_flow_variant")
         val KEY_POCKET_MODE_ACTIVE = booleanPreferencesKey("pocket_mode_active")
     }
 
@@ -36,6 +38,11 @@ class CounterDataStore @Inject constructor(
         preferences[KEY_SMART_FLOW_ENABLED] ?: true
     }
 
+    val smartFlowVariantFlow: Flow<SmartFlowVariant> = dataStore.data.map { preferences ->
+        val name = preferences[KEY_SMART_FLOW_VARIANT] ?: SmartFlowVariant.CLASSIC.name
+        try { SmartFlowVariant.valueOf(name) } catch (e: Exception) { SmartFlowVariant.CLASSIC }
+    }
+
     val isPocketModeActiveFlow: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[KEY_POCKET_MODE_ACTIVE] ?: false
     }
@@ -44,6 +51,13 @@ class CounterDataStore @Inject constructor(
         dataStore.edit { preferences ->
             val current = preferences[KEY_COUNTER_VALUE] ?: 0
             preferences[KEY_COUNTER_VALUE] = current + 1
+        }
+    }
+
+    suspend fun decrementCounter() {
+        dataStore.edit { preferences ->
+            val current = preferences[KEY_COUNTER_VALUE] ?: 0
+            preferences[KEY_COUNTER_VALUE] = maxOf(0, current - 1)
         }
     }
 
@@ -62,6 +76,12 @@ class CounterDataStore @Inject constructor(
     suspend fun setSmartFlowEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[KEY_SMART_FLOW_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setSmartFlowVariant(variant: SmartFlowVariant) {
+        dataStore.edit { preferences ->
+            preferences[KEY_SMART_FLOW_VARIANT] = variant.name
         }
     }
 
