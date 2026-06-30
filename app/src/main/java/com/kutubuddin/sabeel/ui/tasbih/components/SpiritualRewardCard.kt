@@ -71,7 +71,7 @@ fun SpiritualRewardCard(
                         cap = StrokeCap.Round
                     )
                 }
-                .padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 12.dp)
+                .padding(start = 18.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
                 .semantics {  }  // Readable by TalkBack as plain text container
         ) {
             Column {

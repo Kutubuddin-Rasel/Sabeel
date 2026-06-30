@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
 import com.kutubuddin.sabeel.ui.tasbih.components.SpiritualRewardCard
 import com.kutubuddin.sabeel.ui.tasbih.components.TasbihCircle
 import com.kutubuddin.sabeel.ui.tasbih.components.TajweedText
@@ -83,14 +85,6 @@ fun TasbihContent(
     onReset: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Auto-clear celebration after a short delay
-    LaunchedEffect(showCelebration) {
-        if (showCelebration) {
-            kotlinx.coroutines.delay(1200)
-            onCelebrationEnd()
-        }
-    }
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -229,7 +223,8 @@ fun TasbihContent(
                     modifier = Modifier
                         .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(SabeelColors.CounterWhite.copy(alpha = 0.04f))
+                        .background(SabeelColors.CounterWhite.copy(alpha = 0.10f))
+                        .border(1.dp, SabeelColors.BorderIdle, RoundedCornerShape(14.dp))
                         .semantics {
                             contentDescription = "Undo last count"
                             onClick(label = "Decrement") { onDecrement(); true }
@@ -258,6 +253,16 @@ fun TasbihContent(
                 // Balanced spacer
                 Spacer(modifier = Modifier.width(56.dp))
             }
+        }
+
+        // ── Completion rest — calm, dismissible (replaces the 1200ms flash) ───
+        if (showCelebration) {
+            CompletionRest(
+                dhikrName = state.currentDhikr.displayName,
+                total = state.target,
+                onContinue = { onReset(); onCelebrationEnd() },
+                onFinish = onCelebrationEnd
+            )
         }
     }
 }
