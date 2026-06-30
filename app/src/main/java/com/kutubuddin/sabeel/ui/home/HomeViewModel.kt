@@ -3,7 +3,7 @@ package com.kutubuddin.sabeel.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
-import com.kutubuddin.sabeel.domain.model.ActiveDhikr
+import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.domain.model.Streak
 import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
@@ -40,10 +40,9 @@ class HomeViewModel @Inject constructor(
         settingsRepository.dailyGoal,
         tasbihRepository.activeCount,
         tasbihRepository.activeDhikr,
-        tasbihRepository.streak,
-        settingsRepository.showStreaks
-    ) { goal, lastCount, lastDhikr, streak, showStreaks ->
-        listOf<Any?>(goal, lastCount, lastDhikr, streak, showStreaks)
+        tasbihRepository.streak
+    ) { goal, lastCount, lastDhikr, streak ->
+        listOf<Any?>(goal, lastCount, lastDhikr, streak)
     }
 
     val state: StateFlow<HomeState> = combine(sessionGroup, counterGroup) { s, c ->
@@ -55,18 +54,16 @@ class HomeViewModel @Inject constructor(
 
         val dailyGoal    = c[0] as Int
         val lastCount    = c[1] as Int
-        val lastDhikr    = c[2] as ActiveDhikr
+        val lastDhikr    = c[2] as DhikrType
         val streak       = c[3] as? Streak
-        val showStreaks  = c[4] as Boolean
 
-        val greeting = resolveGreeting()
+        val (greeting, icon) = resolveGreeting()
 
-        val target = lastDhikr.target
+        val target = lastDhikr.defaultTarget
 
         val resume = if (lastCount > 0) {
             ResumeSession(
-                dhikrKey = lastDhikr.key,
-                displayName = lastDhikr.displayName,
+                dhikrType = lastDhikr,
                 lastCount = lastCount,
                 target = target
             )
@@ -77,11 +74,12 @@ class HomeViewModel @Inject constructor(
             totalToday     = displayedToday(totalToday, lastCount, target),
             dailyGoal      = dailyGoal,
             currentStreak  = displayedStreak(streak?.count ?: 0, lastCount),
+            longestStreak  = streak?.longestStreak ?: 0,
             totalAllTime   = displayedAllTime(totalAllTime, lastCount, target),
             totalSessionCount = totalSessions,
             resumeSession  = resume,
             greeting       = greeting,
-            showStreaks    = showStreaks
+            greetingIcon   = icon
         )
     }.stateIn(
         scope = viewModelScope,
@@ -112,17 +110,17 @@ class HomeViewModel @Inject constructor(
             if (streakCount == 0 && activeCount > 0) 1 else streakCount
     }
 
-    private fun resolveGreeting(): String {
+    private fun resolveGreeting(): Pair<String, String> {
         val hour = LocalTime.now().hour
         return when (hour) {
-            in 4..6   -> "Fajr time — a blessed start"
-            in 7..11  -> "Good morning"
-            in 12..13 -> "Dhuhr time"
-            in 14..15 -> "Good afternoon"
-            in 16..17 -> "Asr time"
-            in 18..19 -> "Maghrib time"
-            in 20..21 -> "Isha time"
-            else      -> "Assalamu alaikum"
+            in 4..6   -> "Fajr time — a blessed start" to "☀️"
+            in 7..11  -> "Good morning" to "🌤️"
+            in 12..13 -> "Dhuhr time" to "🌤️"
+            in 14..15 -> "Good afternoon" to "☀️"
+            in 16..17 -> "Asr time" to "🌤️"
+            in 18..19 -> "Maghrib time" to "🌅"
+            in 20..21 -> "Isha time" to "🌙"
+            else      -> "Assalamu alaikum" to "🌙"
         }
     }
 }
