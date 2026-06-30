@@ -6,13 +6,15 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.domain.haptic.SabeelVibrator
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class HapticEngineImpl @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val sabeelVibrator: SabeelVibrator
 ) : HapticEngine {
 
     private val vibrator: Vibrator? by lazy {
@@ -35,7 +37,7 @@ class HapticEngineImpl @Inject constructor(
                 .compose()
             vibrator.vibrate(effect)
         } else {
-            vibrateLegacy(durationMs = 15L)
+            sabeelVibrator.vibrate(durationMs = 15L)
         }
     }
 
@@ -49,7 +51,7 @@ class HapticEngineImpl @Inject constructor(
                 .compose()
             vibrator.vibrate(effect)
         } else {
-            vibrateLegacy(durationMs = 45L)
+            sabeelVibrator.vibrate(durationMs = 45L)
         }
     }
 
@@ -64,29 +66,7 @@ class HapticEngineImpl @Inject constructor(
             vibrator.vibrate(effect)
         } else {
             // Double-pulse vibration for heavy feedback fallback
-            vibrateLegacyPattern(pattern = longArrayOf(0, 80, 50, 80))
-        }
-    }
-
-    private fun vibrateLegacy(durationMs: Long) {
-        val vibrator = this.vibrator ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(durationMs)
-        }
-    }
-
-    private fun vibrateLegacyPattern(pattern: LongArray) {
-        val vibrator = this.vibrator ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(pattern, -1)
+            sabeelVibrator.vibratePattern(pattern = longArrayOf(0, 80, 50, 80))
         }
     }
 }
