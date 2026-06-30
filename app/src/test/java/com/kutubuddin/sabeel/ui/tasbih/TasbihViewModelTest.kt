@@ -1,7 +1,8 @@
 package com.kutubuddin.sabeel.ui.tasbih
 
-import com.kutubuddin.sabeel.domain.haptic.TasbihHapticController
 import com.kutubuddin.sabeel.domain.model.DhikrType
+import com.kutubuddin.sabeel.domain.model.Streak
+import com.kutubuddin.sabeel.domain.model.DailyTarget
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,6 @@ import org.junit.Test
 class TasbihViewModelTest {
 
     private val repository: TasbihRepository = mockk(relaxed = true)
-    private val hapticController: TasbihHapticController = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: TasbihViewModel
@@ -36,7 +36,7 @@ class TasbihViewModelTest {
         every { repository.isPocketModeActive } returns flowOf(false)
         every { repository.streak } returns flowOf(null)
 
-        viewModel = TasbihViewModel(repository, hapticController)
+        viewModel = TasbihViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
     }
 
@@ -58,7 +58,7 @@ class TasbihViewModelTest {
     fun testIncrementNormalTick() = runTest {
         // Given state count = 5
         every { repository.activeCount } returns flowOf(5)
-        viewModel = TasbihViewModel(repository, hapticController)
+        viewModel = TasbihViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val effects = mutableListOf<TasbihSideEffect>()
@@ -71,7 +71,6 @@ class TasbihViewModelTest {
 
         // State updates optimistically
         assertEquals(6, viewModel.state.value.count)
-        verify(exactly = 1) { hapticController.playIncrementTick() }
         assertEquals(1, effects.size)
         assertTrue(effects[0] is TasbihSideEffect.PlayHaptic && (effects[0] as TasbihSideEffect.PlayHaptic).type == HapticType.TICK)
 
@@ -85,7 +84,7 @@ class TasbihViewModelTest {
         // Given count = 32
         every { repository.activeCount } returns flowOf(32)
         every { repository.activeDhikr } returns flowOf(DhikrType.SUBHANALLAH)
-        viewModel = TasbihViewModel(repository, hapticController)
+        viewModel = TasbihViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val effects = mutableListOf<TasbihSideEffect>()
@@ -99,7 +98,6 @@ class TasbihViewModelTest {
         // SubhanAllah milestone reached (33) -> resets local count, changes to Alhamdulillah
         assertEquals(0, viewModel.state.value.count)
         assertEquals(DhikrType.ALHAMDULILLAH, viewModel.state.value.currentDhikr)
-        verify(exactly = 1) { hapticController.playMilestoneClick() }
         assertEquals(1, effects.size)
         assertTrue(effects[0] is TasbihSideEffect.PlayHaptic && (effects[0] as TasbihSideEffect.PlayHaptic).type == HapticType.CLICK)
 
@@ -114,7 +112,7 @@ class TasbihViewModelTest {
         // Given count = 32
         every { repository.activeCount } returns flowOf(32)
         every { repository.activeDhikr } returns flowOf(DhikrType.ALHAMDULILLAH)
-        viewModel = TasbihViewModel(repository, hapticController)
+        viewModel = TasbihViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val effects = mutableListOf<TasbihSideEffect>()
@@ -128,7 +126,6 @@ class TasbihViewModelTest {
         // Alhamdulillah milestone reached (33) -> resets local count, changes to Allahu Akbar
         assertEquals(0, viewModel.state.value.count)
         assertEquals(DhikrType.ALLAHU_AKBAR, viewModel.state.value.currentDhikr)
-        verify(exactly = 1) { hapticController.playMilestoneClick() }
         assertEquals(1, effects.size)
         assertTrue(effects[0] is TasbihSideEffect.PlayHaptic && (effects[0] as TasbihSideEffect.PlayHaptic).type == HapticType.CLICK)
 
@@ -143,7 +140,7 @@ class TasbihViewModelTest {
         // Given count = 33
         every { repository.activeCount } returns flowOf(33)
         every { repository.activeDhikr } returns flowOf(DhikrType.ALLAHU_AKBAR)
-        viewModel = TasbihViewModel(repository, hapticController)
+        viewModel = TasbihViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val effects = mutableListOf<TasbihSideEffect>()
@@ -157,7 +154,6 @@ class TasbihViewModelTest {
         // Allahu Akbar milestone reached (34) -> resets local count, wraps back to SubhanAllah, triggers celebration
         assertEquals(0, viewModel.state.value.count)
         assertEquals(DhikrType.SUBHANALLAH, viewModel.state.value.currentDhikr)
-        verify(exactly = 1) { hapticController.playCompletionThud() }
         assertEquals(2, effects.size)
         assertTrue(effects.any { it is TasbihSideEffect.PlayHaptic && it.type == HapticType.THUD })
         assertTrue(effects.any { it is TasbihSideEffect.ShowCelebration })
@@ -170,21 +166,30 @@ class TasbihViewModelTest {
 
     @Test
     fun testResetIntent() = runTest {
+        val effects = mutableListOf<TasbihSideEffect>()
+        val job = launch {
+            viewModel.effect.toList(effects)
+        }
+
         viewModel.processIntent(TasbihIntent.Reset)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(exactly = 1) { hapticController.playCompletionThud() }
+        assertEquals(1, effects.size)
+        assertTrue(effects[0] is TasbihSideEffect.PlayHaptic && (effects[0] as TasbihSideEffect.PlayHaptic).type == HapticType.THUD)
         coVerify(exactly = 1) { repository.resetCount() }
+        job.cancel()
     }
 
     @Test
     fun testSmartFlowFullTransitionSequence() = runTest {
         val fakeRepo = FakeTasbihRepository()
-        val viewModel = TasbihViewModel(fakeRepo, hapticController)
+        val viewModel = TasbihViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
-        
-        // Clear mock invocations from setup if any
-        clearMocks(hapticController)
+
+        val effects = mutableListOf<TasbihSideEffect>()
+        val job = launch {
+            viewModel.effect.toList(effects)
+        }
 
         // 1. SubhanAllah (0 -> 33)
         assertEquals(DhikrType.SUBHANALLAH, viewModel.state.value.currentDhikr)
@@ -247,16 +252,13 @@ class TasbihViewModelTest {
         assertEquals(34, fakeRepo.completedTargets[2].third)
         assertEquals(DhikrType.SUBHANALLAH, fakeRepo._activeDhikr.value)
 
-        // Verify Haptic controller calls
-        // SubhanAllah: 32 ticks, 1 milestone click
-        // Alhamdulillah: 32 ticks, 1 milestone click
-        // Allahu Akbar: 33 ticks, 1 completion thud
-        // Total ticks: 32 + 32 + 33 = 97
-        // Total clicks: 2 (SubhanAllah and Alhamdulillah transitions)
-        // Total thuds: 1 (Allahu Akbar completion)
-        verify(exactly = 97) { hapticController.playIncrementTick() }
-        verify(exactly = 2) { hapticController.playMilestoneClick() }
-        verify(exactly = 1) { hapticController.playCompletionThud() }
+        job.cancel()
+        val ticks = effects.count { it is TasbihSideEffect.PlayHaptic && it.type == HapticType.TICK }
+        val clicks = effects.count { it is TasbihSideEffect.PlayHaptic && it.type == HapticType.CLICK }
+        val thuds = effects.count { it is TasbihSideEffect.PlayHaptic && it.type == HapticType.THUD }
+        assertEquals(97, ticks)
+        assertEquals(2, clicks)
+        assertEquals(1, thuds)
     }
 
     @Test
@@ -265,7 +267,7 @@ class TasbihViewModelTest {
         // Simulate repository database/datastore latency (50ms)
         fakeRepo.delayMs = 50 
         
-        val viewModel = TasbihViewModel(fakeRepo, hapticController)
+        val viewModel = TasbihViewModel(fakeRepo)
         testDispatcher.scheduler.advanceUntilIdle()
         
         // Set count to 32 SubhanAllah
@@ -307,9 +309,49 @@ class TasbihViewModelTest {
         assertEquals(DhikrType.ALHAMDULILLAH, finalState.currentDhikr)
         assertEquals(1, finalState.count)
     }
+
+    @Test
+    fun testHighFrequencyOutofOrderRace() = runTest {
+        val fakeRepo = object : FakeTasbihRepository() {
+            override suspend fun setDhikr(dhikr: DhikrType) {
+                // Simulate slower setDhikr operation (80ms)
+                kotlinx.coroutines.delay(80)
+                _activeDhikr.value = dhikr
+                _activeCount.value = 0
+            }
+
+            override suspend fun incrementCount(date: String): Int {
+                // Simulate faster increment operation (40ms)
+                kotlinx.coroutines.delay(40)
+                _activeCount.value += 1
+                return _activeCount.value
+            }
+        }
+        
+        val viewModel = TasbihViewModel(fakeRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        fakeRepo._activeCount.value = 32
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // Tap 1 (SubhanAllah 32 -> 33, triggers setDhikr(ALHAMDULILLAH))
+        viewModel.processIntent(TasbihIntent.Increment)
+        
+        // Tap 2 happens 20ms later (triggers incrementCount())
+        testDispatcher.scheduler.advanceTimeBy(20)
+        viewModel.processIntent(TasbihIntent.Increment)
+        
+        // Advance time fully
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // Assert the final state. If out-of-order race exists, it will be 0 instead of 1
+        val finalState = viewModel.state.value
+        assertEquals(DhikrType.ALHAMDULILLAH, finalState.currentDhikr)
+        assertEquals(1, finalState.count)
+    }
 }
 
-class FakeTasbihRepository : TasbihRepository {
+open class FakeTasbihRepository : TasbihRepository {
     val _activeCount = kotlinx.coroutines.flow.MutableStateFlow(0)
     override val activeCount: kotlinx.coroutines.flow.Flow<Int> = _activeCount
 
@@ -322,12 +364,12 @@ class FakeTasbihRepository : TasbihRepository {
     val _isPocketModeActive = kotlinx.coroutines.flow.MutableStateFlow(false)
     override val isPocketModeActive: kotlinx.coroutines.flow.Flow<Boolean> = _isPocketModeActive
 
-    val _streak = kotlinx.coroutines.flow.MutableStateFlow<com.kutubuddin.sabeel.data.local.db.entity.StreakEntity?>(null)
-    override val streak: kotlinx.coroutines.flow.Flow<com.kutubuddin.sabeel.data.local.db.entity.StreakEntity?> = _streak
+    val _streak = kotlinx.coroutines.flow.MutableStateFlow<com.kutubuddin.sabeel.domain.model.Streak?>(null)
+    override val streak: kotlinx.coroutines.flow.Flow<com.kutubuddin.sabeel.domain.model.Streak?> = _streak
 
     var delayMs: Long = 0
 
-    override fun getDailyTargetFlow(date: String, dhikrType: DhikrType): kotlinx.coroutines.flow.Flow<com.kutubuddin.sabeel.data.local.db.entity.DailyTargetEntity?> =
+    override fun getDailyTargetFlow(date: String, dhikrType: DhikrType): kotlinx.coroutines.flow.Flow<com.kutubuddin.sabeel.domain.model.DailyTarget?> =
         kotlinx.coroutines.flow.flowOf(null)
 
     val completedTargets = mutableListOf<Triple<String, DhikrType, Int>>()
@@ -364,4 +406,3 @@ class FakeTasbihRepository : TasbihRepository {
         completedTargets.add(Triple(date, dhikrType, targetCount))
     }
 }
-
