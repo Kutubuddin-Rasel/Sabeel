@@ -157,38 +157,46 @@ private fun DhikrCard(
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(onClick = onToggle)
     ) {
-        // ── Collapsed row ─────────────────────────────────────────────────────
-        Row(
+        // ── Collapsed card ────────────────────────────────────────────────────
+        // Arabic spans the full width on top; the English name and target badge
+        // share the bottom baseline — no diagonal dead space.
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                // Arabic text — let the engine clip on a grapheme boundary (never
-                // .take(40), which cuts mid-ligature), RTL-aligned in both states.
-                Text(
-                    text = item.arabicText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = SabeelColors.ArabicText,
-                    textAlign = TextAlign.End,
-                    style = arabicStyle.copy(fontSize = 18.sp, lineHeight = 30.sp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(item.displayName, fontSize = 13.sp, color = SabeelColors.TextSecondary)
-            }
-            Spacer(Modifier.width(12.dp))
-            // Target badge
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(SabeelColors.AccentTealSurface)
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            // Arabic — let the engine clip on a grapheme boundary (never .take(40),
+            // which cuts mid-ligature), RTL-aligned in both states.
+            Text(
+                text = item.arabicText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = SabeelColors.ArabicText,
+                textAlign = TextAlign.End,
+                style = arabicStyle.copy(fontSize = 20.sp, lineHeight = 32.sp),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("${item.defaultTarget}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
+                Text(
+                    text = item.displayName,
+                    fontSize = 14.sp,
+                    color = SabeelColors.TextPrimary,
+                    fontWeight = FontWeight.Medium
+                )
+                // Target badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SabeelColors.AccentTealSurface)
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Text("${item.defaultTarget}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
+                }
             }
         }
 

@@ -70,7 +70,7 @@ fun HomeScreen(
             }
         }
 
-        // ── Resume button ─────────────────────────────────────────────────────
+        // ── Primary action (hero, above the fold) ─────────────────────────────
         if (state.resumeSession != null) {
             item {
                 ResumeCard(
@@ -78,24 +78,24 @@ fun HomeScreen(
                     onClick = onResumeCounting
                 )
             }
+        } else {
+            item {
+                HeroStartCard(onStart = onResumeCounting)
+            }
         }
 
-        // ── Streak + Daily Goal ───────────────────────────────────────────────
+        // ── Stats (demoted below the hero) ────────────────────────────────────
         item {
             StreakGoalCard(state = state)
         }
 
-        // ── Today's Sessions header ───────────────────────────────────────────
+        // ── Today's Sessions ──────────────────────────────────────────────────
         if (state.todaysSessions.isNotEmpty()) {
             item {
                 SectionHeader("Today's Sessions")
             }
             items(state.todaysSessions) { session ->
                 SessionRow(session)
-            }
-        } else {
-            item {
-                EmptyTodayCard()
             }
         }
 
@@ -116,11 +116,11 @@ private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(SabeelColors.Surface)
-            .border(1.dp, SabeelColors.AccentTeal.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(SabeelColors.AccentTealSurface)
+            .border(1.dp, SabeelColors.AccentTeal.copy(alpha = 0.55f), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 20.dp, vertical = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -301,21 +301,42 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun EmptyTodayCard() {
+private fun HeroStartCard(onStart: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(SabeelColors.Surface)
-            .padding(32.dp),
+            .clip(RoundedCornerShape(18.dp))
+            .background(SabeelColors.AccentTealSurface)
+            .border(1.dp, SabeelColors.AccentTeal.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
+            .clickable(onClick = onStart)
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("سَبِيل", fontSize = 28.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.5f))
+        // سَبِيل flourish — a rare, accepted gold accent.
+        Text("سَبِيل", fontSize = 30.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.55f))
         Text(
-            text = "Begin your first session today",
-            fontSize = 14.sp,
-            color = SabeelColors.TextSecondary
+            text = "Begin today's dhikr",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = SabeelColors.TextPrimary
         )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = null,
+                tint = SabeelColors.AccentTeal,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = "Start counting",
+                fontSize = 13.sp,
+                color = SabeelColors.AccentTeal,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
