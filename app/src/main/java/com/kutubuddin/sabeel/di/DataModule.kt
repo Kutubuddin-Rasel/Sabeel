@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.kutubuddin.sabeel.data.local.db.SabeelDatabase
+import com.kutubuddin.sabeel.data.local.db.dao.CustomDhikrDao
+import com.kutubuddin.sabeel.data.local.db.dao.DhikrSessionDao
 import com.kutubuddin.sabeel.data.local.db.dao.SakinahDao
 import dagger.Module
 import dagger.Provides
@@ -21,25 +23,33 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun providePreferencesDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
-        return PreferenceDataStoreFactory.create(
+    fun providePreferencesDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
             produceFile = { context.preferencesDataStoreFile("sabeel_preferences") }
         )
-    }
 
     @Provides
     @Singleton
-    fun provideSabeelDatabase(@ApplicationContext context: Context): SabeelDatabase {
-        return Room.databaseBuilder(
+    fun provideSabeelDatabase(@ApplicationContext context: Context): SabeelDatabase =
+        Room.databaseBuilder(
             context,
             SabeelDatabase::class.java,
             "sabeel-db"
-        ).build()
-    }
+        )
+        .addMigrations(SabeelDatabase.MIGRATION_1_2)
+        .build()
 
     @Provides
     @Singleton
-    fun provideSakinahDao(database: SabeelDatabase): SakinahDao {
-        return database.sakinahDao()
-    }
+    fun provideSakinahDao(database: SabeelDatabase): SakinahDao = database.sakinahDao()
+
+    @Provides
+    @Singleton
+    fun provideDhikrSessionDao(database: SabeelDatabase): DhikrSessionDao =
+        database.dhikrSessionDao()
+
+    @Provides
+    @Singleton
+    fun provideCustomDhikrDao(database: SabeelDatabase): CustomDhikrDao =
+        database.customDhikrDao()
 }
