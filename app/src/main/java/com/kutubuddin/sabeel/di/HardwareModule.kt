@@ -1,10 +1,10 @@
 package com.kutubuddin.sabeel.di
 
-import com.kutubuddin.sabeel.data.hardware.AndroidTasbihHapticController
 import com.kutubuddin.sabeel.data.hardware.HapticEngineImpl
 import com.kutubuddin.sabeel.data.hardware.PowerSaverManagerImpl
-import com.kutubuddin.sabeel.domain.haptic.TasbihHapticController
+import com.kutubuddin.sabeel.data.hardware.SystemSabeelVibrator
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.domain.haptic.SabeelVibrator
 import com.kutubuddin.sabeel.domain.power.PowerSaverManager
 import dagger.Binds
 import dagger.Module
@@ -18,9 +18,9 @@ abstract class HardwareModule {
 
     @Binds
     @Singleton
-    abstract fun bindTasbihHapticController(
-        impl: AndroidTasbihHapticController
-    ): TasbihHapticController
+    abstract fun bindSabeelVibrator(
+        impl: SystemSabeelVibrator
+    ): SabeelVibrator
 
     @Binds
     @Singleton
