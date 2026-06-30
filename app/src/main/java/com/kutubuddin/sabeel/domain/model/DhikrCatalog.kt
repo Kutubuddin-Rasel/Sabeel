@@ -25,7 +25,7 @@ object DhikrCatalog {
                 bn = "আল্লাহ পবিত্র"
             ),
             defaultTarget = 33,
-            spiritualReward = "Glorified is Allah — removes sins as leaves fall from a tree",
+            spiritualReward = "Removes sins as leaves fall from a tree",
             hadithRef = "Sahih Muslim 596",
             category = DhikrCategory.AFTER_PRAYER
         ),
