@@ -2,7 +2,7 @@
 
 <h1>سَبِيل — Sabeel</h1>
 
-<p><strong>A premium digital Tasbih centered on the circle — designed for the modern Muslim.</strong></p>
+<p><strong>A premium digital Tasbih designed for the modern Muslim.</strong></p>
 
 <p>
   <img src="https://img.shields.io/badge/Platform-Android-green?logo=android" alt="Platform" />
