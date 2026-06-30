@@ -9,6 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -129,23 +133,50 @@ fun TasbihContent(
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
                     exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
                 ) {
-                    Text(
-                        text = "⚡ Smart Flow",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = SabeelColors.SmartFlowGold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Bolt,
+                            contentDescription = null,
+                            tint = SabeelColors.SmartFlowGold,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "Smart Flow",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SabeelColors.SmartFlowGold
+                        )
+                    }
                 }
 
-                // Streak
-                Text(
-                    text = "🔥 ${state.currentStreak}",
-                    fontSize = 14.sp,
-                    color = SabeelColors.StreakAmber.copy(alpha = 0.7f),
-                    modifier = Modifier.clearAndSetSemantics {
-                        contentDescription = "Streak: ${state.currentStreak} days"
+                // Consistency — calm icon, no fire/loss framing. Hidden at zero so
+                // a first-timer is never greeted by a cold "0".
+                if (state.currentStreak > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.clearAndSetSemantics {
+                            contentDescription = "Consistency: ${state.currentStreak} days"
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Spa,
+                            contentDescription = null,
+                            tint = SabeelColors.AccentTeal,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "${state.currentStreak}d",
+                            fontSize = 14.sp,
+                            color = SabeelColors.TextSecondary
+                        )
                     }
-                )
+                } else {
+                    Spacer(Modifier.size(48.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -192,10 +223,12 @@ fun TasbihContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Decrement pill
+                // Decrement pill — hit area ≥48dp (WCAG/Material floor) for
+                // eyes-free use; the visible pill stays small via inner padding.
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
+                        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(SabeelColors.CounterWhite.copy(alpha = 0.04f))
                         .semantics {
                             contentDescription = "Undo last count"
@@ -204,13 +237,14 @@ fun TasbihContent(
                         .pointerInput(Unit) {
                             detectTapGestures(onTap = { onDecrement() })
                         }
-                        .padding(horizontal = 18.dp, vertical = 10.dp)
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "−1",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
-                        color = SabeelColors.TextHint.copy(alpha = 1.5f)
+                        color = SabeelColors.TextSecondary
                     )
                 }
 

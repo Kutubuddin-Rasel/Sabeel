@@ -144,7 +144,7 @@ private fun SettingsSegmentRow(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) SabeelColors.GoldPrimary else SabeelColors.SurfaceElevated)
+                        .background(if (isSelected) SabeelColors.AccentTeal else SabeelColors.SurfaceElevated)
                         .clickable { onSelect(value) }
                         .padding(horizontal = 14.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -186,9 +186,11 @@ private fun SettingsToggleRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = SabeelColors.Background,
-                checkedTrackColor = SabeelColors.GoldPrimary,
+                checkedTrackColor = SabeelColors.AccentTeal,
+                checkedBorderColor = SabeelColors.AccentTeal,
                 uncheckedThumbColor = SabeelColors.TextSecondary,
-                uncheckedTrackColor = SabeelColors.SurfaceElevated
+                uncheckedTrackColor = SabeelColors.SurfaceElevated,
+                uncheckedBorderColor = SabeelColors.BorderIdle
             )
         )
     }
@@ -209,12 +211,12 @@ private fun DailyGoalRow(goal: Int, onGoalChange: (Int) -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             TextButton(
                 onClick = { if (goal > 50) onGoalChange(goal - 50) },
-                colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.GoldPrimary)
+                colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.AccentTeal)
             ) { Text("−", fontSize = 20.sp) }
             Text("$goal", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary)
             TextButton(
                 onClick = { if (goal < 1000) onGoalChange(goal + 50) },
-                colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.GoldPrimary)
+                colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.AccentTeal)
             ) { Text("+", fontSize = 20.sp) }
         }
     }

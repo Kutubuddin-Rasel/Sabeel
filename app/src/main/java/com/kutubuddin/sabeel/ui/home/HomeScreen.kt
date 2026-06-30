@@ -9,7 +9,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +52,7 @@ fun HomeScreen(
         item {
             Column {
                 Text(
-                    text = "${state.greetingIcon}  ${state.greeting}",
+                    text = state.greeting,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = SabeelColors.TextPrimary
@@ -112,15 +117,23 @@ private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SabeelColors.GoldSurface)
-            .border(1.dp, SabeelColors.GoldPrimary.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+            .background(SabeelColors.Surface)
+            .border(1.dp, SabeelColors.AccentTeal.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text("▶  Resume", fontSize = 12.sp, color = SabeelColors.GoldPrimary, fontWeight = FontWeight.Medium)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                    tint = SabeelColors.AccentTeal,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text("Resume", fontSize = 12.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Medium)
+            }
             Spacer(Modifier.height(2.dp))
             Text(
                 text = session.dhikrType.displayName,
@@ -133,7 +146,7 @@ private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
             text = "${session.lastCount} / ${session.target}",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = SabeelColors.GoldPrimary
+            color = SabeelColors.AccentTeal
         )
     }
 }
@@ -157,10 +170,27 @@ private fun StreakGoalCard(state: HomeState) {
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Streak row
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            StatPill(label = "🔥 Streak", value = "${state.currentStreak} days")
-            StatPill(label = "🏆 Best", value = "${state.longestStreak} days")
+        // Consistency — gentle and forgiving. We deliberately drop the "Best"
+        // comparison: it only invites self-judgment in an act of worship.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Spa,
+                contentDescription = null,
+                tint = SabeelColors.AccentTeal,
+                modifier = Modifier.size(18.dp)
+            )
+            Text("Consistency", fontSize = 11.sp, color = SabeelColors.TextSecondary)
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = if (state.currentStreak == 1) "1 day" else "${state.currentStreak} days",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = SabeelColors.TextPrimary
+            )
         }
 
         HorizontalDivider(color = SabeelColors.Divider)
@@ -171,7 +201,15 @@ private fun StreakGoalCard(state: HomeState) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("🎯 Daily Goal", fontSize = 13.sp, color = SabeelColors.TextSecondary)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.TrackChanges,
+                    contentDescription = null,
+                    tint = SabeelColors.TextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text("Daily Goal", fontSize = 13.sp, color = SabeelColors.TextSecondary)
+            }
             Text(
                 text = "${state.totalToday} / ${state.dailyGoal}",
                 fontSize = 13.sp,
@@ -185,18 +223,12 @@ private fun StreakGoalCard(state: HomeState) {
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(3.dp)),
-            color = SabeelColors.GoldPrimary,
+            color = SabeelColors.AccentTeal,
             trackColor = SabeelColors.ArcTrack,
-            strokeCap = StrokeCap.Round
+            strokeCap = StrokeCap.Round,
+            gapSize = 0.dp,
+            drawStopIndicator = {}
         )
-    }
-}
-
-@Composable
-private fun StatPill(label: String, value: String) {
-    Column {
-        Text(label, fontSize = 11.sp, color = SabeelColors.TextSecondary)
-        Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary)
     }
 }
 
@@ -229,7 +261,7 @@ private fun SessionRow(session: DhikrSessionEntity) {
             text = "${session.count}",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = SabeelColors.GoldPrimary
+            color = SabeelColors.AccentTeal
         )
     }
 }

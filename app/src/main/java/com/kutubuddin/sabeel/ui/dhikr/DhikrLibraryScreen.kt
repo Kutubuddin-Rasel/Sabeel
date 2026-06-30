@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +24,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,6 +33,7 @@ import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.theme.arabicStyle
 
 @Composable
 fun DhikrLibraryScreen(
@@ -107,7 +111,7 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: 
             onValueChange = onQueryChange,
             singleLine = true,
             textStyle = TextStyle(color = SabeelColors.TextPrimary, fontSize = 15.sp),
-            cursorBrush = SolidColor(SabeelColors.GoldPrimary),
+            cursorBrush = SolidColor(SabeelColors.AccentTeal),
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
                 if (query.isEmpty()) {
@@ -142,7 +146,7 @@ private fun DhikrCard(
     onToggle: () -> Unit,
     onCountNow: () -> Unit
 ) {
-    val borderColor = if (isExpanded) SabeelColors.GoldPrimary.copy(alpha = 0.6f)
+    val borderColor = if (isExpanded) SabeelColors.AccentTeal.copy(alpha = 0.6f)
                       else SabeelColors.BorderIdle
 
     Column(
@@ -162,13 +166,16 @@ private fun DhikrCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                // Arabic text
+                // Arabic text — let the engine clip on a grapheme boundary (never
+                // .take(40), which cuts mid-ligature), RTL-aligned in both states.
                 Text(
-                    text = item.arabicText.take(40) + if (item.arabicText.length > 40) "…" else "",
-                    fontSize = 18.sp,
+                    text = item.arabicText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = SabeelColors.ArabicText,
-                    textAlign = TextAlign.Start,
-                    lineHeight = 26.sp
+                    textAlign = TextAlign.End,
+                    style = arabicStyle.copy(fontSize = 18.sp, lineHeight = 30.sp),
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(item.displayName, fontSize = 13.sp, color = SabeelColors.TextSecondary)
@@ -178,10 +185,10 @@ private fun DhikrCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(SabeelColors.GoldSurface)
+                    .background(SabeelColors.AccentTealSurface)
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
-                Text("${item.defaultTarget}×", fontSize = 13.sp, color = SabeelColors.GoldPrimary, fontWeight = FontWeight.Bold)
+                Text("${item.defaultTarget}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -199,13 +206,12 @@ private fun DhikrCard(
             ) {
                 HorizontalDivider(color = SabeelColors.Divider)
 
-                // Full Arabic text
+                // Full Arabic text — shared arabicStyle so diacritics never clip
                 Text(
                     text = item.arabicText,
-                    fontSize = 20.sp,
                     color = SabeelColors.ArabicText,
                     textAlign = TextAlign.End,
-                    lineHeight = 32.sp,
+                    style = arabicStyle,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -224,20 +230,33 @@ private fun DhikrCard(
 
                 // Spiritual reward
                 if (item.spiritualReward.isNotBlank()) {
-                    Text(
-                        text = "✦  ${item.spiritualReward}",
-                        fontSize = 12.sp,
-                        color = SabeelColors.SageGreen,
-                        lineHeight = 18.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AutoAwesome,
+                            contentDescription = null,
+                            tint = SabeelColors.SageGreen,
+                            modifier = Modifier
+                                .padding(top = 2.dp)
+                                .size(14.dp)
+                        )
+                        Text(
+                            text = item.spiritualReward,
+                            fontSize = 12.sp,
+                            color = SabeelColors.SageGreen,
+                            lineHeight = 18.sp
+                        )
+                    }
                 }
 
-                // Hadith reference
+                // Hadith reference — the trust anchor, so it must be legible.
                 if (item.hadithRef.isNotBlank()) {
                     Text(
                         text = "Ref: ${item.hadithRef}",
-                        fontSize = 10.sp,
-                        color = SabeelColors.TextHint,
+                        fontSize = 12.sp,
+                        color = SabeelColors.TextSecondary,
                         letterSpacing = 0.5.sp
                     )
                 }
@@ -246,7 +265,7 @@ private fun DhikrCard(
                 Button(
                     onClick = onCountNow,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.GoldPrimary),
+                    colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
@@ -268,7 +287,12 @@ private fun EmptySearchResult(query: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("🔍", fontSize = 36.sp)
+        Icon(
+            imageVector = Icons.Outlined.SearchOff,
+            contentDescription = null,
+            tint = SabeelColors.TextSecondary,
+            modifier = Modifier.size(36.dp)
+        )
         Spacer(Modifier.height(12.dp))
         Text("No dhikr found for \"$query\"", fontSize = 14.sp, color = SabeelColors.TextSecondary)
         Text("Try searching in Arabic or English", fontSize = 12.sp, color = SabeelColors.TextHint)
