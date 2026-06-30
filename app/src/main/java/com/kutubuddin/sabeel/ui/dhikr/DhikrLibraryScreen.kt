@@ -167,13 +167,15 @@ private fun DhikrCard(
         ) {
             // Arabic — let the engine clip on a grapheme boundary (never .take(40),
             // which cuts mid-ligature), RTL-aligned in both states.
+            // One Arabic source of truth: truncates to a single line collapsed,
+            // expands to the full (multi-line) text on tap — no duplicate below.
             Text(
                 text = item.arabicText,
-                maxLines = 1,
+                maxLines = if (isExpanded) Int.MAX_VALUE else 1,
                 overflow = TextOverflow.Ellipsis,
                 color = SabeelColors.ArabicText,
                 textAlign = TextAlign.End,
-                style = arabicStyle.copy(fontSize = 20.sp, lineHeight = 32.sp),
+                style = if (isExpanded) arabicStyle else arabicStyle.copy(fontSize = 20.sp, lineHeight = 32.sp),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(10.dp))
@@ -214,14 +216,8 @@ private fun DhikrCard(
             ) {
                 HorizontalDivider(color = SabeelColors.Divider)
 
-                // Full Arabic text — shared arabicStyle so diacritics never clip
-                Text(
-                    text = item.arabicText,
-                    color = SabeelColors.ArabicText,
-                    textAlign = TextAlign.End,
-                    style = arabicStyle,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // (Arabic is rendered once in the collapsed header, which expands
+                // to full multi-line text above — no duplicate here.)
 
                 // Transliteration
                 item.transliteration?.let {
