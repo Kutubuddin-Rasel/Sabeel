@@ -8,12 +8,10 @@ data class HomeState(
     val totalToday: Int = 0,
     val dailyGoal: Int = 200,
     val currentStreak: Int = 0,
-    val longestStreak: Int = 0,
     val totalAllTime: Int = 0,
     val totalSessionCount: Int = 0,
     val resumeSession: ResumeSession? = null,
     val greeting: String = "Assalamu alaikum",
-    val greetingIcon: String = "🌙",
     val showStreaks: Boolean = true
 )
 

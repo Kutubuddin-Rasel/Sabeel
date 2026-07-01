@@ -59,7 +59,7 @@ class HomeViewModel @Inject constructor(
         val streak       = c[3] as? Streak
         val showStreaks  = c[4] as Boolean
 
-        val (greeting, icon) = resolveGreeting()
+        val greeting = resolveGreeting()
 
         val target = lastDhikr.defaultTarget
 
@@ -76,12 +76,10 @@ class HomeViewModel @Inject constructor(
             totalToday     = displayedToday(totalToday, lastCount, target),
             dailyGoal      = dailyGoal,
             currentStreak  = displayedStreak(streak?.count ?: 0, lastCount),
-            longestStreak  = streak?.longestStreak ?: 0,
             totalAllTime   = displayedAllTime(totalAllTime, lastCount, target),
             totalSessionCount = totalSessions,
             resumeSession  = resume,
             greeting       = greeting,
-            greetingIcon   = icon,
             showStreaks    = showStreaks
         )
     }.stateIn(
@@ -113,17 +111,17 @@ class HomeViewModel @Inject constructor(
             if (streakCount == 0 && activeCount > 0) 1 else streakCount
     }
 
-    private fun resolveGreeting(): Pair<String, String> {
+    private fun resolveGreeting(): String {
         val hour = LocalTime.now().hour
         return when (hour) {
-            in 4..6   -> "Fajr time — a blessed start" to "☀️"
-            in 7..11  -> "Good morning" to "🌤️"
-            in 12..13 -> "Dhuhr time" to "🌤️"
-            in 14..15 -> "Good afternoon" to "☀️"
-            in 16..17 -> "Asr time" to "🌤️"
-            in 18..19 -> "Maghrib time" to "🌅"
-            in 20..21 -> "Isha time" to "🌙"
-            else      -> "Assalamu alaikum" to "🌙"
+            in 4..6   -> "Fajr time — a blessed start"
+            in 7..11  -> "Good morning"
+            in 12..13 -> "Dhuhr time"
+            in 14..15 -> "Good afternoon"
+            in 16..17 -> "Asr time"
+            in 18..19 -> "Maghrib time"
+            in 20..21 -> "Isha time"
+            else      -> "Assalamu alaikum"
         }
     }
 }
