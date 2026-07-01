@@ -3,7 +3,7 @@ package com.kutubuddin.sabeel.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
-import com.kutubuddin.sabeel.domain.model.DhikrType
+import com.kutubuddin.sabeel.domain.model.ActiveDhikr
 import com.kutubuddin.sabeel.domain.model.Streak
 import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
@@ -55,17 +55,18 @@ class HomeViewModel @Inject constructor(
 
         val dailyGoal    = c[0] as Int
         val lastCount    = c[1] as Int
-        val lastDhikr    = c[2] as DhikrType
+        val lastDhikr    = c[2] as ActiveDhikr
         val streak       = c[3] as? Streak
         val showStreaks  = c[4] as Boolean
 
         val greeting = resolveGreeting()
 
-        val target = lastDhikr.defaultTarget
+        val target = lastDhikr.target
 
         val resume = if (lastCount > 0) {
             ResumeSession(
-                dhikrType = lastDhikr,
+                dhikrKey = lastDhikr.key,
+                displayName = lastDhikr.displayName,
                 lastCount = lastCount,
                 target = target
             )

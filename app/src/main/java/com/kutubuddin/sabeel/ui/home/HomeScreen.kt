@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
-import com.kutubuddin.sabeel.domain.model.DhikrType
+import com.kutubuddin.sabeel.domain.model.DhikrCatalog
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import java.text.NumberFormat
 
@@ -136,7 +136,7 @@ private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
             }
             Spacer(Modifier.height(2.dp))
             Text(
-                text = session.dhikrType.displayName,
+                text = session.displayName,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = SabeelColors.TextPrimary
@@ -237,11 +237,7 @@ private fun StreakGoalCard(state: HomeState) {
 
 @Composable
 private fun SessionRow(session: DhikrSessionEntity) {
-    val displayName = try {
-        DhikrType.valueOf(session.dhikrKey).displayName
-    } catch (e: Exception) {
-        session.dhikrKey
-    }
+    val displayName = DhikrCatalog.displayNameFor(session.dhikrKey)
 
     Row(
         modifier = Modifier

@@ -72,6 +72,7 @@ fun TasbihScreen(
         state = state,
         showCelebration = showCelebration,
         showStreaks = settingsState.showStreaks,
+        language = settingsState.language,
         onCelebrationEnd = { showCelebration = false },
         onIncrement = { viewModel.processIntent(TasbihIntent.Increment) },
         onDecrement = { viewModel.processIntent(TasbihIntent.Decrement) },
@@ -89,8 +90,15 @@ fun TasbihContent(
     onDecrement: () -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
-    showStreaks: Boolean = true
+    showStreaks: Boolean = true,
+    language: String = "en"
 ) {
+    // When a Tasbīḥ-after-Salah sequence is active, the header tracks the current
+    // step; otherwise it shows the single selected dhikr.
+    val activeStep = state.sequence?.steps?.getOrNull(state.stepIndex)
+    val displayArabic = activeStep?.arabicText ?: state.currentDhikr.arabicText
+    val displayName = activeStep?.displayName ?: state.currentDhikr.displayName
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -98,7 +106,7 @@ fun TasbihContent(
             // Full-screen tap still counts — "eyes-free" fallback
             .semantics {
                 contentDescription =
-                    "${state.currentDhikr.displayName}. Count: ${state.count} of ${state.target}. " +
+                    "$displayName. Count: ${state.count} of ${state.target}. " +
                     "Tap anywhere to count. Long press anywhere to reset."
                 onClick(label = "Count") { onIncrement(); true }
             }
@@ -184,7 +192,8 @@ fun TasbihContent(
 
             // ── Arabic Dhikr Name ────────────────────────────────────────────
             TajweedText(
-                currentDhikr = state.currentDhikr,
+                arabicText = displayArabic,
+                displayName = displayName,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -210,7 +219,7 @@ fun TasbihContent(
 
             // ── Spiritual Reward Card ────────────────────────────────────────
             SpiritualRewardCard(
-                dhikr = state.currentDhikr,
+                reward = state.currentDhikr.spiritualReward.get(language),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -266,6 +275,7 @@ fun TasbihContent(
         if (showCelebration) {
             CompletionRest(
                 dhikrName = state.currentDhikr.displayName,
+                // NOTE: completion always reports the whole dhikr/sequence, not a step.
                 total = state.target,
                 onContinue = { onReset(); onCelebrationEnd() },
                 onFinish = onCelebrationEnd

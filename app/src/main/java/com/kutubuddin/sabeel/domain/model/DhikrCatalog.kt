@@ -475,6 +475,35 @@ object DhikrCatalog {
     /** Fast key → item lookup, built once. */
     private val byKey: Map<String, DhikrItem> by lazy { all.associateBy { it.key } }
 
+    // ── Post-Salah sequences ───────────────────────────────────────────────────
+    // Built from the same phrases used elsewhere in the catalog so there is one
+    // source of truth for each Arabic string.
+
+    private val stepSubhan = DhikrStep("سُبْحَانَ اللَّهِ", "SubhanAllah", "Subhāna Allāh", 33)
+    private val stepHamd = DhikrStep("الْحَمْدُ لِلَّهِ", "Alhamdulillah", "Al-ḥamdu lillāh", 33)
+    private val stepAkbar34 = DhikrStep("اللَّهُ أَكْبَرُ", "Allahu Akbar", "Allāhu akbar", 34)
+    private val stepAkbar33 = stepAkbar34.copy(target = 33)
+    private val stepTahlil = DhikrStep("لَا إِلَٰهَ إِلَّا اللَّهُ", "La ilaha illallah", "Lā ilāha illā Allāh", 1)
+
+    /**
+     * Human-readable name for a stored key, or the raw key if it isn't a built-in
+     * entry (e.g. a custom dhikr). Used for labelling saved sessions.
+     */
+    fun displayNameFor(key: String): String = byKey[key]?.displayName ?: key
+
+    /** Returns the multi-step sequence for a post-Salah entry key, or null. */
+    fun sequenceFor(key: String): DhikrSequence? = when (key) {
+        "SMART_FLOW_CLASSIC" -> DhikrSequence(
+            key, "Tasbīḥ after Salah · Classic",
+            listOf(stepSubhan, stepHamd, stepAkbar34)
+        )
+        "SMART_FLOW_WITH_TAHLIL" -> DhikrSequence(
+            key, "Tasbīḥ after Salah · With Tahlīl",
+            listOf(stepSubhan, stepHamd, stepAkbar33, stepTahlil)
+        )
+        else -> null
+    }
+
     /**
      * Resolves a stored String key into a countable [ActiveDhikr].
      *
