@@ -52,12 +52,56 @@ val UthmanicHafsFontFamily: FontFamily = try {
 }
 
 
+/**
+ * A single harmonic type scale. Screens should pull from
+ * MaterialTheme.typography.* instead of hardcoding raw .sp values, so the
+ * rhythm is predictable and the brain gets a consistent scanning grid.
+ */
 val Typography = Typography(
+    // The 80sp counter — Medium (not Bold) to reduce OLED bloom.
+    displayLarge = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 80.sp,
+        lineHeight = 84.sp,
+        letterSpacing = (-0.5).sp
+    ),
+    titleLarge = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp
+    ),
+    titleMedium = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 22.sp
+    ),
     bodyLarge = TextStyle(
-        fontFamily = UthmanicHafsFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.sp
+    ),
+    bodyMedium = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+    labelMedium = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.8.sp
     )
+)
+
+/**
+ * Arabic / Qur'anic text style. Uthmanic diacritics need ~1.9× leading or the
+ * marks clip — a *trust* failure on sacred text, not just a visual one.
+ * Always right-aligned (RTL). Use this everywhere Arabic is rendered.
+ */
+val arabicStyle = TextStyle(
+    fontFamily = UthmanicHafsFontFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize = 22.sp,
+    lineHeight = 42.sp
 )

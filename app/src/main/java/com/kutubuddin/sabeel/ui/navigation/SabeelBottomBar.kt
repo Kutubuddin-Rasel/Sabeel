@@ -49,11 +49,11 @@ fun SabeelBottomBar(
                 label = { Text(tab.label, fontSize = 11.sp) },
                 alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = SabeelColors.GoldPrimary,
-                    selectedTextColor = SabeelColors.GoldPrimary,
+                    selectedIconColor = SabeelColors.AccentTeal,
+                    selectedTextColor = SabeelColors.AccentTeal,
                     unselectedIconColor = SabeelColors.TextSecondary,
                     unselectedTextColor = SabeelColors.TextSecondary,
-                    indicatorColor = SabeelColors.GoldSurface
+                    indicatorColor = SabeelColors.AccentTealSurface
                 )
             )
         }

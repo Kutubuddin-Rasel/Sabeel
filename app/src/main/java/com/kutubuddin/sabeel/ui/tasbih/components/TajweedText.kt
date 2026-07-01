@@ -8,12 +8,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.domain.model.DhikrType
-import com.kutubuddin.sabeel.ui.theme.UthmanicHafsFontFamily
+import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.theme.arabicStyle
 
 @Composable
 fun TajweedText(
@@ -36,17 +36,16 @@ fun TajweedText(
         ) {
             Text(
                 text = dhikr.arabicText,
-                fontFamily = UthmanicHafsFontFamily,
-                fontSize = 36.sp,
-                color = Color.White,
+                color = SabeelColors.ArabicText,
                 textAlign = TextAlign.Center,
+                style = arabicStyle.copy(fontSize = 36.sp, lineHeight = 58.sp),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = dhikr.displayName,
                 fontSize = 18.sp,
-                color = Color.Gray,
+                color = SabeelColors.TextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
