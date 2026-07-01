@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,11 +67,14 @@ fun DhikrLibraryScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 state.categorized.forEach { (category, items) ->
-                    // Sticky category header
-                    stickyHeader(key = category.name) {
+                    // Sticky category header. NOTE: LazyColumn shares ONE key
+                    // namespace across headers AND items, so a bare category.name
+                    // ("TAHLIL") collides with a dhikr key ("TAHLIL") and crashes.
+                    // Prefix to keep the two namespaces disjoint.
+                    stickyHeader(key = "header_${category.name}") {
                         CategoryHeader(category.displayName)
                     }
-                    items(items, key = { it.key }) { item ->
+                    items(items, key = { "item_${it.key}" }) { item ->
                         DhikrCard(
                             item = item,
                             language = state.language,
@@ -221,7 +225,7 @@ private fun DhikrCard(
 
                 // Transliteration
                 item.transliteration?.let {
-                    Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                    Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary, fontStyle = FontStyle.Italic)
                 }
 
                 // Meaning in selected language
