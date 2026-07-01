@@ -215,6 +215,7 @@ fun TasbihContent(
             TasbihCircle(
                 count = state.count,
                 target = state.target,
+                language = language,
                 onTap = onIncrement,
                 modifier = Modifier
                     // Block the tap from propagating to the outer full-screen tap
