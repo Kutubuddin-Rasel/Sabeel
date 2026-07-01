@@ -74,7 +74,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SMART_FLOW_CLASSIC",
             arabicText = "سُبْحَانَ اللَّهِ · الْحَمْدُ لِلَّهِ · اللَّهُ أَكْبَرُ",
-            displayName = "Smart Flow — Variation 1",
+            displayName = "Tasbīḥ after Salah · Classic",
             transliteration = "SubhanAllah · Alhamdulillah · Allahu Akbar",
             meaning = DhikrMeaning(
                 en = "33 + 33 + 34 sequence after prayer",
@@ -95,7 +95,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SMART_FLOW_WITH_TAHLIL",
             arabicText = "سُبْحَانَ اللَّهِ · الْحَمْدُ لِلَّهِ · اللَّهُ أَكْبَرُ · لَا إِلَٰهَ إِلَّا اللَّهُ",
-            displayName = "Smart Flow — Variation 2",
+            displayName = "Tasbīḥ after Salah · With Tahlīl",
             transliteration = "SubhanAllah · Alhamdulillah · Allahu Akbar · La ilaha illallah",
             meaning = DhikrMeaning(
                 en = "33 + 33 + 33 + Tahlil sequence after prayer",

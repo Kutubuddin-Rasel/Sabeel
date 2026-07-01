@@ -144,7 +144,7 @@ fun TasbihContent(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "Smart Flow",
+                            text = "Tasbīḥ after Salah",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = SabeelColors.SmartFlowGold
