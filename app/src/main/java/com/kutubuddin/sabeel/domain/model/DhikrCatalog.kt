@@ -471,4 +471,27 @@ object DhikrCatalog {
     // ── Aggregated catalog ─────────────────────────────────────────────────────
     val all: List<DhikrItem>
         get() = afterPrayer + daily + morning + evening + salawat + istighfar + tahlil
+
+    /** Fast key → item lookup, built once. */
+    private val byKey: Map<String, DhikrItem> by lazy { all.associateBy { it.key } }
+
+    /**
+     * Resolves a stored String key into a countable [ActiveDhikr].
+     *
+     * Falls back to SubhanAllah when the key is unknown (e.g. a custom dhikr the
+     * built-in catalog can't see, or legacy data) so the Count screen always has
+     * a valid dhikr to show.
+     */
+    fun resolve(key: String): ActiveDhikr {
+        val item = byKey[key] ?: byKey.getValue(DhikrType.SUBHANALLAH.name)
+        return ActiveDhikr(
+            key = item.key,
+            arabicText = item.arabicText,
+            displayName = item.displayName,
+            target = item.defaultTarget,
+            spiritualReward = item.spiritualReward,
+            hadithRef = item.hadithRef,
+            sequenceKey = if (item.isSmartFlow) item.key else null
+        )
+    }
 }
