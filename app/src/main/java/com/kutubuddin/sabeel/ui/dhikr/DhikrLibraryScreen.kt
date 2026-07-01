@@ -33,6 +33,8 @@ import com.kutubuddin.sabeel.domain.model.DhikrItem
 import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
+import com.kutubuddin.sabeel.ui.i18n.localizeHadithRef
+import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.theme.arabicStyle
 
@@ -201,7 +203,7 @@ private fun DhikrCard(
                         .background(SabeelColors.AccentTealSurface)
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
-                    Text("${item.defaultTarget}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
+                    Text("${item.defaultTarget.toLocalizedNumerals(language)}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -236,8 +238,9 @@ private fun DhikrCard(
                 }
                 Text(meaning, fontSize = 13.sp, color = SabeelColors.TextPrimary)
 
-                // Spiritual reward
-                if (item.spiritualReward.isNotBlank()) {
+                // Spiritual reward — localized to the selected language.
+                val reward = item.spiritualReward.get(language)
+                if (reward.isNotBlank()) {
                     Row(
                         verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -251,7 +254,7 @@ private fun DhikrCard(
                                 .size(14.dp)
                         )
                         Text(
-                            text = item.spiritualReward,
+                            text = reward,
                             fontSize = 12.sp,
                             color = SabeelColors.SageGreen,
                             lineHeight = 18.sp
@@ -262,7 +265,7 @@ private fun DhikrCard(
                 // Hadith reference — the trust anchor, so it must be legible.
                 if (item.hadithRef.isNotBlank()) {
                     Text(
-                        text = "Ref: ${item.hadithRef}",
+                        text = "Ref: ${localizeHadithRef(item.hadithRef, language)}",
                         fontSize = 12.sp,
                         color = SabeelColors.TextSecondary,
                         letterSpacing = 0.5.sp
