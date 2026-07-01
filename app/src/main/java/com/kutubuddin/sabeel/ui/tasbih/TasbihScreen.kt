@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
 import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
+import com.kutubuddin.sabeel.ui.tasbih.components.SequenceTracker
 import com.kutubuddin.sabeel.ui.tasbih.components.SpiritualRewardCard
 import com.kutubuddin.sabeel.ui.tasbih.components.TasbihCircle
 import com.kutubuddin.sabeel.ui.tasbih.components.TajweedText
@@ -189,6 +190,17 @@ fun TasbihContent(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            // ── Sequence progress (post-Salah only) ──────────────────────────
+            state.sequence?.let { seq ->
+                SequenceTracker(
+                    stepIndex = state.stepIndex,
+                    stepCount = seq.steps.size,
+                    language = language,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // ── Arabic Dhikr Name ────────────────────────────────────────────
             TajweedText(
