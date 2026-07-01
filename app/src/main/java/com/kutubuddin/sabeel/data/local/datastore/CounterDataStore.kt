@@ -29,9 +29,13 @@ class CounterDataStore @Inject constructor(
         preferences[KEY_COUNTER_VALUE] ?: 0
     }
 
-    val activeDhikrFlow: Flow<DhikrType> = dataStore.data.map { preferences ->
-        val name = preferences[KEY_ACTIVE_DHIKR] ?: DhikrType.SUBHANALLAH.name
-        try { DhikrType.valueOf(name) } catch (e: Exception) { DhikrType.SUBHANALLAH }
+    /**
+     * The active dhikr as a plain String key. Any catalog entry (not just the 6
+     * DhikrType values) can be persisted, so every dhikr is countable. Defaults
+     * to SubhanAllah's key when nothing is stored.
+     */
+    val activeDhikrKeyFlow: Flow<String> = dataStore.data.map { preferences ->
+        preferences[KEY_ACTIVE_DHIKR] ?: DhikrType.SUBHANALLAH.name
     }
 
     val isSmartFlowEnabledFlow: Flow<Boolean> = dataStore.data.map { preferences ->
@@ -67,9 +71,9 @@ class CounterDataStore @Inject constructor(
         }
     }
 
-    suspend fun setDhikr(dhikr: DhikrType) {
+    suspend fun setDhikrKey(key: String) {
         dataStore.edit { preferences ->
-            preferences[KEY_ACTIVE_DHIKR] = dhikr.name
+            preferences[KEY_ACTIVE_DHIKR] = key
         }
     }
 

@@ -7,8 +7,9 @@ import com.kutubuddin.sabeel.data.local.db.entity.DailyTargetEntity
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
 import com.kutubuddin.sabeel.data.local.db.entity.StreakEntity
 import com.kutubuddin.sabeel.di.IoDispatcher
+import com.kutubuddin.sabeel.domain.model.ActiveDhikr
 import com.kutubuddin.sabeel.domain.model.DailyTarget
-import com.kutubuddin.sabeel.domain.model.DhikrType
+import com.kutubuddin.sabeel.domain.model.DhikrCatalog
 import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
 import com.kutubuddin.sabeel.domain.model.Streak
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
@@ -42,7 +43,8 @@ class TasbihRepositoryImpl @Inject constructor(
 ) : TasbihRepository {
 
     override val activeCount: Flow<Int>           = counterDataStore.counterValueFlow
-    override val activeDhikr: Flow<DhikrType>     = counterDataStore.activeDhikrFlow
+    override val activeDhikr: Flow<ActiveDhikr>   = counterDataStore.activeDhikrKeyFlow
+        .map { DhikrCatalog.resolve(it) }
     override val isSmartFlowEnabled: Flow<Boolean> = counterDataStore.isSmartFlowEnabledFlow
     override val smartFlowVariant: Flow<SmartFlowVariant> = counterDataStore.smartFlowVariantFlow
     override val isPocketModeActive: Flow<Boolean> = counterDataStore.isPocketModeActiveFlow
@@ -60,14 +62,14 @@ class TasbihRepositoryImpl @Inject constructor(
         }
         .flowOn(ioDispatcher)
 
-    override fun getDailyTargetFlow(date: String, dhikrType: DhikrType): Flow<DailyTarget?> =
-        sakinahDao.getDailyTargetFlow("${dhikrType.name}_$date")
+    override fun getDailyTargetFlow(date: String, dhikrKey: String): Flow<DailyTarget?> =
+        sakinahDao.getDailyTargetFlow("${dhikrKey}_$date")
             .map { entity ->
                 entity?.let {
                     DailyTarget(
                         id           = it.id,
                         date         = it.date,
-                        dhikrType    = DhikrType.valueOf(it.dhikrType),
+                        dhikrType    = it.dhikrType,
                         currentCount = it.currentCount,
                         targetCount  = it.targetCount,
                         isCompleted  = it.isCompleted
@@ -79,17 +81,18 @@ class TasbihRepositoryImpl @Inject constructor(
     override suspend fun incrementCount(date: String): Int = withContext(ioDispatcher) {
         counterDataStore.incrementCounter()
         val currentCount = counterDataStore.counterValueFlow.first()
-        val activeDhikr  = counterDataStore.activeDhikrFlow.first()
+        val key          = counterDataStore.activeDhikrKeyFlow.first()
+        val resolved     = DhikrCatalog.resolve(key)
 
         // Keep DailyTarget in sync for legacy streak logic
         sakinahDao.insertDailyTarget(
             DailyTargetEntity(
-                id           = "${activeDhikr.name}_$date",
+                id           = "${key}_$date",
                 date         = date,
-                dhikrType    = activeDhikr.name,
+                dhikrType    = key,
                 currentCount = currentCount,
-                targetCount  = activeDhikr.defaultTarget,
-                isCompleted  = currentCount >= activeDhikr.defaultTarget
+                targetCount  = resolved.target,
+                isCompleted  = currentCount >= resolved.target
             )
         )
         currentCount
@@ -104,8 +107,8 @@ class TasbihRepositoryImpl @Inject constructor(
         counterDataStore.resetCounter()
     }
 
-    override suspend fun setDhikr(dhikr: DhikrType) = withContext(ioDispatcher) {
-        counterDataStore.setDhikr(dhikr)
+    override suspend fun setDhikr(key: String) = withContext(ioDispatcher) {
+        counterDataStore.setDhikrKey(key)
         counterDataStore.resetCounter()
     }
 
@@ -132,7 +135,7 @@ class TasbihRepositoryImpl @Inject constructor(
      */
     override suspend fun completeDhikrTarget(
         date: String,
-        dhikrType: DhikrType,
+        dhikrKey: String,
         targetCount: Int
     ) = withContext(ioDispatcher) {
         val today       = LocalDate.parse(date)
@@ -159,7 +162,7 @@ class TasbihRepositoryImpl @Inject constructor(
             progress     = targetCount,
             target       = targetCount,
             streakCount  = newStreakCount,
-            dhikrType    = dhikrType.name,
+            dhikrType    = dhikrKey,
             longestStreak = newLongest
         )
 
@@ -168,7 +171,7 @@ class TasbihRepositoryImpl @Inject constructor(
         // update in real-time without any manual trigger.
         dhikrSessionDao.insertSession(
             DhikrSessionEntity(
-                dhikrKey   = dhikrType.name,
+                dhikrKey   = dhikrKey,
                 count      = targetCount,
                 target     = targetCount,
                 isComplete = true,

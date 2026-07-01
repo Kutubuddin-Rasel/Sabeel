@@ -1,7 +1,6 @@
 package com.kutubuddin.sabeel.ui.home
 
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
-import com.kutubuddin.sabeel.domain.model.DhikrType
 
 data class HomeState(
     val todaysSessions: List<DhikrSessionEntity> = emptyList(),
@@ -17,7 +16,8 @@ data class HomeState(
 
 /** Non-null only when the user has an in-progress (incomplete) session. */
 data class ResumeSession(
-    val dhikrType: DhikrType,
+    val dhikrKey: String,
+    val displayName: String,
     val lastCount: Int,
     val target: Int
 )

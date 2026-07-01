@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.model.DhikrItem
-import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.i18n.localizeHadithRef
@@ -83,13 +82,9 @@ fun DhikrLibraryScreen(
                             isExpanded = state.expandedKey == item.key,
                             onToggle = { viewModel.onToggleExpand(item.key) },
                             onCountNow = {
-                                // Resolve to DhikrType if it's a built-in key
-                                val dhikrType = try {
-                                    DhikrType.valueOf(item.key)
-                                } catch (e: Exception) {
-                                    DhikrType.SUBHANALLAH // fallback for custom/smart-flow
-                                }
-                                tasbihViewModel.processIntent(TasbihIntent.SetDhikr(dhikrType))
+                                // Any catalog key is countable — the ViewModel resolves
+                                // it against the full catalog, no enum coercion needed.
+                                tasbihViewModel.processIntent(TasbihIntent.SetDhikr(item.key))
                                 onCountNow()
                             }
                         )
