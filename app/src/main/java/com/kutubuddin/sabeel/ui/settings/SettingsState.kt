@@ -6,8 +6,9 @@ data class SettingsState(
     val hapticsLevel: String = "medium",
     val dailyGoal: Int = 200,
     val translitEnabled: Boolean = true,
-    val autoReset: Boolean = true,
-    val soundEnabled: Boolean = false
+    val autoReset: Boolean = false,
+    val soundEnabled: Boolean = false,
+    val showStreaks: Boolean = true
 )
 
 sealed class SettingsIntent {
@@ -18,4 +19,5 @@ sealed class SettingsIntent {
     data class SetTranslit(val on: Boolean) : SettingsIntent()
     data class SetAutoReset(val on: Boolean) : SettingsIntent()
     data class SetSoundOn(val on: Boolean) : SettingsIntent()
+    data class SetShowStreaks(val on: Boolean) : SettingsIntent()
 }

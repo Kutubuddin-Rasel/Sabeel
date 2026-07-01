@@ -172,28 +172,31 @@ private fun StreakGoalCard(state: HomeState) {
     ) {
         // Consistency — gentle and forgiving. We deliberately drop the "Best"
         // comparison: it only invites self-judgment in an act of worship.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Spa,
-                contentDescription = null,
-                tint = SabeelColors.AccentTeal,
-                modifier = Modifier.size(18.dp)
-            )
-            Text("Consistency", fontSize = 11.sp, color = SabeelColors.TextSecondary)
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = if (state.currentStreak == 1) "1 day" else "${state.currentStreak} days",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = SabeelColors.TextPrimary
-            )
-        }
+        // Hidden entirely when the worshipper opts for pure ibadah (Settings).
+        if (state.showStreaks) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Spa,
+                    contentDescription = null,
+                    tint = SabeelColors.AccentTeal,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text("Consistency", fontSize = 11.sp, color = SabeelColors.TextSecondary)
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = if (state.currentStreak == 1) "1 day" else "${state.currentStreak} days",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SabeelColors.TextPrimary
+                )
+            }
 
-        HorizontalDivider(color = SabeelColors.Divider)
+            HorizontalDivider(color = SabeelColors.Divider)
+        }
 
         // Daily goal
         Row(
