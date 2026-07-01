@@ -1,11 +1,11 @@
 package com.kutubuddin.sabeel.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoMode
+import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.AutoMode
+import androidx.compose.material.icons.outlined.Adjust
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
@@ -27,8 +27,8 @@ sealed class SabeelTab(
     object Count : SabeelTab(
         route = "count",
         label = "Count",
-        icon = Icons.Outlined.AutoMode,
-        selectedIcon = Icons.Filled.AutoMode
+        icon = Icons.Outlined.Adjust,
+        selectedIcon = Icons.Filled.Adjust
     )
     object Dhikr : SabeelTab(
         route = "dhikr",

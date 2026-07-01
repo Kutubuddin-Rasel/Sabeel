@@ -25,7 +25,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ পবিত্র"
             ),
             defaultTarget = 33,
-            spiritualReward = "Glorified is Allah — removes sins as leaves fall from a tree",
+            spiritualReward = LocalizedText(
+                en = "Removes sins as leaves fall from a tree",
+                ur = "درخت سے پتے گرنے کی طرح گناہ جھڑ جاتے ہیں",
+                bn = "গাছ থেকে পাতা ঝরার মতো গুনাহ ঝরে পড়ে"
+            ),
             hadithRef = "Sahih Muslim 596",
             category = DhikrCategory.AFTER_PRAYER
         ),
@@ -40,7 +44,11 @@ object DhikrCatalog {
                 bn = "সমস্ত প্রশংসা আল্লাহর জন্য"
             ),
             defaultTarget = 33,
-            spiritualReward = "Fills the scales heavier than the heavens and the earth",
+            spiritualReward = LocalizedText(
+                en = "Fills the scales heavier than the heavens and the earth",
+                ur = "ترازو کو آسمانوں اور زمین سے زیادہ بھر دیتا ہے",
+                bn = "আসমান-জমিনের চেয়ে ভারী করে দাঁড়িপাল্লা পূর্ণ করে"
+            ),
             hadithRef = "Sahih Muslim 596",
             category = DhikrCategory.AFTER_PRAYER
         ),
@@ -55,14 +63,18 @@ object DhikrCatalog {
                 bn = "আল্লাহ সর্বশ্রেষ্ঠ"
             ),
             defaultTarget = 34,
-            spiritualReward = "The most beloved words to Allah — Allah is the Most Great",
+            spiritualReward = LocalizedText(
+                en = "The most beloved words to Allah — Allah is the Most Great",
+                ur = "اللہ کو سب سے محبوب کلمات — اللہ سب سے بڑا ہے",
+                bn = "আল্লাহর কাছে সর্বাধিক প্রিয় বাক্য — আল্লাহ সর্বশ্রেষ্ঠ"
+            ),
             hadithRef = "Sahih Muslim 596",
             category = DhikrCategory.AFTER_PRAYER
         ),
         DhikrItem(
             key = "SMART_FLOW_CLASSIC",
             arabicText = "سُبْحَانَ اللَّهِ · الْحَمْدُ لِلَّهِ · اللَّهُ أَكْبَرُ",
-            displayName = "Smart Flow — Variation 1",
+            displayName = "Tasbīḥ after Salah · Classic",
             transliteration = "SubhanAllah · Alhamdulillah · Allahu Akbar",
             meaning = DhikrMeaning(
                 en = "33 + 33 + 34 sequence after prayer",
@@ -70,7 +82,11 @@ object DhikrCatalog {
                 bn = "নামাজের পরে ৩৩+৩৩+৩৪ ক্রম"
             ),
             defaultTarget = 100,
-            spiritualReward = "Complete post-Salah dhikr — sins forgiven even if as foam on the sea",
+            spiritualReward = LocalizedText(
+                en = "Complete post-Salah dhikr — sins forgiven even if as foam on the sea",
+                ur = "مکمل بعد از نماز ذکر — گناہ سمندر کی جھاگ کے برابر بھی ہوں تو معاف",
+                bn = "পূর্ণ নামাজ-পরবর্তী জিকির — সমুদ্রের ফেনা সমান গুনাহও ক্ষমা"
+            ),
             hadithRef = "Sahih Muslim 596",
             category = DhikrCategory.AFTER_PRAYER,
             isSmartFlow = true,
@@ -79,7 +95,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SMART_FLOW_WITH_TAHLIL",
             arabicText = "سُبْحَانَ اللَّهِ · الْحَمْدُ لِلَّهِ · اللَّهُ أَكْبَرُ · لَا إِلَٰهَ إِلَّا اللَّهُ",
-            displayName = "Smart Flow — Variation 2",
+            displayName = "Tasbīḥ after Salah · With Tahlīl",
             transliteration = "SubhanAllah · Alhamdulillah · Allahu Akbar · La ilaha illallah",
             meaning = DhikrMeaning(
                 en = "33 + 33 + 33 + Tahlil sequence after prayer",
@@ -87,7 +103,11 @@ object DhikrCatalog {
                 bn = "নামাজের পরে ৩৩+৩৩+৩৩+তাহলীল ক্রম"
             ),
             defaultTarget = 100,
-            spiritualReward = "Complete post-Salah dhikr ending with the greatest kalimah",
+            spiritualReward = LocalizedText(
+                en = "Complete post-Salah dhikr ending with the greatest kalimah",
+                ur = "سب سے بڑے کلمے پر ختم ہونے والا مکمل بعد از نماز ذکر",
+                bn = "সর্বশ্রেষ্ঠ কালিমা দিয়ে সমাপ্ত পূর্ণ নামাজ-পরবর্তী জিকির"
+            ),
             hadithRef = "Sahih Muslim 595",
             category = DhikrCategory.AFTER_PRAYER,
             isSmartFlow = true,
@@ -109,7 +129,11 @@ object DhikrCatalog {
                 bn = "আমি আল্লাহর কাছে ক্ষমা চাই"
             ),
             defaultTarget = 100,
-            spiritualReward = "Whoever seeks forgiveness, Allah opens a way out from every hardship",
+            spiritualReward = LocalizedText(
+                en = "Whoever seeks forgiveness, Allah opens a way out from every hardship",
+                ur = "جو استغفار کرے، اللہ ہر مشکل سے نکلنے کا راستہ بنا دیتا ہے",
+                bn = "যে ক্ষমা চায়, আল্লাহ তার প্রতিটি কষ্ট থেকে উত্তরণের পথ খুলে দেন"
+            ),
             hadithRef = "Sahih al-Bukhari 6307",
             category = DhikrCategory.DAILY
         ),
@@ -124,7 +148,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ পবিত্র এবং তাঁর প্রশংসা"
             ),
             defaultTarget = 100,
-            spiritualReward = "Forgives sins even if they are as many as the foam of the sea",
+            spiritualReward = LocalizedText(
+                en = "Forgives sins even if they are as many as the foam of the sea",
+                ur = "گناہ سمندر کی جھاگ کے برابر بھی ہوں تو معاف ہو جاتے ہیں",
+                bn = "সমুদ্রের ফেনা সমান গুনাহও ক্ষমা হয়ে যায়"
+            ),
             hadithRef = "Sahih al-Bukhari 6405",
             category = DhikrCategory.DAILY
         ),
@@ -139,7 +167,11 @@ object DhikrCatalog {
                 bn = "মহান আল্লাহর পবিত্রতা"
             ),
             defaultTarget = 100,
-            spiritualReward = "Two phrases light on the tongue, heavy on the scales, beloved to Allah",
+            spiritualReward = LocalizedText(
+                en = "Two phrases light on the tongue, heavy on the scales, beloved to Allah",
+                ur = "زبان پر ہلکے، ترازو میں بھاری، اللہ کو محبوب دو کلمے",
+                bn = "জিভে হালকা, পাল্লায় ভারী, আল্লাহর প্রিয় দুই বাক্য"
+            ),
             hadithRef = "Sahih al-Bukhari 6682",
             category = DhikrCategory.DAILY
         )
@@ -159,7 +191,11 @@ object DhikrCatalog {
                 bn = "আল্লাহই আমার জন্য যথেষ্ট, তিনি ছাড়া কোনো ইলাহ নেই"
             ),
             defaultTarget = 7,
-            spiritualReward = "Whoever recites this 7 times morning and evening, Allah suffices him",
+            spiritualReward = LocalizedText(
+                en = "Whoever recites this 7 times morning and evening, Allah suffices him",
+                ur = "جو صبح و شام سات بار پڑھے، اللہ اسے کافی ہو جاتا ہے",
+                bn = "যে সকাল-সন্ধ্যায় সাতবার পড়ে, আল্লাহ তার জন্য যথেষ্ট"
+            ),
             hadithRef = "Abu Dawud 5081",
             category = DhikrCategory.MORNING
         ),
@@ -174,7 +210,11 @@ object DhikrCatalog {
                 bn = "আল্লাহর পূর্ণ বাণীর আশ্রয়ে সৃষ্টির অনিষ্ট থেকে"
             ),
             defaultTarget = 3,
-            spiritualReward = "No harm will befall the one who recites this 3 times in the morning",
+            spiritualReward = LocalizedText(
+                en = "No harm will befall the one who recites this 3 times in the morning",
+                ur = "جو صبح تین بار پڑھے اسے کوئی نقصان نہیں پہنچے گا",
+                bn = "যে সকালে তিনবার পড়ে তার কোনো ক্ষতি হবে না"
+            ),
             hadithRef = "Sahih Muslim 2709",
             category = DhikrCategory.MORNING
         ),
@@ -189,7 +229,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ ছাড়া কোনো ইলাহ নেই, তিনি একা"
             ),
             defaultTarget = 10,
-            spiritualReward = "Equal to freeing 10 slaves, 100 good deeds written, shield from Shaytan",
+            spiritualReward = LocalizedText(
+                en = "Equal to freeing 10 slaves, 100 good deeds written, shield from Shaytan",
+                ur = "دس غلام آزاد کرنے کے برابر، سو نیکیاں، شیطان سے حفاظت",
+                bn = "দশ দাস মুক্তির সমান, একশ নেকি, শয়তান থেকে সুরক্ষা"
+            ),
             hadithRef = "Sahih al-Bukhari 3293",
             category = DhikrCategory.MORNING
         ),
@@ -204,7 +248,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ পবিত্র এবং তাঁর প্রশংসা"
             ),
             defaultTarget = 100,
-            spiritualReward = "Whoever says this 100 times in the morning, his sins are erased",
+            spiritualReward = LocalizedText(
+                en = "Whoever says this 100 times in the morning, his sins are erased",
+                ur = "جو صبح سو بار کہے، اس کے گناہ مٹا دیے جاتے ہیں",
+                bn = "যে সকালে একশবার বলে, তার গুনাহ মুছে দেওয়া হয়"
+            ),
             hadithRef = "Sahih Muslim 2692",
             category = DhikrCategory.MORNING
         )
@@ -224,7 +272,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ ছাড়া কোনো ইলাহ নেই, তিনি একা"
             ),
             defaultTarget = 10,
-            spiritualReward = "Equal to freeing 10 slaves, protection all evening until morning",
+            spiritualReward = LocalizedText(
+                en = "Equal to freeing 10 slaves, protection all evening until morning",
+                ur = "دس غلام آزاد کرنے کے برابر، صبح تک شام بھر حفاظت",
+                bn = "দশ দাস মুক্তির সমান, সকাল পর্যন্ত সারা সন্ধ্যা সুরক্ষা"
+            ),
             hadithRef = "Sahih al-Bukhari 3293",
             category = DhikrCategory.EVENING
         ),
@@ -239,7 +291,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ পবিত্র এবং তাঁর প্রশংসা"
             ),
             defaultTarget = 100,
-            spiritualReward = "Whoever says this 100 times in the evening, sins are erased",
+            spiritualReward = LocalizedText(
+                en = "Whoever says this 100 times in the evening, sins are erased",
+                ur = "جو شام سو بار کہے، گناہ مٹا دیے جاتے ہیں",
+                bn = "যে সন্ধ্যায় একশবার বলে, গুনাহ মুছে দেওয়া হয়"
+            ),
             hadithRef = "Sahih Muslim 2692",
             category = DhikrCategory.EVENING
         ),
@@ -254,7 +310,11 @@ object DhikrCatalog {
                 bn = "আমি আল্লাহর কাছে ক্ষমা চাই এবং তওবা করি"
             ),
             defaultTarget = 100,
-            spiritualReward = "The Prophet ﷺ used to say this 70–100 times each day",
+            spiritualReward = LocalizedText(
+                en = "The Prophet ﷺ used to say this 70–100 times each day",
+                ur = "نبی ﷺ ہر دن ستر سے سو بار یہ کہا کرتے تھے",
+                bn = "নবী ﷺ প্রতিদিন সত্তর থেকে একশবার এটি বলতেন"
+            ),
             hadithRef = "Sahih al-Bukhari 6307",
             category = DhikrCategory.EVENING
         )
@@ -274,7 +334,11 @@ object DhikrCatalog {
                 bn = "হে আল্লাহ, মুহাম্মদের উপর দরুদ পাঠাও"
             ),
             defaultTarget = 10,
-            spiritualReward = "Allah sends 10 blessings on you for each salawat upon the Prophet ﷺ",
+            spiritualReward = LocalizedText(
+                en = "Allah sends 10 blessings on you for each salawat upon the Prophet ﷺ",
+                ur = "نبی ﷺ پر ہر درود پر اللہ آپ پر دس رحمتیں بھیجتا ہے",
+                bn = "নবী ﷺ-এর উপর প্রতিটি দরুদে আল্লাহ আপনার উপর দশটি রহমত পাঠান"
+            ),
             hadithRef = "Sahih Muslim 408",
             category = DhikrCategory.SALAWAT
         ),
@@ -289,7 +353,11 @@ object DhikrCatalog {
                 bn = "হে আল্লাহ, আমাদের নবী মুহাম্মদের উপর শান্তি ও দরুদ পাঠাও"
             ),
             defaultTarget = 100,
-            spiritualReward = "Intercession on the Day of Judgment for one who sends 100 salawat",
+            spiritualReward = LocalizedText(
+                en = "Intercession on the Day of Judgment for one who sends 100 salawat",
+                ur = "جو سو درود بھیجے اس کے لیے قیامت کے دن شفاعت",
+                bn = "যে একশ দরুদ পাঠায় তার জন্য কিয়ামতের দিন সুপারিশ"
+            ),
             hadithRef = "Tirmidhi 484",
             category = DhikrCategory.SALAWAT
         ),
@@ -304,7 +372,11 @@ object DhikrCatalog {
                 bn = "হে আল্লাহ, মুহাম্মদ ও তাঁর পরিবারের উপর দরুদ পাঠাও"
             ),
             defaultTarget = 10,
-            spiritualReward = "The most complete form of salawat, recited in every prayer",
+            spiritualReward = LocalizedText(
+                en = "The most complete form of salawat, recited in every prayer",
+                ur = "درود کی سب سے مکمل صورت، ہر نماز میں پڑھی جاتی ہے",
+                bn = "দরুদের সর্বাধিক পূর্ণ রূপ, প্রতি নামাজে পঠিত"
+            ),
             hadithRef = "Sahih al-Bukhari 3370",
             category = DhikrCategory.SALAWAT
         )
@@ -324,7 +396,11 @@ object DhikrCatalog {
                 bn = "মহান আল্লাহর কাছে ক্ষমা চাই যিনি ছাড়া কোনো ইলাহ নেই"
             ),
             defaultTarget = 100,
-            spiritualReward = "Sins are forgiven even if they were as much as the foam of the sea",
+            spiritualReward = LocalizedText(
+                en = "Sins are forgiven even if they were as much as the foam of the sea",
+                ur = "گناہ سمندر کی جھاگ کے برابر بھی ہوں تو معاف",
+                bn = "সমুদ্রের ফেনা সমান গুনাহও ক্ষমা"
+            ),
             hadithRef = "Abu Dawud 1517",
             category = DhikrCategory.ISTIGHFAR
         ),
@@ -339,7 +415,11 @@ object DhikrCatalog {
                 bn = "হে আল্লাহ, তুমি আমার রব। তুমি ছাড়া কোনো ইলাহ নেই। তুমি আমাকে সৃষ্টি করেছ।"
             ),
             defaultTarget = 1,
-            spiritualReward = "Master of Istighfar — whoever says it once with conviction enters Jannah",
+            spiritualReward = LocalizedText(
+                en = "Master of Istighfar — whoever says it once with conviction enters Jannah",
+                ur = "سید الاستغفار — جو یقین کے ساتھ ایک بار کہے جنت میں داخل",
+                bn = "সাইয়িদুল ইস্তিগফার — যে দৃঢ় বিশ্বাসে একবার বলে জান্নাতে প্রবেশ করে"
+            ),
             hadithRef = "Sahih al-Bukhari 6306",
             category = DhikrCategory.ISTIGHFAR
         )
@@ -359,7 +439,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ ছাড়া কোনো ইলাহ নেই, তিনি একা, তাঁর কোনো অংশীদার নেই"
             ),
             defaultTarget = 100,
-            spiritualReward = "Equal to freeing 10 slaves — a shield against Shaytan all day",
+            spiritualReward = LocalizedText(
+                en = "Equal to freeing 10 slaves — a shield against Shaytan all day",
+                ur = "دس غلام آزاد کرنے کے برابر — دن بھر شیطان سے ڈھال",
+                bn = "দশ দাস মুক্তির সমান — সারাদিন শয়তান থেকে ঢাল"
+            ),
             hadithRef = "Sahih al-Bukhari 3293",
             category = DhikrCategory.TAHLIL
         ),
@@ -374,7 +458,11 @@ object DhikrCatalog {
                 bn = "আল্লাহ ছাড়া কোনো ইলাহ নেই"
             ),
             defaultTarget = 100,
-            spiritualReward = "The best dhikr is La ilaha illallah — the most excellent of all",
+            spiritualReward = LocalizedText(
+                en = "The best dhikr is La ilaha illallah — the most excellent of all",
+                ur = "بہترین ذکر لا الہ الا اللہ ہے — سب سے افضل",
+                bn = "সর্বোত্তম জিকির লা ইলাহা ইল্লাল্লাহ — সবচেয়ে শ্রেষ্ঠ"
+            ),
             hadithRef = "Tirmidhi 3383",
             category = DhikrCategory.TAHLIL
         )
@@ -383,4 +471,56 @@ object DhikrCatalog {
     // ── Aggregated catalog ─────────────────────────────────────────────────────
     val all: List<DhikrItem>
         get() = afterPrayer + daily + morning + evening + salawat + istighfar + tahlil
+
+    /** Fast key → item lookup, built once. */
+    private val byKey: Map<String, DhikrItem> by lazy { all.associateBy { it.key } }
+
+    // ── Post-Salah sequences ───────────────────────────────────────────────────
+    // Built from the same phrases used elsewhere in the catalog so there is one
+    // source of truth for each Arabic string.
+
+    private val stepSubhan = DhikrStep("سُبْحَانَ اللَّهِ", "SubhanAllah", "Subhāna Allāh", 33)
+    private val stepHamd = DhikrStep("الْحَمْدُ لِلَّهِ", "Alhamdulillah", "Al-ḥamdu lillāh", 33)
+    private val stepAkbar34 = DhikrStep("اللَّهُ أَكْبَرُ", "Allahu Akbar", "Allāhu akbar", 34)
+    private val stepAkbar33 = stepAkbar34.copy(target = 33)
+    private val stepTahlil = DhikrStep("لَا إِلَٰهَ إِلَّا اللَّهُ", "La ilaha illallah", "Lā ilāha illā Allāh", 1)
+
+    /**
+     * Human-readable name for a stored key, or the raw key if it isn't a built-in
+     * entry (e.g. a custom dhikr). Used for labelling saved sessions.
+     */
+    fun displayNameFor(key: String): String = byKey[key]?.displayName ?: key
+
+    /** Returns the multi-step sequence for a post-Salah entry key, or null. */
+    fun sequenceFor(key: String): DhikrSequence? = when (key) {
+        "SMART_FLOW_CLASSIC" -> DhikrSequence(
+            key, "Tasbīḥ after Salah · Classic",
+            listOf(stepSubhan, stepHamd, stepAkbar34)
+        )
+        "SMART_FLOW_WITH_TAHLIL" -> DhikrSequence(
+            key, "Tasbīḥ after Salah · With Tahlīl",
+            listOf(stepSubhan, stepHamd, stepAkbar33, stepTahlil)
+        )
+        else -> null
+    }
+
+    /**
+     * Resolves a stored String key into a countable [ActiveDhikr].
+     *
+     * Falls back to SubhanAllah when the key is unknown (e.g. a custom dhikr the
+     * built-in catalog can't see, or legacy data) so the Count screen always has
+     * a valid dhikr to show.
+     */
+    fun resolve(key: String): ActiveDhikr {
+        val item = byKey[key] ?: byKey.getValue(DhikrType.SUBHANALLAH.name)
+        return ActiveDhikr(
+            key = item.key,
+            arabicText = item.arabicText,
+            displayName = item.displayName,
+            target = item.defaultTarget,
+            spiritualReward = item.spiritualReward,
+            hadithRef = item.hadithRef,
+            sequenceKey = if (item.isSmartFlow) item.key else null
+        )
+    }
 }

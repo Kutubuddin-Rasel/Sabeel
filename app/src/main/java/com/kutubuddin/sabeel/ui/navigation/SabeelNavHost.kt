@@ -5,6 +5,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -47,12 +48,7 @@ fun SabeelNavHost(
         ) {
             composable(SabeelTab.Home.route) {
                 HomeScreen(
-                    onResumeCounting = {
-                        navController.navigate(SabeelTab.Count.route) {
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                    onResumeCounting = { navController.switchToCountTab() }
                 )
             }
 
@@ -66,12 +62,7 @@ fun SabeelNavHost(
             composable(SabeelTab.Dhikr.route) {
                 DhikrLibraryScreen(
                     tasbihViewModel = tasbihViewModel,
-                    onCountNow = {
-                        navController.navigate(SabeelTab.Count.route) {
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                    onCountNow = { navController.switchToCountTab() }
                 )
             }
 
@@ -79,6 +70,23 @@ fun SabeelNavHost(
                 SettingsScreen()
             }
         }
+    }
+}
+
+/**
+ * Switch to the Count tab exactly as tapping it in the bottom bar does.
+ *
+ * The Resume (Home) and Count-Now (Dhikr) actions previously used a bare
+ * `navigate(Count) { launchSingleTop; restoreState }` without the bottom bar's
+ * `popUpTo(Count) { saveState }`. That mismatch left an inconsistent back stack
+ * and swallowed the first tap — so it took two presses to actually land on Count.
+ * Routing both entry points through this one helper keeps navigation coherent.
+ */
+private fun NavHostController.switchToCountTab() {
+    navigate(SabeelTab.Count.route) {
+        popUpTo(SabeelTab.Count.route) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 

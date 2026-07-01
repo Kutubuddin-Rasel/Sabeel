@@ -22,22 +22,22 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
 /**
  * Displays the Hadith-sourced spiritual reward for the current dhikr.
  *
- * Animates smoothly when the dhikr changes (Smart Flow transition).
- * SRP: purely presentational — receives the reward string, renders it.
+ * Animates smoothly when the reward changes (dhikr switch / sequence step).
+ * SRP: purely presentational — receives the already-localized reward string,
+ * renders it. Language resolution happens at the call site.
  */
 @Composable
 fun SpiritualRewardCard(
-    dhikr: DhikrType,
+    reward: String,
     modifier: Modifier = Modifier
 ) {
     AnimatedContent(
-        targetState = dhikr,
+        targetState = reward,
         transitionSpec = {
             (fadeIn(spring(stiffness = Spring.StiffnessMedium)) +
              slideInVertically(
@@ -52,7 +52,7 @@ fun SpiritualRewardCard(
         },
         label = "SpiritualRewardTransition",
         modifier = modifier
-    ) { currentDhikr ->
+    ) { rewardText ->
         val borderColor = SabeelColors.RewardBorder
 
         Box(
@@ -71,7 +71,7 @@ fun SpiritualRewardCard(
                         cap = StrokeCap.Round
                     )
                 }
-                .padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 12.dp)
+                .padding(start = 18.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
                 .semantics {  }  // Readable by TalkBack as plain text container
         ) {
             Column {
@@ -84,7 +84,7 @@ fun SpiritualRewardCard(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = currentDhikr.spiritualReward,
+                    text = rewardText,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Normal,
                     color = SabeelColors.TextSecondary,

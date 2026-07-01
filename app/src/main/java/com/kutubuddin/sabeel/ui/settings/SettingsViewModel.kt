@@ -20,8 +20,8 @@ class SettingsViewModel @Inject constructor(
         combine(repository.theme, repository.language, repository.hapticsLevel) {
             theme, lang, haptics -> Triple(theme, lang, haptics)
         },
-        combine(repository.dailyGoal, repository.translitEnabled, repository.autoReset, repository.soundEnabled) {
-            goal, translit, autoReset, sound -> listOf<Any>(goal, translit, autoReset, sound)
+        combine(repository.dailyGoal, repository.translitEnabled, repository.autoReset, repository.soundEnabled, repository.showStreaks) {
+            goal, translit, autoReset, sound, showStreaks -> listOf<Any>(goal, translit, autoReset, sound, showStreaks)
         }
     ) { (theme, lang, haptics), extras ->
         SettingsState(
@@ -31,7 +31,8 @@ class SettingsViewModel @Inject constructor(
             dailyGoal       = extras[0] as Int,
             translitEnabled = extras[1] as Boolean,
             autoReset       = extras[2] as Boolean,
-            soundEnabled    = extras[3] as Boolean
+            soundEnabled    = extras[3] as Boolean,
+            showStreaks     = extras[4] as Boolean
         )
     }.stateIn(
         scope = viewModelScope,
@@ -48,6 +49,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.SetTranslit -> repository.setTranslitEnabled(intent.on)
             is SettingsIntent.SetAutoReset-> repository.setAutoReset(intent.on)
             is SettingsIntent.SetSoundOn  -> repository.setSoundEnabled(intent.on)
+            is SettingsIntent.SetShowStreaks -> repository.setShowStreaks(intent.on)
         }
     }
 }

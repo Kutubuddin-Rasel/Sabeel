@@ -1,10 +1,10 @@
 package com.kutubuddin.sabeel.data.repository
 
 import com.kutubuddin.sabeel.data.local.datastore.CounterDataStore
+import com.kutubuddin.sabeel.data.local.db.dao.DhikrSessionDao
 import com.kutubuddin.sabeel.data.local.db.dao.SakinahDao
 import com.kutubuddin.sabeel.data.local.db.entity.DailyTargetEntity
 import com.kutubuddin.sabeel.data.local.db.entity.StreakEntity
-import com.kutubuddin.sabeel.domain.model.DhikrType
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -19,6 +19,7 @@ class TasbihRepositoryImplTest {
 
     private val counterDataStore: CounterDataStore = mockk(relaxed = true)
     private val sakinahDao: SakinahDao = mockk(relaxed = true)
+    private val dhikrSessionDao: DhikrSessionDao = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var repository: TasbihRepositoryImpl
 
@@ -27,6 +28,7 @@ class TasbihRepositoryImplTest {
         repository = TasbihRepositoryImpl(
             counterDataStore = counterDataStore,
             sakinahDao = sakinahDao,
+            dhikrSessionDao = dhikrSessionDao,
             ioDispatcher = testDispatcher
         )
     }
@@ -35,7 +37,7 @@ class TasbihRepositoryImplTest {
     fun testIncrementCount() = runTest(testDispatcher) {
         val date = "2026-06-30"
         coEvery { counterDataStore.counterValueFlow } returns flowOf(5)
-        coEvery { counterDataStore.activeDhikrFlow } returns flowOf(DhikrType.SUBHANALLAH)
+        coEvery { counterDataStore.activeDhikrKeyFlow } returns flowOf("SUBHANALLAH")
         coEvery { counterDataStore.incrementCounter() } just Runs
 
         val count = repository.incrementCount(date)
@@ -65,12 +67,12 @@ class TasbihRepositoryImplTest {
 
     @Test
     fun testSetDhikr() = runTest(testDispatcher) {
-        coEvery { counterDataStore.setDhikr(DhikrType.ALHAMDULILLAH) } just Runs
+        coEvery { counterDataStore.setDhikrKey("ALHAMDULILLAH") } just Runs
         coEvery { counterDataStore.resetCounter() } just Runs
 
-        repository.setDhikr(DhikrType.ALHAMDULILLAH)
+        repository.setDhikr("ALHAMDULILLAH")
 
-        coVerify(exactly = 1) { counterDataStore.setDhikr(DhikrType.ALHAMDULILLAH) }
+        coVerify(exactly = 1) { counterDataStore.setDhikrKey("ALHAMDULILLAH") }
         coVerify(exactly = 1) { counterDataStore.resetCounter() }
     }
 
@@ -80,7 +82,7 @@ class TasbihRepositoryImplTest {
         coEvery { sakinahDao.getStreak("current_streak") } returns null
         coEvery { sakinahDao.updateProgressAndStreak(any(), any(), any(), any(), any(), any()) } just Runs
 
-        repository.completeDhikrTarget(date, DhikrType.SUBHANALLAH, 33)
+        repository.completeDhikrTarget(date, "SUBHANALLAH", 33)
 
         coVerify(exactly = 1) {
             sakinahDao.updateProgressAndStreak(
@@ -105,7 +107,7 @@ class TasbihRepositoryImplTest {
         )
         coEvery { sakinahDao.updateProgressAndStreak(any(), any(), any(), any(), any(), any()) } just Runs
 
-        repository.completeDhikrTarget(date, DhikrType.SUBHANALLAH, 33)
+        repository.completeDhikrTarget(date, "SUBHANALLAH", 33)
 
         coVerify(exactly = 1) {
             sakinahDao.updateProgressAndStreak(
@@ -130,7 +132,7 @@ class TasbihRepositoryImplTest {
         )
         coEvery { sakinahDao.updateProgressAndStreak(any(), any(), any(), any(), any(), any()) } just Runs
 
-        repository.completeDhikrTarget(date, DhikrType.SUBHANALLAH, 33)
+        repository.completeDhikrTarget(date, "SUBHANALLAH", 33)
 
         coVerify(exactly = 1) {
             sakinahDao.updateProgressAndStreak(

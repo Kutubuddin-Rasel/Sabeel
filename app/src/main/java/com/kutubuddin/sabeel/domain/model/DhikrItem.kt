@@ -16,7 +16,7 @@ data class DhikrItem(
     val transliteration: String?,
     val meaning: DhikrMeaning,
     val defaultTarget: Int,
-    val spiritualReward: String,
+    val spiritualReward: LocalizedText,
     val hadithRef: String,
     val category: DhikrCategory,
     val isSmartFlow: Boolean = false,

@@ -6,9 +6,14 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
+import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
+import com.kutubuddin.sabeel.ui.tasbih.components.SequenceTracker
 import com.kutubuddin.sabeel.ui.tasbih.components.SpiritualRewardCard
 import com.kutubuddin.sabeel.ui.tasbih.components.TasbihCircle
 import com.kutubuddin.sabeel.ui.tasbih.components.TajweedText
@@ -34,9 +43,11 @@ import com.kutubuddin.sabeel.ui.theme.UthmanicHafsFontFamily
 fun TasbihScreen(
     viewModel: TasbihViewModel,
     hapticEngine: HapticEngine,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val settingsState by settingsViewModel.state.collectAsState()
     var showCelebration by remember { mutableStateOf(false) }
 
     // Collect transient side-effects
@@ -61,6 +72,8 @@ fun TasbihScreen(
     TasbihContent(
         state = state,
         showCelebration = showCelebration,
+        showStreaks = settingsState.showStreaks,
+        language = settingsState.language,
         onCelebrationEnd = { showCelebration = false },
         onIncrement = { viewModel.processIntent(TasbihIntent.Increment) },
         onDecrement = { viewModel.processIntent(TasbihIntent.Decrement) },
@@ -77,15 +90,15 @@ fun TasbihContent(
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onReset: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showStreaks: Boolean = true,
+    language: String = "en"
 ) {
-    // Auto-clear celebration after a short delay
-    LaunchedEffect(showCelebration) {
-        if (showCelebration) {
-            kotlinx.coroutines.delay(1200)
-            onCelebrationEnd()
-        }
-    }
+    // When a Tasbīḥ-after-Salah sequence is active, the header tracks the current
+    // step; otherwise it shows the single selected dhikr.
+    val activeStep = state.sequence?.steps?.getOrNull(state.stepIndex)
+    val displayArabic = activeStep?.arabicText ?: state.currentDhikr.arabicText
+    val displayName = activeStep?.displayName ?: state.currentDhikr.displayName
 
     Box(
         modifier = modifier
@@ -94,7 +107,7 @@ fun TasbihContent(
             // Full-screen tap still counts — "eyes-free" fallback
             .semantics {
                 contentDescription =
-                    "${state.currentDhikr.displayName}. Count: ${state.count} of ${state.target}. " +
+                    "$displayName. Count: ${state.count} of ${state.target}. " +
                     "Tap anywhere to count. Long press anywhere to reset."
                 onClick(label = "Count") { onIncrement(); true }
             }
@@ -129,30 +142,70 @@ fun TasbihContent(
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
                     exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
                 ) {
-                    Text(
-                        text = "⚡ Smart Flow",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = SabeelColors.SmartFlowGold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Bolt,
+                            contentDescription = null,
+                            tint = SabeelColors.SmartFlowGold,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "Tasbīḥ after Salah",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SabeelColors.SmartFlowGold
+                        )
+                    }
                 }
 
-                // Streak
-                Text(
-                    text = "🔥 ${state.currentStreak}",
-                    fontSize = 14.sp,
-                    color = SabeelColors.StreakAmber.copy(alpha = 0.7f),
-                    modifier = Modifier.clearAndSetSemantics {
-                        contentDescription = "Streak: ${state.currentStreak} days"
+                // Consistency — calm icon, no fire/loss framing. Hidden at zero so
+                // a first-timer is never greeted by a cold "0", and hidden entirely
+                // when the worshipper opts for pure ibadah (Settings › Show Streaks).
+                if (showStreaks && state.currentStreak > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.clearAndSetSemantics {
+                            contentDescription = "Consistency: ${state.currentStreak} days"
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Spa,
+                            contentDescription = null,
+                            tint = SabeelColors.AccentTeal,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "${state.currentStreak}d",
+                            fontSize = 14.sp,
+                            color = SabeelColors.TextSecondary
+                        )
                     }
-                )
+                } else {
+                    Spacer(Modifier.size(48.dp))
+                }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ── Sequence progress (post-Salah only) ──────────────────────────
+            state.sequence?.let { seq ->
+                SequenceTracker(
+                    stepIndex = state.stepIndex,
+                    stepCount = seq.steps.size,
+                    language = language,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // ── Arabic Dhikr Name ────────────────────────────────────────────
             TajweedText(
-                currentDhikr = state.currentDhikr,
+                arabicText = displayArabic,
+                displayName = displayName,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -162,6 +215,7 @@ fun TasbihContent(
             TasbihCircle(
                 count = state.count,
                 target = state.target,
+                language = language,
                 onTap = onIncrement,
                 modifier = Modifier
                     // Block the tap from propagating to the outer full-screen tap
@@ -178,7 +232,7 @@ fun TasbihContent(
 
             // ── Spiritual Reward Card ────────────────────────────────────────
             SpiritualRewardCard(
-                dhikr = state.currentDhikr,
+                reward = state.currentDhikr.spiritualReward.get(language),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -192,11 +246,14 @@ fun TasbihContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Decrement pill
+                // Decrement pill — hit area ≥48dp (WCAG/Material floor) for
+                // eyes-free use; the visible pill stays small via inner padding.
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(SabeelColors.CounterWhite.copy(alpha = 0.04f))
+                        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SabeelColors.CounterWhite.copy(alpha = 0.10f))
+                        .border(1.dp, SabeelColors.BorderIdle, RoundedCornerShape(14.dp))
                         .semantics {
                             contentDescription = "Undo last count"
                             onClick(label = "Decrement") { onDecrement(); true }
@@ -204,13 +261,14 @@ fun TasbihContent(
                         .pointerInput(Unit) {
                             detectTapGestures(onTap = { onDecrement() })
                         }
-                        .padding(horizontal = 18.dp, vertical = 10.dp)
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "−1",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
-                        color = SabeelColors.TextHint.copy(alpha = 1.5f)
+                        color = SabeelColors.TextSecondary
                     )
                 }
 
@@ -224,6 +282,17 @@ fun TasbihContent(
                 // Balanced spacer
                 Spacer(modifier = Modifier.width(56.dp))
             }
+        }
+
+        // ── Completion rest — calm, dismissible (replaces the 1200ms flash) ───
+        if (showCelebration) {
+            CompletionRest(
+                dhikrName = state.currentDhikr.displayName,
+                // NOTE: completion always reports the whole dhikr/sequence, not a step.
+                total = state.target,
+                onContinue = { onReset(); onCelebrationEnd() },
+                onFinish = onCelebrationEnd
+            )
         }
     }
 }

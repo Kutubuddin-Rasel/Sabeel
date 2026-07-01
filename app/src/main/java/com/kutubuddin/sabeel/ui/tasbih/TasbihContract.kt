@@ -1,5 +1,8 @@
 package com.kutubuddin.sabeel.ui.tasbih
 
+import com.kutubuddin.sabeel.domain.model.ActiveDhikr
+import com.kutubuddin.sabeel.domain.model.DhikrCatalog
+import com.kutubuddin.sabeel.domain.model.DhikrSequence
 import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
 
@@ -7,18 +10,23 @@ import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
  * Represents the immutable visual state of the Tasbih screen.
  * All fields are derived from repository observables — the UI is a pure
  * function of this state object (MVI pattern).
+ *
+ * [currentDhikr] is an [ActiveDhikr] resolved from a String key, so any catalog
+ * entry can be counted. When [sequence] is non-null the screen is running a
+ * multi-step Tasbīḥ-after-Salah, and [stepIndex] is the current step.
  */
 data class TasbihState(
     val count: Int = 0,
     val target: Int = 33,
-    val currentDhikr: DhikrType = DhikrType.SUBHANALLAH,
+    val currentDhikr: ActiveDhikr = DhikrCatalog.resolve(DhikrType.SUBHANALLAH.name),
+    val sequence: DhikrSequence? = null,
+    val stepIndex: Int = 0,
     val isSessionComplete: Boolean = false,
     val isSmartFlowEnabled: Boolean = true,
     val smartFlowVariant: SmartFlowVariant = SmartFlowVariant.CLASSIC,
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
     val isPocketModeActive: Boolean = false,
-    val dailyProgress: Map<DhikrType, Int> = emptyMap(),
     val error: String? = null
 )
 
@@ -30,7 +38,7 @@ sealed interface TasbihIntent {
     object Increment : TasbihIntent
     object Decrement : TasbihIntent
     object Reset : TasbihIntent
-    data class SetDhikr(val type: DhikrType) : TasbihIntent
+    data class SetDhikr(val key: String) : TasbihIntent
     data class SetSmartFlowEnabled(val enabled: Boolean) : TasbihIntent
     data class SetSmartFlowVariant(val variant: SmartFlowVariant) : TasbihIntent
     data class SetPocketModeActive(val active: Boolean) : TasbihIntent
