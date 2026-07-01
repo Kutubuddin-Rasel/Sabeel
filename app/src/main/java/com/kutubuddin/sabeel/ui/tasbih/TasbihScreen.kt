@@ -28,7 +28,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
 import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
 import com.kutubuddin.sabeel.ui.tasbih.components.SpiritualRewardCard
 import com.kutubuddin.sabeel.ui.tasbih.components.TasbihCircle
@@ -40,9 +42,11 @@ import com.kutubuddin.sabeel.ui.theme.UthmanicHafsFontFamily
 fun TasbihScreen(
     viewModel: TasbihViewModel,
     hapticEngine: HapticEngine,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val settingsState by settingsViewModel.state.collectAsState()
     var showCelebration by remember { mutableStateOf(false) }
 
     // Collect transient side-effects
@@ -67,6 +71,7 @@ fun TasbihScreen(
     TasbihContent(
         state = state,
         showCelebration = showCelebration,
+        showStreaks = settingsState.showStreaks,
         onCelebrationEnd = { showCelebration = false },
         onIncrement = { viewModel.processIntent(TasbihIntent.Increment) },
         onDecrement = { viewModel.processIntent(TasbihIntent.Decrement) },
@@ -83,7 +88,8 @@ fun TasbihContent(
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onReset: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showStreaks: Boolean = true
 ) {
     Box(
         modifier = modifier
@@ -147,8 +153,9 @@ fun TasbihContent(
                 }
 
                 // Consistency — calm icon, no fire/loss framing. Hidden at zero so
-                // a first-timer is never greeted by a cold "0".
-                if (state.currentStreak > 0) {
+                // a first-timer is never greeted by a cold "0", and hidden entirely
+                // when the worshipper opts for pure ibadah (Settings › Show Streaks).
+                if (showStreaks && state.currentStreak > 0) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),

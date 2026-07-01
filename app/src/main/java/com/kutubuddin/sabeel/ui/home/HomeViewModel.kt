@@ -40,9 +40,10 @@ class HomeViewModel @Inject constructor(
         settingsRepository.dailyGoal,
         tasbihRepository.activeCount,
         tasbihRepository.activeDhikr,
-        tasbihRepository.streak
-    ) { goal, lastCount, lastDhikr, streak ->
-        listOf<Any?>(goal, lastCount, lastDhikr, streak)
+        tasbihRepository.streak,
+        settingsRepository.showStreaks
+    ) { goal, lastCount, lastDhikr, streak, showStreaks ->
+        listOf<Any?>(goal, lastCount, lastDhikr, streak, showStreaks)
     }
 
     val state: StateFlow<HomeState> = combine(sessionGroup, counterGroup) { s, c ->
@@ -56,6 +57,7 @@ class HomeViewModel @Inject constructor(
         val lastCount    = c[1] as Int
         val lastDhikr    = c[2] as DhikrType
         val streak       = c[3] as? Streak
+        val showStreaks  = c[4] as Boolean
 
         val (greeting, icon) = resolveGreeting()
 
@@ -79,7 +81,8 @@ class HomeViewModel @Inject constructor(
             totalSessionCount = totalSessions,
             resumeSession  = resume,
             greeting       = greeting,
-            greetingIcon   = icon
+            greetingIcon   = icon,
+            showStreaks    = showStreaks
         )
     }.stateIn(
         scope = viewModelScope,

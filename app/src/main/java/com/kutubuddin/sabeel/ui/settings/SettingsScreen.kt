@@ -87,6 +87,14 @@ fun SettingsScreen(
                 onCheckedChange = { viewModel.processIntent(SettingsIntent.SetAutoReset(it)) }
             )
         }
+        item {
+            SettingsToggleRow(
+                label = "Show Streaks",
+                description = "Hide consistency counts for pure ibadah",
+                checked = state.showStreaks,
+                onCheckedChange = { viewModel.processIntent(SettingsIntent.SetShowStreaks(it)) }
+            )
+        }
 
         item { Spacer(Modifier.height(4.dp)) }
         item { SettingsHeader("Daily Goal") }

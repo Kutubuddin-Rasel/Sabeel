@@ -25,6 +25,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val KEY_TRANSLIT_ENABLED = booleanPreferencesKey("settings_translit")
         val KEY_AUTO_RESET       = booleanPreferencesKey("settings_auto_reset")
         val KEY_SOUND_ENABLED    = booleanPreferencesKey("settings_sound")
+        val KEY_SHOW_STREAKS     = booleanPreferencesKey("settings_show_streaks")
     }
 
     override val theme: Flow<String> = dataStore.data.map { it[KEY_THEME] ?: "dark" }
@@ -32,8 +33,9 @@ class SettingsRepositoryImpl @Inject constructor(
     override val hapticsLevel: Flow<String> = dataStore.data.map { it[KEY_HAPTICS] ?: "medium" }
     override val dailyGoal: Flow<Int> = dataStore.data.map { it[KEY_DAILY_GOAL] ?: 200 }
     override val translitEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_TRANSLIT_ENABLED] ?: true }
-    override val autoReset: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_RESET] ?: true }
+    override val autoReset: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_RESET] ?: false }
     override val soundEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SOUND_ENABLED] ?: false }
+    override val showStreaks: Flow<Boolean> = dataStore.data.map { it[KEY_SHOW_STREAKS] ?: true }
 
     override suspend fun setTheme(theme: String) = dataStore.edit { it[KEY_THEME] = theme }.let {}
     override suspend fun setLanguage(lang: String) = dataStore.edit { it[KEY_LANGUAGE] = lang }.let {}
@@ -42,4 +44,5 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setTranslitEnabled(on: Boolean) = dataStore.edit { it[KEY_TRANSLIT_ENABLED] = on }.let {}
     override suspend fun setAutoReset(on: Boolean) = dataStore.edit { it[KEY_AUTO_RESET] = on }.let {}
     override suspend fun setSoundEnabled(on: Boolean) = dataStore.edit { it[KEY_SOUND_ENABLED] = on }.let {}
+    override suspend fun setShowStreaks(on: Boolean) = dataStore.edit { it[KEY_SHOW_STREAKS] = on }.let {}
 }

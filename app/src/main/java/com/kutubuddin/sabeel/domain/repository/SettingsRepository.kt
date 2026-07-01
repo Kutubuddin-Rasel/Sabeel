@@ -10,6 +10,7 @@ interface SettingsRepository {
     val translitEnabled: Flow<Boolean>
     val autoReset: Flow<Boolean>
     val soundEnabled: Flow<Boolean>
+    val showStreaks: Flow<Boolean>   // consistency counts visible, or hidden for pure ibadah
 
     suspend fun setTheme(theme: String)
     suspend fun setLanguage(lang: String)
@@ -18,4 +19,5 @@ interface SettingsRepository {
     suspend fun setTranslitEnabled(on: Boolean)
     suspend fun setAutoReset(on: Boolean)
     suspend fun setSoundEnabled(on: Boolean)
+    suspend fun setShowStreaks(on: Boolean)
 }
