@@ -45,6 +45,25 @@ object UiText {
     val homeDayOne = LocalizedText(en = "%1\$s day", ur = "%1\$s دن", bn = "%1\$s দিন")
     val homeDayOther = LocalizedText(en = "%1\$s days", ur = "%1\$s دن", bn = "%1\$s দিন")
 
+    // ── Counting screen ───────────────────────────────
+    val countSmartFlow = LocalizedText(en = "Tasbīḥ after Salah", ur = "نماز کے بعد تسبیح", bn = "নামাযের পর তাসবিহ")
+    val countConsistencyA11y = LocalizedText(en = "Consistency: %1\$s days", ur = "تسلسل: %1\$s دن", bn = "ধারাবাহিকতা: %1\$s দিন")
+    val countStreakShort = LocalizedText(en = "%1\$sd", ur = "%1\$s دن", bn = "%1\$s দিন")
+    val countUndo = LocalizedText(en = "Undo last count", ur = "آخری شمار واپس لیں", bn = "শেষ গণনা ফিরিয়ে নিন")
+    val countDecrementAction = LocalizedText(en = "Decrement", ur = "کم کریں", bn = "কমান")
+    val countTapHint = LocalizedText(en = "Tap the circle to count", ur = "شمار کرنے کے لیے دائرے کو چھوئیں", bn = "গণনা করতে বৃত্তে ট্যাপ করুন")
+    val countComplete = LocalizedText(en = "%1\$s complete", ur = "%1\$s مکمل", bn = "%1\$s সম্পন্ন")
+    val countFinish = LocalizedText(en = "Finish", ur = "ختم", bn = "শেষ")
+    val countContinue = LocalizedText(en = "Continue", ur = "جاری رکھیں", bn = "চালিয়ে যান")
+    val countStepOf = LocalizedText(en = "Step %1\$s of %2\$s", ur = "مرحلہ %1\$s از %2\$s", bn = "ধাপ %1\$s / %2\$s")
+    val countReward = LocalizedText(en = "SPIRITUAL REWARD", ur = "روحانی اجر", bn = "আধ্যাত্মিক সওয়াব")
+    val countCircleA11y = LocalizedText(
+        en = "Count %1\$s of %2\$s. Tap to count. Long press to reset.",
+        ur = "شمار %1\$s از %2\$s۔ شمار کرنے کے لیے چھوئیں۔ ری سیٹ کرنے کے لیے دبائے رکھیں۔",
+        bn = "গণনা %1\$s / %2\$s। গণনা করতে ট্যাপ করুন। রিসেট করতে চেপে ধরে রাখুন।"
+    )
+    val countOf = LocalizedText(en = "of %1\$s", ur = "از %1\$s", bn = "%1\$s এর মধ্যে")
+
     fun resolve(lang: String) = UiStrings(
         navHome = navHome.get(lang),
         navCount = navCount.get(lang),
@@ -71,5 +90,18 @@ object UiText {
         homeStartCounting = homeStartCounting.get(lang),
         homeDayOne = homeDayOne.get(lang),
         homeDayOther = homeDayOther.get(lang),
+        countSmartFlow = countSmartFlow.get(lang),
+        countConsistencyA11y = countConsistencyA11y.get(lang),
+        countStreakShort = countStreakShort.get(lang),
+        countUndo = countUndo.get(lang),
+        countDecrementAction = countDecrementAction.get(lang),
+        countTapHint = countTapHint.get(lang),
+        countComplete = countComplete.get(lang),
+        countFinish = countFinish.get(lang),
+        countContinue = countContinue.get(lang),
+        countStepOf = countStepOf.get(lang),
+        countReward = countReward.get(lang),
+        countCircleA11y = countCircleA11y.get(lang),
+        countOf = countOf.get(lang),
     )
 }

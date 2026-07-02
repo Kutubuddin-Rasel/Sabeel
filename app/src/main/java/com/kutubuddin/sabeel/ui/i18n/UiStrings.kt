@@ -41,6 +41,20 @@ data class UiStrings(
     val homeStartCounting: String,
     val homeDayOne: String,   // template: "%1$s day"
     val homeDayOther: String, // template: "%1$s days"
+    // ── Counting screen ──
+    val countSmartFlow: String,
+    val countConsistencyA11y: String, // template: "Consistency: %1$s days"
+    val countStreakShort: String,     // template: "%1$sd"
+    val countUndo: String,            // a11y: undo-last-count description
+    val countDecrementAction: String, // a11y: onClick action label
+    val countTapHint: String,
+    val countComplete: String,        // template: "%1$s complete"
+    val countFinish: String,
+    val countContinue: String,
+    val countStepOf: String,          // template: "Step %1$s of %2$s"
+    val countReward: String,
+    val countCircleA11y: String,      // template: "Count %1$s of %2$s. Tap to count. Long press to reset."
+    val countOf: String,              // template: "of %1$s"
 ) {
     /**
      * Category labels resolve in the UI layer (not the domain enum) so the

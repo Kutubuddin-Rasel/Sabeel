@@ -29,6 +29,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
+import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.theme.arabicStyle
 
@@ -48,8 +50,10 @@ fun CompletionRest(
     total: Int,
     onContinue: () -> Unit,
     onFinish: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    language: String = "en"
 ) {
+    val strings = LocalStrings.current
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -77,7 +81,7 @@ fun CompletionRest(
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "$total complete",
+                text = strings.countComplete.format(total.toLocalizedNumerals(language)),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = SabeelColors.TextPrimary
@@ -97,14 +101,14 @@ fun CompletionRest(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = SabeelColors.TextSecondary),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Finish", fontSize = 14.sp)
+                    Text(strings.countFinish, fontSize = 14.sp)
                 }
                 Button(
                     onClick = onContinue,
                     colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Continue", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SabeelColors.Background)
+                    Text(strings.countContinue, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SabeelColors.Background)
                 }
             }
         }

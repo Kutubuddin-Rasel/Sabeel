@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
@@ -46,13 +47,16 @@ fun SequenceTracker(
     language: String,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalStrings.current
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Step ${(stepIndex + 1).toLocalizedNumerals(language)} of " +
-                stepCount.toLocalizedNumerals(language),
+            text = strings.countStepOf.format(
+                (stepIndex + 1).toLocalizedNumerals(language),
+                stepCount.toLocalizedNumerals(language)
+            ),
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             color = SabeelColors.TextSecondary

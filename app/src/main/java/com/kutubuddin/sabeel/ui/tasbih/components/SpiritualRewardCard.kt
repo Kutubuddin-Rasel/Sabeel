@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
 /**
@@ -36,6 +37,7 @@ fun SpiritualRewardCard(
     reward: String,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalStrings.current
     AnimatedContent(
         targetState = reward,
         transitionSpec = {
@@ -76,7 +78,7 @@ fun SpiritualRewardCard(
         ) {
             Column {
                 Text(
-                    text = "SPIRITUAL REWARD",
+                    text = strings.countReward,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 1.5.sp,
