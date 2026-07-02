@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.model.DhikrItem
 import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.localizeHadithRef
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
@@ -44,6 +45,7 @@ fun DhikrLibraryScreen(
     viewModel: DhikrViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val strings = LocalStrings.current
 
     Column(
         modifier = Modifier
@@ -73,7 +75,7 @@ fun DhikrLibraryScreen(
                     // ("TAHLIL") collides with a dhikr key ("TAHLIL") and crashes.
                     // Prefix to keep the two namespaces disjoint.
                     stickyHeader(key = "header_${category.name}") {
-                        CategoryHeader(category.displayName)
+                        CategoryHeader(strings.categoryLabel(category))
                     }
                     items(items, key = { "item_${it.key}" }) { item ->
                         DhikrCard(
@@ -98,6 +100,7 @@ fun DhikrLibraryScreen(
 
 @Composable
 private fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier) {
+    val strings = LocalStrings.current
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
@@ -116,7 +119,7 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: 
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
                 if (query.isEmpty()) {
-                    Text("Search dhikr…", fontSize = 15.sp, color = SabeelColors.TextHint)
+                    Text(strings.dhikrSearchPlaceholder, fontSize = 15.sp, color = SabeelColors.TextHint)
                 }
                 inner()
             }
@@ -147,6 +150,7 @@ private fun DhikrCard(
     onToggle: () -> Unit,
     onCountNow: () -> Unit
 ) {
+    val strings = LocalStrings.current
     val borderColor = if (isExpanded) SabeelColors.AccentTeal.copy(alpha = 0.6f)
                       else SabeelColors.BorderIdle
 
@@ -260,7 +264,7 @@ private fun DhikrCard(
                 // Hadith reference — the trust anchor, so it must be legible.
                 if (item.hadithRef.isNotBlank()) {
                     Text(
-                        text = "Ref: ${localizeHadithRef(item.hadithRef, language)}",
+                        text = strings.dhikrRef.format(localizeHadithRef(item.hadithRef, language)),
                         fontSize = 12.sp,
                         color = SabeelColors.TextSecondary,
                         letterSpacing = 0.5.sp
@@ -275,7 +279,8 @@ private fun DhikrCard(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Count Now  →",
+                        // Arrow direction is made RTL-aware in the RTL task.
+                        text = "${strings.dhikrCountNow}  →",
                         color = SabeelColors.Background,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
@@ -288,6 +293,7 @@ private fun DhikrCard(
 
 @Composable
 private fun EmptySearchResult(query: String) {
+    val strings = LocalStrings.current
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -300,7 +306,7 @@ private fun EmptySearchResult(query: String) {
             modifier = Modifier.size(36.dp)
         )
         Spacer(Modifier.height(12.dp))
-        Text("No dhikr found for \"$query\"", fontSize = 14.sp, color = SabeelColors.TextSecondary)
-        Text("Try searching in Arabic or English", fontSize = 12.sp, color = SabeelColors.TextHint)
+        Text(strings.dhikrNoResults.format(query), fontSize = 14.sp, color = SabeelColors.TextSecondary)
+        Text(strings.dhikrSearchHint, fontSize = 12.sp, color = SabeelColors.TextHint)
     }
 }
