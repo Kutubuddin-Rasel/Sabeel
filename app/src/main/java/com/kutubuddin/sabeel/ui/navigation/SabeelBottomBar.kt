@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
+import com.kutubuddin.sabeel.ui.i18n.UiStrings
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
 @Composable
@@ -20,6 +22,7 @@ fun SabeelBottomBar(
 ) {
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
+    val strings = LocalStrings.current
 
     NavigationBar(
         containerColor = SabeelColors.Surface,
@@ -27,6 +30,7 @@ fun SabeelBottomBar(
     ) {
         SabeelTab.all.forEach { tab ->
             val selected = currentRoute == tab.route
+            val label = strings.labelFor(tab)
             NavigationBarItem(
                 selected = selected,
                 onClick = {
@@ -43,10 +47,10 @@ fun SabeelBottomBar(
                 icon = {
                     Icon(
                         imageVector = if (selected) tab.selectedIcon else tab.icon,
-                        contentDescription = tab.label
+                        contentDescription = label
                     )
                 },
-                label = { Text(tab.label, fontSize = 11.sp) },
+                label = { Text(label, fontSize = 11.sp) },
                 alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = SabeelColors.AccentTeal,
@@ -58,4 +62,13 @@ fun SabeelBottomBar(
             )
         }
     }
+}
+
+/** Localized display label for a tab. Lives here (navigation → i18n) so the
+ *  i18n layer never has to know about navigation types. */
+private fun UiStrings.labelFor(tab: SabeelTab): String = when (tab) {
+    SabeelTab.Home -> navHome
+    SabeelTab.Count -> navCount
+    SabeelTab.Dhikr -> navDhikr
+    SabeelTab.Settings -> navSettings
 }
