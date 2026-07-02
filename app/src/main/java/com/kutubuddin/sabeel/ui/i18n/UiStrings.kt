@@ -1,0 +1,42 @@
+package com.kutubuddin.sabeel.ui.i18n
+
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.LayoutDirection
+import com.kutubuddin.sabeel.domain.model.DhikrCategory
+
+/**
+ * Resolved, per-language chrome strings — the type-safe bundle composables read
+ * via [LocalStrings]. Grows one field per string as screens migrate.
+ *
+ * The compiler keeps this in sync with [UiText.resolve]: adding a field here
+ * without filling it there is a compile error, and vice-versa.
+ */
+data class UiStrings(
+    // ── Bottom navigation ─────────────────────────────
+    val navHome: String,
+    val navCount: String,
+    val navDhikr: String,
+    val navSettings: String,
+) {
+    /**
+     * Category labels resolve in the UI layer (not the domain enum) so the
+     * domain model stays free of presentation/language concerns. Filled out in
+     * the Dhikr Library task once the category fields exist; until then falls
+     * back to the domain's English [DhikrCategory.displayName].
+     */
+    fun categoryLabel(cat: DhikrCategory): String = cat.displayName
+}
+
+/**
+ * The current language's chrome strings. Static (not observable-per-field)
+ * because the value changes only on language switch — the whole subtree
+ * recomposes, which is what we want. Defaults to English so Compose previews
+ * and un-wrapped test trees render instead of crashing.
+ */
+val LocalStrings: ProvidableCompositionLocal<UiStrings> =
+    staticCompositionLocalOf { UiText.resolve("en") }
+
+/** Urdu is right-to-left; English and Bengali are left-to-right. */
+fun layoutDirectionFor(lang: String): LayoutDirection =
+    if (lang == "ur") LayoutDirection.Rtl else LayoutDirection.Ltr

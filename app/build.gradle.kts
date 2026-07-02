@@ -89,6 +89,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.compose.ui.test.junit4)
+    // Test-only: powers the reflection-based UiText translation-completeness test.
+    testImplementation(kotlin("reflect"))
 
     // Compile-only helpers
     compileOnly(libs.error.prone.annotations)
