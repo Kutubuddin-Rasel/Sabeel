@@ -55,6 +55,32 @@ data class UiStrings(
     val countReward: String,
     val countCircleA11y: String,      // template: "Count %1$s of %2$s. Tap to count. Long press to reset."
     val countOf: String,              // template: "of %1$s"
+    // ── Settings screen ──
+    val settingsAppearance: String,
+    val settingsLanguageText: String,
+    val settingsCountingBehaviour: String,
+    val settingsDailyGoalHeader: String,
+    val settingsAbout: String,
+    val settingsTheme: String,
+    val settingsThemeDark: String,
+    val settingsThemeLight: String,
+    val settingsLanguage: String,
+    val settingsHaptics: String,
+    val settingsHapticOff: String,
+    val settingsHapticLight: String,
+    val settingsHapticMedium: String,
+    val settingsHapticStrong: String,
+    val settingsTranslit: String,
+    val settingsTranslitDesc: String,
+    val settingsSound: String,
+    val settingsSoundDesc: String,
+    val settingsAutoReset: String,
+    val settingsAutoResetDesc: String,
+    val settingsShowStreaks: String,
+    val settingsShowStreaksDesc: String,
+    val settingsDailyTarget: String,
+    val settingsFont: String,
+    val settingsVersion: String,
 ) {
     /**
      * Category labels resolve in the UI layer (not the domain enum) so the

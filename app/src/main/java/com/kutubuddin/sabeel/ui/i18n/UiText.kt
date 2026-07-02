@@ -64,6 +64,33 @@ object UiText {
     )
     val countOf = LocalizedText(en = "of %1\$s", ur = "از %1\$s", bn = "%1\$s এর মধ্যে")
 
+    // ── Settings screen ───────────────────────────────
+    val settingsAppearance = LocalizedText(en = "Appearance", ur = "ظاہری شکل", bn = "অবয়ব")
+    val settingsLanguageText = LocalizedText(en = "Language & Text", ur = "زبان اور متن", bn = "ভাষা ও লেখা")
+    val settingsCountingBehaviour = LocalizedText(en = "Counting Behaviour", ur = "شمار کا انداز", bn = "গণনার আচরণ")
+    val settingsDailyGoalHeader = LocalizedText(en = "Daily Goal", ur = "روزانہ ہدف", bn = "দৈনিক লক্ষ্য")
+    val settingsAbout = LocalizedText(en = "About", ur = "متعلق", bn = "সম্পর্কে")
+    val settingsTheme = LocalizedText(en = "Theme", ur = "تھیم", bn = "থিম")
+    val settingsThemeDark = LocalizedText(en = "Dark", ur = "گہرا", bn = "গাঢ়")
+    val settingsThemeLight = LocalizedText(en = "Light", ur = "ہلکا", bn = "হালকা")
+    val settingsLanguage = LocalizedText(en = "Language", ur = "زبان", bn = "ভাষা")
+    val settingsHaptics = LocalizedText(en = "Haptic Feedback", ur = "ہپٹک فیڈبیک", bn = "হ্যাপটিক ফিডব্যাক")
+    val settingsHapticOff = LocalizedText(en = "Off", ur = "بند", bn = "বন্ধ")
+    val settingsHapticLight = LocalizedText(en = "Light", ur = "ہلکا", bn = "হালকা")
+    val settingsHapticMedium = LocalizedText(en = "Medium", ur = "درمیانہ", bn = "মাঝারি")
+    val settingsHapticStrong = LocalizedText(en = "Strong", ur = "تیز", bn = "জোরালো")
+    val settingsTranslit = LocalizedText(en = "Show Transliteration", ur = "نقل حرفی دکھائیں", bn = "প্রতিবর্ণীকরণ দেখান")
+    val settingsTranslitDesc = LocalizedText(en = "Romanized pronunciation under Arabic", ur = "عربی کے نیچے رومن تلفظ", bn = "আরবির নিচে রোমান উচ্চারণ")
+    val settingsSound = LocalizedText(en = "Sound on Milestone", ur = "سنگ میل پر آواز", bn = "মাইলফলকে শব্দ")
+    val settingsSoundDesc = LocalizedText(en = "Subtle chime at 33, 100 etc.", ur = "۳۳، ۱۰۰ وغیرہ پر ہلکی آواز", bn = "৩৩, ১০০ ইত্যাদিতে মৃদু ধ্বনি")
+    val settingsAutoReset = LocalizedText(en = "Auto-reset on Completion", ur = "تکمیل پر خودکار ری سیٹ", bn = "সম্পূর্ণ হলে স্বয়ংক্রিয় রিসেট")
+    val settingsAutoResetDesc = LocalizedText(en = "Counter resets when target is hit", ur = "ہدف پر پہنچنے پر شمار خودکار ری سیٹ ہو جاتا ہے", bn = "লক্ষ্যে পৌঁছালে গণনা রিসেট হয়")
+    val settingsShowStreaks = LocalizedText(en = "Show Streaks", ur = "تسلسل دکھائیں", bn = "ধারাবাহিকতা দেখান")
+    val settingsShowStreaksDesc = LocalizedText(en = "Hide consistency counts for pure ibadah", ur = "خالص عبادت کے لیے تسلسل چھپائیں", bn = "খাঁটি ইবাদতের জন্য ধারাবাহিকতা লুকান")
+    val settingsDailyTarget = LocalizedText(en = "Daily target", ur = "روزانہ ہدف", bn = "দৈনিক লক্ষ্য")
+    val settingsFont = LocalizedText(en = "Font", ur = "فونٹ", bn = "ফন্ট")
+    val settingsVersion = LocalizedText(en = "Version", ur = "ورژن", bn = "সংস্করণ")
+
     fun resolve(lang: String) = UiStrings(
         navHome = navHome.get(lang),
         navCount = navCount.get(lang),
@@ -103,5 +130,30 @@ object UiText {
         countReward = countReward.get(lang),
         countCircleA11y = countCircleA11y.get(lang),
         countOf = countOf.get(lang),
+        settingsAppearance = settingsAppearance.get(lang),
+        settingsLanguageText = settingsLanguageText.get(lang),
+        settingsCountingBehaviour = settingsCountingBehaviour.get(lang),
+        settingsDailyGoalHeader = settingsDailyGoalHeader.get(lang),
+        settingsAbout = settingsAbout.get(lang),
+        settingsTheme = settingsTheme.get(lang),
+        settingsThemeDark = settingsThemeDark.get(lang),
+        settingsThemeLight = settingsThemeLight.get(lang),
+        settingsLanguage = settingsLanguage.get(lang),
+        settingsHaptics = settingsHaptics.get(lang),
+        settingsHapticOff = settingsHapticOff.get(lang),
+        settingsHapticLight = settingsHapticLight.get(lang),
+        settingsHapticMedium = settingsHapticMedium.get(lang),
+        settingsHapticStrong = settingsHapticStrong.get(lang),
+        settingsTranslit = settingsTranslit.get(lang),
+        settingsTranslitDesc = settingsTranslitDesc.get(lang),
+        settingsSound = settingsSound.get(lang),
+        settingsSoundDesc = settingsSoundDesc.get(lang),
+        settingsAutoReset = settingsAutoReset.get(lang),
+        settingsAutoResetDesc = settingsAutoResetDesc.get(lang),
+        settingsShowStreaks = settingsShowStreaks.get(lang),
+        settingsShowStreaksDesc = settingsShowStreaksDesc.get(lang),
+        settingsDailyTarget = settingsDailyTarget.get(lang),
+        settingsFont = settingsFont.get(lang),
+        settingsVersion = settingsVersion.get(lang),
     )
 }

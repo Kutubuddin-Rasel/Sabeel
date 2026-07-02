@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
+import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
 @Composable
@@ -21,6 +23,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val strings = LocalStrings.current
 
     LazyColumn(
         modifier = Modifier
@@ -29,23 +32,25 @@ fun SettingsScreen(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item { SettingsHeader("Appearance") }
+        item { SettingsHeader(strings.settingsAppearance) }
 
         item {
             SettingsSegmentRow(
-                label = "Theme",
-                options = listOf("dark" to "Dark", "light" to "Light"),
+                label = strings.settingsTheme,
+                options = listOf("dark" to strings.settingsThemeDark, "light" to strings.settingsThemeLight),
                 selected = state.theme,
                 onSelect = { viewModel.processIntent(SettingsIntent.SetTheme(it)) }
             )
         }
 
         item { Spacer(Modifier.height(4.dp)) }
-        item { SettingsHeader("Language & Text") }
+        item { SettingsHeader(strings.settingsLanguageText) }
 
         item {
+            // Language endonyms stay in their own script regardless of app
+            // language — that is how a user recognises their own language.
             SettingsSegmentRow(
-                label = "Translation",
+                label = strings.settingsLanguage,
                 options = listOf("en" to "English", "ur" to "اردو", "bn" to "বাংলা"),
                 selected = state.language,
                 onSelect = { viewModel.processIntent(SettingsIntent.SetLanguage(it)) }
@@ -53,67 +58,73 @@ fun SettingsScreen(
         }
         item {
             SettingsToggleRow(
-                label = "Show Transliteration",
-                description = "Romanized pronunciation under Arabic",
+                label = strings.settingsTranslit,
+                description = strings.settingsTranslitDesc,
                 checked = state.translitEnabled,
                 onCheckedChange = { viewModel.processIntent(SettingsIntent.SetTranslit(it)) }
             )
         }
 
         item { Spacer(Modifier.height(4.dp)) }
-        item { SettingsHeader("Counting Behaviour") }
+        item { SettingsHeader(strings.settingsCountingBehaviour) }
 
         item {
             SettingsSegmentRow(
-                label = "Haptic Feedback",
-                options = listOf("off" to "Off", "light" to "Light", "medium" to "Medium", "strong" to "Strong"),
+                label = strings.settingsHaptics,
+                options = listOf(
+                    "off" to strings.settingsHapticOff,
+                    "light" to strings.settingsHapticLight,
+                    "medium" to strings.settingsHapticMedium,
+                    "strong" to strings.settingsHapticStrong
+                ),
                 selected = state.hapticsLevel,
                 onSelect = { viewModel.processIntent(SettingsIntent.SetHaptics(it)) }
             )
         }
         item {
             SettingsToggleRow(
-                label = "Sound on Milestone",
-                description = "Subtle chime at 33, 100 etc.",
+                label = strings.settingsSound,
+                description = strings.settingsSoundDesc,
                 checked = state.soundEnabled,
                 onCheckedChange = { viewModel.processIntent(SettingsIntent.SetSoundOn(it)) }
             )
         }
         item {
             SettingsToggleRow(
-                label = "Auto-reset on Completion",
-                description = "Counter resets when target is hit",
+                label = strings.settingsAutoReset,
+                description = strings.settingsAutoResetDesc,
                 checked = state.autoReset,
                 onCheckedChange = { viewModel.processIntent(SettingsIntent.SetAutoReset(it)) }
             )
         }
         item {
             SettingsToggleRow(
-                label = "Show Streaks",
-                description = "Hide consistency counts for pure ibadah",
+                label = strings.settingsShowStreaks,
+                description = strings.settingsShowStreaksDesc,
                 checked = state.showStreaks,
                 onCheckedChange = { viewModel.processIntent(SettingsIntent.SetShowStreaks(it)) }
             )
         }
 
         item { Spacer(Modifier.height(4.dp)) }
-        item { SettingsHeader("Daily Goal") }
+        item { SettingsHeader(strings.settingsDailyGoalHeader) }
 
         item {
             DailyGoalRow(
                 goal = state.dailyGoal,
+                language = state.language,
                 onGoalChange = { viewModel.processIntent(SettingsIntent.SetDailyGoal(it)) }
             )
         }
 
         item { Spacer(Modifier.height(4.dp)) }
-        item { SettingsHeader("About") }
+        item { SettingsHeader(strings.settingsAbout) }
 
         item {
-            SettingsInfoRow("Font", "KFGQPC Uthmanic Script Hafs")
+            SettingsInfoRow(strings.settingsFont, "KFGQPC Uthmanic Script Hafs")
         }
         item {
-            SettingsInfoRow("Version", "1.0.0")
+            SettingsInfoRow(strings.settingsVersion, "1.0.0")
         }
     }
 }
@@ -205,7 +216,8 @@ private fun SettingsToggleRow(
 }
 
 @Composable
-private fun DailyGoalRow(goal: Int, onGoalChange: (Int) -> Unit) {
+private fun DailyGoalRow(goal: Int, language: String, onGoalChange: (Int) -> Unit) {
+    val strings = LocalStrings.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -215,13 +227,13 @@ private fun DailyGoalRow(goal: Int, onGoalChange: (Int) -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Daily target", fontSize = 14.sp, color = SabeelColors.TextPrimary, fontWeight = FontWeight.Medium)
+        Text(strings.settingsDailyTarget, fontSize = 14.sp, color = SabeelColors.TextPrimary, fontWeight = FontWeight.Medium)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             TextButton(
                 onClick = { if (goal > 50) onGoalChange(goal - 50) },
                 colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.AccentTeal)
             ) { Text("−", fontSize = 20.sp) }
-            Text("$goal", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary)
+            Text(goal.toLocalizedNumerals(language), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary)
             TextButton(
                 onClick = { if (goal < 1000) onGoalChange(goal + 50) },
                 colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.AccentTeal)
