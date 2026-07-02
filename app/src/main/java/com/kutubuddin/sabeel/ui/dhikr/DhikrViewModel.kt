@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * ViewModel for the Dhikr Library tab.
@@ -42,7 +43,7 @@ class DhikrViewModel @Inject constructor(
     private val _expandedKey  = MutableStateFlow<String?>(null)
 
     // Debounce search to avoid filtering on every keystroke
-    private val debouncedQuery = _searchQuery.debounce(300L)
+    private val debouncedQuery = _searchQuery.debounce(300L.milliseconds)
 
     // Filter catalog based on debounced query; recompute only when query or catalog changes
     private val filteredDhikr = dhikrRepository.getAllDhikr()

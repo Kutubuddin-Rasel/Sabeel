@@ -101,11 +101,13 @@ object UiText {
     val navCount = LocalizedText(en = "Count", ur = "شمار",  bn = "গণনা")
     // … ~70 entries …
 
-    // Templates: %1$s / %2$s let translations reorder.
+    // Templates: %1$s / %2$s let translations reorder. NOTE: in a Kotlin string
+    // literal the `$` must be escaped as `\$` (otherwise `$s` is read as a template
+    // reference and won't compile) — so these are authored as "Step %1\$s of %2\$s".
     val stepXofY = LocalizedText(
-        en = "Step %1$s of %2$s",
-        ur = "%2$s میں سے %1$s قدم",
-        bn = "%2$s-এর ধাপ %1$s"
+        en = "Step %1\$s of %2\$s",
+        ur = "%2\$s میں سے %1\$s قدم",
+        bn = "%2\$s-এর ধাপ %1\$s"
     )
 
     fun resolve(lang: String) = UiStrings(
