@@ -81,14 +81,37 @@ data class UiStrings(
     val settingsDailyTarget: String,
     val settingsFont: String,
     val settingsVersion: String,
+    // ── Dhikr Library ──
+    val dhikrSearchPlaceholder: String,
+    val dhikrRef: String,          // template: "Ref: %1$s"
+    val dhikrCountNow: String,
+    val dhikrNoResults: String,    // template: "No dhikr found for \"%1$s\""
+    val dhikrSearchHint: String,
+    // ── Dhikr categories (resolved via categoryLabel) ──
+    val catAfterPrayer: String,
+    val catDaily: String,
+    val catMorning: String,
+    val catEvening: String,
+    val catSalawat: String,
+    val catIstighfar: String,
+    val catTahlil: String,
+    val catCustom: String,
 ) {
     /**
      * Category labels resolve in the UI layer (not the domain enum) so the
-     * domain model stays free of presentation/language concerns. Filled out in
-     * the Dhikr Library task once the category fields exist; until then falls
-     * back to the domain's English [DhikrCategory.displayName].
+     * domain model stays free of presentation/language concerns. The exhaustive
+     * `when` makes the compiler flag any [DhikrCategory] we forget to localize.
      */
-    fun categoryLabel(cat: DhikrCategory): String = cat.displayName
+    fun categoryLabel(cat: DhikrCategory): String = when (cat) {
+        DhikrCategory.AFTER_PRAYER -> catAfterPrayer
+        DhikrCategory.DAILY -> catDaily
+        DhikrCategory.MORNING -> catMorning
+        DhikrCategory.EVENING -> catEvening
+        DhikrCategory.SALAWAT -> catSalawat
+        DhikrCategory.ISTIGHFAR -> catIstighfar
+        DhikrCategory.TAHLIL -> catTahlil
+        DhikrCategory.CUSTOM -> catCustom
+    }
 }
 
 /**

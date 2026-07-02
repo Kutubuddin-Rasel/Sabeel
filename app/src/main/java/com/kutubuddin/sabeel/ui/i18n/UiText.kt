@@ -91,6 +91,23 @@ object UiText {
     val settingsFont = LocalizedText(en = "Font", ur = "فونٹ", bn = "ফন্ট")
     val settingsVersion = LocalizedText(en = "Version", ur = "ورژن", bn = "সংস্করণ")
 
+    // ── Dhikr Library ─────────────────────────────────
+    val dhikrSearchPlaceholder = LocalizedText(en = "Search dhikr…", ur = "ذکر تلاش کریں…", bn = "যিকির খুঁজুন…")
+    val dhikrRef = LocalizedText(en = "Ref: %1\$s", ur = "حوالہ: %1\$s", bn = "সূত্র: %1\$s")
+    val dhikrCountNow = LocalizedText(en = "Count Now", ur = "ابھی شمار کریں", bn = "এখন গণনা করুন")
+    val dhikrNoResults = LocalizedText(en = "No dhikr found for \"%1\$s\"", ur = "\"%1\$s\" کے لیے کوئی ذکر نہیں ملا", bn = "\"%1\$s\" এর জন্য কোনো যিকির পাওয়া যায়নি")
+    val dhikrSearchHint = LocalizedText(en = "Try searching in Arabic or English", ur = "عربی یا انگریزی میں تلاش کریں", bn = "আরবি বা ইংরেজিতে খুঁজে দেখুন")
+
+    // ── Dhikr categories ──────────────────────────────
+    val catAfterPrayer = LocalizedText(en = "After Prayer", ur = "نماز کے بعد", bn = "নামাযের পর")
+    val catDaily = LocalizedText(en = "Daily Remembrance", ur = "روزانہ ذکر", bn = "দৈনিক যিকির")
+    val catMorning = LocalizedText(en = "Morning Adhkar", ur = "صبح کے اذکار", bn = "সকালের যিকির")
+    val catEvening = LocalizedText(en = "Evening Adhkar", ur = "شام کے اذکار", bn = "সন্ধ্যার যিকির")
+    val catSalawat = LocalizedText(en = "Salawat", ur = "درود", bn = "দরূদ")
+    val catIstighfar = LocalizedText(en = "Istighfar", ur = "استغفار", bn = "ইস্তিগফার")
+    val catTahlil = LocalizedText(en = "Tahlil", ur = "تہلیل", bn = "তাহলিল")
+    val catCustom = LocalizedText(en = "My Dhikr", ur = "میرا ذکر", bn = "আমার যিকির")
+
     fun resolve(lang: String) = UiStrings(
         navHome = navHome.get(lang),
         navCount = navCount.get(lang),
@@ -155,5 +172,18 @@ object UiText {
         settingsDailyTarget = settingsDailyTarget.get(lang),
         settingsFont = settingsFont.get(lang),
         settingsVersion = settingsVersion.get(lang),
+        dhikrSearchPlaceholder = dhikrSearchPlaceholder.get(lang),
+        dhikrRef = dhikrRef.get(lang),
+        dhikrCountNow = dhikrCountNow.get(lang),
+        dhikrNoResults = dhikrNoResults.get(lang),
+        dhikrSearchHint = dhikrSearchHint.get(lang),
+        catAfterPrayer = catAfterPrayer.get(lang),
+        catDaily = catDaily.get(lang),
+        catMorning = catMorning.get(lang),
+        catEvening = catEvening.get(lang),
+        catSalawat = catSalawat.get(lang),
+        catIstighfar = catIstighfar.get(lang),
+        catTahlil = catTahlil.get(lang),
+        catCustom = catCustom.get(lang),
     )
 }
