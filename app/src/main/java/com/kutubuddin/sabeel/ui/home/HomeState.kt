@@ -10,8 +10,9 @@ data class HomeState(
     val totalAllTime: Int = 0,
     val totalSessionCount: Int = 0,
     val resumeSession: ResumeSession? = null,
-    val greeting: String = "Assalamu alaikum",
-    val showStreaks: Boolean = true
+    val greeting: GreetingType = GreetingType.DEFAULT,
+    val showStreaks: Boolean = true,
+    val language: String = "en"
 )
 
 /** Non-null only when the user has an in-progress (incomplete) session. */

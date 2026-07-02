@@ -18,6 +18,29 @@ data class UiStrings(
     val navCount: String,
     val navDhikr: String,
     val navSettings: String,
+    // ── Home: greetings (resolved from GreetingType at the call site) ──
+    val greetingFajr: String,
+    val greetingMorning: String,
+    val greetingDhuhr: String,
+    val greetingAfternoon: String,
+    val greetingAsr: String,
+    val greetingMaghrib: String,
+    val greetingIsha: String,
+    val greetingDefault: String,
+    // ── Home: cards, headers, stats ──
+    val homeResume: String,
+    val homeTodaysSessions: String,
+    val homeAllTime: String,
+    val homeConsistency: String,
+    val homeDailyGoal: String,
+    val homeTotalCounted: String,
+    val homeSessions: String,
+    val homeCompleted: String,
+    val homePartial: String,
+    val homeBeginToday: String,
+    val homeStartCounting: String,
+    val homeDayOne: String,   // template: "%1$s day"
+    val homeDayOther: String, // template: "%1$s days"
 ) {
     /**
      * Category labels resolve in the UI layer (not the domain enum) so the

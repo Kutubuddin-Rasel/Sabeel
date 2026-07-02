@@ -30,6 +30,16 @@ fun String.localizeDigits(lang: String): String {
 fun Int.toLocalizedNumerals(lang: String): String = this.toString().localizeDigits(lang)
 
 /**
+ * Groups a number with thousands separators, then localizes the digits — for
+ * large chrome totals (e.g. the all-time count). Grouping is Western
+ * (`1,234,567`) for universal clarity; only the digits follow the language.
+ */
+fun Int.toGroupedLocalizedNumerals(lang: String): String =
+    java.text.NumberFormat.getIntegerInstance(java.util.Locale.US)
+        .format(this.toLong())
+        .localizeDigits(lang)
+
+/**
  * Book-name lookup. Longest English prefix first so "Sahih al-Bukhari" is
  * matched before the shorter "Sahih …" would be. OCP: add a book by adding a row.
  */

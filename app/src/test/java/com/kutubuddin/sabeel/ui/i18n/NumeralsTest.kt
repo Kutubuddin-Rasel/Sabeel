@@ -11,4 +11,9 @@ class NumeralsTest {
     @Test fun hadith_bengali() = assertEquals("সহীহ মুসলিম ৫৯৬", localizeHadithRef("Sahih Muslim 596", "bn"))
     @Test fun hadith_english_unchanged() = assertEquals("Sahih Muslim 596", localizeHadithRef("Sahih Muslim 596", "en"))
     @Test fun hadith_bukhari_urdu() = assertEquals("صحیح بخاری ۶۳۰۷", localizeHadithRef("Sahih al-Bukhari 6307", "ur"))
+
+    // Grouped totals: Western thousands separators (universal), localized digits.
+    @Test fun grouped_english() = assertEquals("1,234,567", 1234567.toGroupedLocalizedNumerals("en"))
+    @Test fun grouped_urdu() = assertEquals("۱,۲۳۴,۵۶۷", 1234567.toGroupedLocalizedNumerals("ur"))
+    @Test fun grouped_bengali() = assertEquals("১,২৩৪,৫৬৭", 1234567.toGroupedLocalizedNumerals("bn"))
 }
