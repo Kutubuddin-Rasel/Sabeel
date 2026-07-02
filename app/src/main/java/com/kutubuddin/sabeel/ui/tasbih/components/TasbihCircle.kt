@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import kotlinx.coroutines.launch
@@ -61,6 +62,7 @@ fun TasbihCircle(
     diameter: Dp = 280.dp,
     language: String = "en"
 ) {
+    val strings = LocalStrings.current
     val coroutineScope = rememberCoroutineScope()
     val pressScale = remember { Animatable(1f) }
 
@@ -117,8 +119,10 @@ fun TasbihCircle(
                 )
             }
             .clearAndSetSemantics {
-                contentDescription = "Count ${count.toLocalizedNumerals(language)} of " +
-                    "${target.toLocalizedNumerals(language)}. Tap to count. Long press to reset."
+                contentDescription = strings.countCircleA11y.format(
+                    count.toLocalizedNumerals(language),
+                    target.toLocalizedNumerals(language)
+                )
             }
     ) {
         // ── Layer 1: Arc track + gold progress arc ────────────────────────────
@@ -201,7 +205,7 @@ fun TasbihCircle(
 
                 // "of 33" sub-label
                 Text(
-                    text = "of ${target.toLocalizedNumerals(language)}",
+                    text = strings.countOf.format(target.toLocalizedNumerals(language)),
                     style = TextStyle(
                         color = SabeelColors.TextSecondary,
                         fontSize = 14.sp,

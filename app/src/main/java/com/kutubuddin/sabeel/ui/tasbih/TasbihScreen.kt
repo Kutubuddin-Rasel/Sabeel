@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
+import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
 import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
 import com.kutubuddin.sabeel.ui.tasbih.components.SequenceTracker
@@ -94,6 +96,7 @@ fun TasbihContent(
     showStreaks: Boolean = true,
     language: String = "en"
 ) {
+    val strings = LocalStrings.current
     // When a Tasbīḥ-after-Salah sequence is active, the header tracks the current
     // step; otherwise it shows the single selected dhikr.
     val activeStep = state.sequence?.steps?.getOrNull(state.stepIndex)
@@ -143,7 +146,7 @@ fun TasbihContent(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "Tasbīḥ after Salah",
+                            text = strings.countSmartFlow,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = SabeelColors.SmartFlowGold
@@ -159,7 +162,8 @@ fun TasbihContent(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.clearAndSetSemantics {
-                            contentDescription = "Consistency: ${state.currentStreak} days"
+                            contentDescription = strings.countConsistencyA11y
+                                .format(state.currentStreak.toLocalizedNumerals(language))
                         }
                     ) {
                         Icon(
@@ -169,7 +173,8 @@ fun TasbihContent(
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "${state.currentStreak}d",
+                            text = strings.countStreakShort
+                                .format(state.currentStreak.toLocalizedNumerals(language)),
                             fontSize = 14.sp,
                             color = SabeelColors.TextSecondary
                         )
@@ -238,8 +243,8 @@ fun TasbihContent(
                         .background(SabeelColors.CounterWhite.copy(alpha = 0.10f))
                         .border(1.dp, SabeelColors.BorderIdle, RoundedCornerShape(14.dp))
                         .semantics {
-                            contentDescription = "Undo last count"
-                            onClick(label = "Decrement") { onDecrement(); true }
+                            contentDescription = strings.countUndo
+                            onClick(label = strings.countDecrementAction) { onDecrement(); true }
                         }
                         .pointerInput(Unit) {
                             detectTapGestures(onTap = { onDecrement() })
@@ -248,7 +253,7 @@ fun TasbihContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "−1",
+                        text = "−" + 1.toLocalizedNumerals(language),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         color = SabeelColors.TextSecondary
@@ -256,7 +261,7 @@ fun TasbihContent(
                 }
 
                 Text(
-                    text = "Tap the circle to count",
+                    text = strings.countTapHint,
                     fontSize = 12.sp,
                     color = SabeelColors.TextHint,
                     textAlign = TextAlign.Center
@@ -273,6 +278,7 @@ fun TasbihContent(
                 dhikrName = state.currentDhikr.displayName,
                 // NOTE: completion always reports the whole dhikr/sequence, not a step.
                 total = state.target,
+                language = language,
                 onContinue = { onReset(); onCelebrationEnd() },
                 onFinish = onCelebrationEnd
             )
