@@ -19,7 +19,7 @@ enum class SmartFlowVariant(
      * Reference: Sahih Muslim 596, Sahih al-Bukhari 843
      */
     CLASSIC(
-        displayName = "33 + 33 + 34",
+        displayName = "Classic · 33·33·34",
         hadithRef = "Sahih Muslim 596",
         description = "SubhanAllah 33 · Alhamdulillah 33 · Allahu Akbar 34"
     ),
@@ -31,7 +31,7 @@ enum class SmartFlowVariant(
      * Reference: Sahih Muslim 596, Sahih al-Bukhari 843
      */
     WITH_TAHLIL(
-        displayName = "33 + 33 + 33 + Tahlil",
+        displayName = "With Tahlīl · 33·33·33·1",
         hadithRef = "Sahih Muslim 595",
         description = "SubhanAllah 33 · Alhamdulillah 33 · Allahu Akbar 33 · Tahlil 1"
     )
