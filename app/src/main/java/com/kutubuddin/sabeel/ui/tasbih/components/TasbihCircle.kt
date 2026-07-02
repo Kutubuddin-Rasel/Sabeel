@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import kotlinx.coroutines.launch
 
@@ -53,10 +54,16 @@ fun TasbihCircle(
     target: Int,
     onTap: () -> Unit,
     modifier: Modifier = Modifier,
-    diameter: Dp = 280.dp
+    diameter: Dp = 280.dp,
+    language: String = "en"
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pressScale = remember { Animatable(1f) }
+
+    // Hoist tokens read inside the (non-composable) Canvas draw lambda.
+    val arcTrackColor = SabeelColors.ArcTrack
+    val arcStartColor = SabeelColors.AccentTeal
+    val arcEndColor = SabeelColors.AccentTealBright
 
     // Progress fraction — clamped to [0, 1]
     val progress = (count.toFloat() / target.toFloat()).coerceIn(0f, 1f)
@@ -105,7 +112,8 @@ fun TasbihCircle(
                 )
             }
             .clearAndSetSemantics {
-                contentDescription = "Count $count of $target. Tap to count."
+                contentDescription = "Count ${count.toLocalizedNumerals(language)} of " +
+                    "${target.toLocalizedNumerals(language)}. Tap to count."
             }
     ) {
         // ── Layer 1: Arc track + gold progress arc ────────────────────────────
@@ -120,7 +128,7 @@ fun TasbihCircle(
 
             // Track (full 360°)
             drawArc(
-                color = SabeelColors.ArcTrack,
+                color = arcTrackColor,
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
@@ -129,13 +137,14 @@ fun TasbihCircle(
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
 
-            // Gold progress arc
+            // Progress arc — teal (calm, everyday). Gold is reserved for the
+            // milestone completion flash so it stays meaningful.
             if (sweepAngle.value > 0f) {
                 drawArc(
                     brush = Brush.sweepGradient(
                         colorStops = arrayOf(
-                            0.0f to SabeelColors.GoldPrimary,
-                            1.0f to SabeelColors.GoldLuminous
+                            0.0f to arcStartColor,
+                            1.0f to arcEndColor
                         )
                     ),
                     startAngle = -90f,
@@ -175,10 +184,11 @@ fun TasbihCircle(
                 // Counter — 3-digit zero-padded odometer
                 OdometerCounter(
                     count = count,
+                    language = language,
                     style = TextStyle(
                         color = SabeelColors.CounterWhite,
                         fontSize = 80.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Medium  // Medium (not Bold) reduces OLED bloom at 80sp
                     )
                 )
 
@@ -186,7 +196,7 @@ fun TasbihCircle(
 
                 // "of 33" sub-label
                 Text(
-                    text = "of $target",
+                    text = "of ${target.toLocalizedNumerals(language)}",
                     style = TextStyle(
                         color = SabeelColors.TextSecondary,
                         fontSize = 14.sp,
