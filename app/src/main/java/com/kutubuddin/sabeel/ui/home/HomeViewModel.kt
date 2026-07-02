@@ -31,9 +31,10 @@ class HomeViewModel @Inject constructor(
         sessionRepository.getSessionsForDate(today),
         sessionRepository.getTotalCountForDate(today),
         sessionRepository.getTotalAllTime(),
-        sessionRepository.getTotalSessionCount()
-    ) { sessions, totalToday, totalAllTime, totalSessions ->
-        listOf<Any>(sessions, totalToday, totalAllTime, totalSessions)
+        sessionRepository.getTotalSessionCount(),
+        settingsRepository.language
+    ) { sessions, totalToday, totalAllTime, totalSessions, language ->
+        listOf<Any>(sessions, totalToday, totalAllTime, totalSessions, language)
     }
 
     private val counterGroup = combine(
@@ -52,6 +53,7 @@ class HomeViewModel @Inject constructor(
         val totalToday   = s[1] as Int
         val totalAllTime = s[2] as Int
         val totalSessions= s[3] as Int
+        val language     = s[4] as String
 
         val dailyGoal    = c[0] as Int
         val lastCount    = c[1] as Int
@@ -81,7 +83,8 @@ class HomeViewModel @Inject constructor(
             totalSessionCount = totalSessions,
             resumeSession  = resume,
             greeting       = greeting,
-            showStreaks    = showStreaks
+            showStreaks    = showStreaks,
+            language       = language
         )
     }.stateIn(
         scope = viewModelScope,
@@ -112,17 +115,6 @@ class HomeViewModel @Inject constructor(
             if (streakCount == 0 && activeCount > 0) 1 else streakCount
     }
 
-    private fun resolveGreeting(): String {
-        val hour = LocalTime.now().hour
-        return when (hour) {
-            in 4..6   -> "Fajr time — a blessed start"
-            in 7..11  -> "Good morning"
-            in 12..13 -> "Dhuhr time"
-            in 14..15 -> "Good afternoon"
-            in 16..17 -> "Asr time"
-            in 18..19 -> "Maghrib time"
-            in 20..21 -> "Isha time"
-            else      -> "Assalamu alaikum"
-        }
-    }
+    /** Pure time→type mapping; the screen localizes the copy. */
+    private fun resolveGreeting(): GreetingType = greetingTypeForHour(LocalTime.now().hour)
 }

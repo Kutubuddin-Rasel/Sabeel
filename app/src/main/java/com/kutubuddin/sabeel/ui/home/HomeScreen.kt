@@ -31,8 +31,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
 import com.kutubuddin.sabeel.domain.model.DhikrCatalog
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
+import com.kutubuddin.sabeel.ui.i18n.UiStrings
+import com.kutubuddin.sabeel.ui.i18n.localizeDigits
+import com.kutubuddin.sabeel.ui.i18n.toGroupedLocalizedNumerals
+import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
-import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -50,17 +55,24 @@ fun HomeScreen(
     ) {
         // ── Greeting ──────────────────────────────────────────────────────────
         item {
+            val strings = LocalStrings.current
             Column {
                 Text(
-                    text = state.greeting,
+                    text = strings.greetingText(state.greeting),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = SabeelColors.TextPrimary
                 )
                 Spacer(Modifier.height(4.dp))
-                val todayLabel = remember {
+                // Locale-aware day/month names, then localized digits so the
+                // whole date follows the app language (not the device locale).
+                val todayLabel = remember(state.language) {
                     java.time.LocalDate.now()
-                        .format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))
+                        .format(
+                            java.time.format.DateTimeFormatter
+                                .ofPattern("EEEE, d MMMM yyyy", localeFor(state.language))
+                        )
+                        .localizeDigits(state.language)
                 }
                 Text(
                     text = todayLabel,
@@ -75,6 +87,7 @@ fun HomeScreen(
             item {
                 ResumeCard(
                     session = state.resumeSession!!,
+                    language = state.language,
                     onClick = onResumeCounting
                 )
             }
@@ -92,16 +105,16 @@ fun HomeScreen(
         // ── Today's Sessions ──────────────────────────────────────────────────
         if (state.todaysSessions.isNotEmpty()) {
             item {
-                SectionHeader("Today's Sessions")
+                SectionHeader(LocalStrings.current.homeTodaysSessions)
             }
             items(state.todaysSessions) { session ->
-                SessionRow(session)
+                SessionRow(session, state.language)
             }
         }
 
         // ── All Time stats ────────────────────────────────────────────────────
         item {
-            SectionHeader("All Time")
+            SectionHeader(LocalStrings.current.homeAllTime)
         }
         item {
             AllTimeCard(state = state)
@@ -112,7 +125,8 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
+private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> Unit) {
+    val strings = LocalStrings.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -132,7 +146,7 @@ private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
                     tint = SabeelColors.AccentTeal,
                     modifier = Modifier.size(16.dp)
                 )
-                Text("Resume", fontSize = 12.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Medium)
+                Text(strings.homeResume, fontSize = 12.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Medium)
             }
             Spacer(Modifier.height(2.dp))
             Text(
@@ -143,7 +157,7 @@ private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
             )
         }
         Text(
-            text = "${session.lastCount} / ${session.target}",
+            text = "${session.lastCount.toLocalizedNumerals(language)} / ${session.target.toLocalizedNumerals(language)}",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = SabeelColors.AccentTeal
@@ -153,6 +167,7 @@ private fun ResumeCard(session: ResumeSession, onClick: () -> Unit) {
 
 @Composable
 private fun StreakGoalCard(state: HomeState) {
+    val strings = LocalStrings.current
     val goalFraction = if (state.dailyGoal > 0)
         (state.totalToday.toFloat() / state.dailyGoal).coerceIn(0f, 1f)
     else 0f
@@ -185,10 +200,14 @@ private fun StreakGoalCard(state: HomeState) {
                     tint = SabeelColors.AccentTeal,
                     modifier = Modifier.size(18.dp)
                 )
-                Text("Consistency", fontSize = 11.sp, color = SabeelColors.TextSecondary)
+                Text(strings.homeConsistency, fontSize = 11.sp, color = SabeelColors.TextSecondary)
                 Spacer(Modifier.weight(1f))
+                val streakDigits = state.currentStreak.toLocalizedNumerals(state.language)
                 Text(
-                    text = if (state.currentStreak == 1) "1 day" else "${state.currentStreak} days",
+                    text = if (state.currentStreak == 1)
+                        strings.homeDayOne.format(streakDigits)
+                    else
+                        strings.homeDayOther.format(streakDigits),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = SabeelColors.TextPrimary
@@ -211,10 +230,10 @@ private fun StreakGoalCard(state: HomeState) {
                     tint = SabeelColors.TextSecondary,
                     modifier = Modifier.size(16.dp)
                 )
-                Text("Daily Goal", fontSize = 13.sp, color = SabeelColors.TextSecondary)
+                Text(strings.homeDailyGoal, fontSize = 13.sp, color = SabeelColors.TextSecondary)
             }
             Text(
-                text = "${state.totalToday} / ${state.dailyGoal}",
+                text = "${state.totalToday.toLocalizedNumerals(state.language)} / ${state.dailyGoal.toLocalizedNumerals(state.language)}",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = SabeelColors.TextPrimary
@@ -236,7 +255,8 @@ private fun StreakGoalCard(state: HomeState) {
 }
 
 @Composable
-private fun SessionRow(session: DhikrSessionEntity) {
+private fun SessionRow(session: DhikrSessionEntity, language: String) {
+    val strings = LocalStrings.current
     val displayName = DhikrCatalog.displayNameFor(session.dhikrKey)
 
     Row(
@@ -251,13 +271,13 @@ private fun SessionRow(session: DhikrSessionEntity) {
         Column {
             Text(displayName, fontSize = 14.sp, color = SabeelColors.TextPrimary, fontWeight = FontWeight.Medium)
             Text(
-                text = if (session.isComplete) "Completed ✓" else "Partial",
+                text = if (session.isComplete) strings.homeCompleted else strings.homePartial,
                 fontSize = 11.sp,
                 color = if (session.isComplete) SabeelColors.SageGreen else SabeelColors.TextSecondary
             )
         }
         Text(
-            text = "${session.count}",
+            text = session.count.toLocalizedNumerals(language),
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = SabeelColors.AccentTeal
@@ -267,6 +287,7 @@ private fun SessionRow(session: DhikrSessionEntity) {
 
 @Composable
 private fun AllTimeCard(state: HomeState) {
+    val strings = LocalStrings.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -275,8 +296,8 @@ private fun AllTimeCard(state: HomeState) {
             .padding(20.dp),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
-        AllTimeStat("Total Counted", NumberFormat.getInstance().format(state.totalAllTime))
-        AllTimeStat("Sessions", "${state.totalSessionCount}")
+        AllTimeStat(strings.homeTotalCounted, state.totalAllTime.toGroupedLocalizedNumerals(state.language))
+        AllTimeStat(strings.homeSessions, state.totalSessionCount.toLocalizedNumerals(state.language))
     }
 }
 
@@ -301,6 +322,7 @@ private fun SectionHeader(text: String) {
 
 @Composable
 private fun HeroStartCard(onStart: () -> Unit) {
+    val strings = LocalStrings.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -315,7 +337,7 @@ private fun HeroStartCard(onStart: () -> Unit) {
         // سَبِيل flourish — a rare, accepted gold accent.
         Text("سَبِيل", fontSize = 30.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.55f))
         Text(
-            text = "Begin today's dhikr",
+            text = strings.homeBeginToday,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = SabeelColors.TextPrimary
@@ -331,7 +353,7 @@ private fun HeroStartCard(onStart: () -> Unit) {
                 modifier = Modifier.size(18.dp)
             )
             Text(
-                text = "Start counting",
+                text = strings.homeStartCounting,
                 fontSize = 13.sp,
                 color = SabeelColors.AccentTeal,
                 fontWeight = FontWeight.Medium
@@ -339,3 +361,25 @@ private fun HeroStartCard(onStart: () -> Unit) {
         }
     }
 }
+
+/**
+ * Maps the resolved [GreetingType] to its localized copy. Lives in the UI layer
+ * (not the domain/state) so [HomeState] carries only the language-agnostic enum;
+ * the exhaustive `when` makes the compiler flag any GreetingType we forget.
+ */
+private fun UiStrings.greetingText(type: GreetingType): String = when (type) {
+    GreetingType.FAJR -> greetingFajr
+    GreetingType.MORNING -> greetingMorning
+    GreetingType.DHUHR -> greetingDhuhr
+    GreetingType.AFTERNOON -> greetingAfternoon
+    GreetingType.ASR -> greetingAsr
+    GreetingType.MAGHRIB -> greetingMaghrib
+    GreetingType.ISHA -> greetingIsha
+    GreetingType.DEFAULT -> greetingDefault
+}
+
+/**
+ * App-language → JVM [Locale] for date formatting (day/month names). The codes
+ * `en`/`ur`/`bn` are valid BCP-47 tags, so a single lookup covers all three.
+ */
+private fun localeFor(lang: String): Locale = Locale.forLanguageTag(lang)
