@@ -46,6 +46,9 @@ import kotlinx.coroutines.launch
  * @param count         Current count value (0..target)
  * @param target        Target to complete (33, 34, 100, etc.)
  * @param onTap         Called on tap — increments count in ViewModel
+ * @param onLongPress   Called on long press — resets the count. The circle owns
+ *                      its full gesture surface (tap + long press) so the screen
+ *                      never needs a separate gesture wrapper.
  * @param diameter      Circle diameter; default 280.dp
  */
 @Composable
@@ -54,6 +57,7 @@ fun TasbihCircle(
     target: Int,
     onTap: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongPress: () -> Unit = {},
     diameter: Dp = 280.dp,
     language: String = "en"
 ) {
@@ -108,12 +112,13 @@ fun TasbihCircle(
                             )
                         }
                     },
-                    onTap = { onTap() }
+                    onTap = { onTap() },
+                    onLongPress = { onLongPress() }
                 )
             }
             .clearAndSetSemantics {
                 contentDescription = "Count ${count.toLocalizedNumerals(language)} of " +
-                    "${target.toLocalizedNumerals(language)}. Tap to count."
+                    "${target.toLocalizedNumerals(language)}. Tap to count. Long press to reset."
             }
     ) {
         // ── Layer 1: Arc track + gold progress arc ────────────────────────────

@@ -104,19 +104,9 @@ fun TasbihContent(
         modifier = modifier
             .fillMaxSize()
             .background(SabeelColors.Background)
-            // Full-screen tap still counts — "eyes-free" fallback
-            .semantics {
-                contentDescription =
-                    "$displayName. Count: ${state.count} of ${state.target}. " +
-                    "Tap anywhere to count. Long press anywhere to reset."
-                onClick(label = "Count") { onIncrement(); true }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onIncrement() },
-                    onLongPress = { onReset() }
-                )
-            }
+            // Counting is intentionally confined to the circle (below) — a single
+            // focal point. Eyes-free counting is served by Pocket Mode's volume
+            // keys, so the whole screen no longer acts as a tap target.
     ) {
         Column(
             modifier = Modifier
@@ -212,20 +202,13 @@ fun TasbihContent(
             Spacer(modifier = Modifier.weight(1f))
 
             // ── Circle Tap Button ────────────────────────────────────────────
+            // The sole counting affordance: tap to count, long press to reset.
             TasbihCircle(
                 count = state.count,
                 target = state.target,
                 language = language,
                 onTap = onIncrement,
-                modifier = Modifier
-                    // Block the tap from propagating to the outer full-screen tap
-                    // so we don't double-count. The circle handles its own tap.
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = { /* consumed by TasbihCircle internally */ },
-                            onLongPress = { onReset() }
-                        )
-                    }
+                onLongPress = onReset
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -273,7 +256,7 @@ fun TasbihContent(
                 }
 
                 Text(
-                    text = "Tap anywhere to count",
+                    text = "Tap the circle to count",
                     fontSize = 12.sp,
                     color = SabeelColors.TextHint,
                     textAlign = TextAlign.Center

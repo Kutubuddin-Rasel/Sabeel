@@ -1,6 +1,8 @@
 package com.kutubuddin.sabeel.ui.tasbih
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -76,8 +78,9 @@ class TasbihScreenGestureTest {
             )
         }
 
-        // Tap the screen (root node)
-        composeTestRule.onRoot().performClick()
+        // Tap the counting circle
+        composeTestRule.onNodeWithContentDescription("Tap to count", substring = true)
+            .performClick()
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Verify incrementCount was triggered on repository
@@ -99,10 +102,11 @@ class TasbihScreenGestureTest {
             )
         }
 
-        // Long press the screen (root node)
-        composeTestRule.onRoot().performTouchInput {
-            longClick()
-        }
+        // Long press the counting circle
+        composeTestRule.onNodeWithContentDescription("Tap to count", substring = true)
+            .performTouchInput {
+                longClick()
+            }
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Verify resetCount was triggered on repository
@@ -119,14 +123,33 @@ class TasbihScreenGestureTest {
             )
         }
 
-        // Perform two clicks in rapid succession (double click)
-        composeTestRule.onRoot().performTouchInput {
-            click()
-            click()
-        }
+        // Perform two clicks in rapid succession (double click) on the circle
+        composeTestRule.onNodeWithContentDescription("Tap to count", substring = true)
+            .performTouchInput {
+                click()
+                click()
+            }
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Verify that it is processed as two separate increments
         coVerify(exactly = 2) { repository.incrementCount(any()) }
+    }
+
+    @Test
+    fun testTapOutsideCircleDoesNotCount() {
+        composeTestRule.setContent {
+            TasbihScreen(
+                viewModel = viewModel,
+                hapticEngine = hapticEngine,
+                settingsViewModel = settingsViewModel
+            )
+        }
+
+        // Tap the top-left corner — top-bar / padding area, well outside the
+        // centered counting circle. With circle-only counting this must NOT count.
+        composeTestRule.onRoot().performTouchInput { click(Offset(5f, 5f)) }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { repository.incrementCount(any()) }
     }
 }
