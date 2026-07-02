@@ -7,11 +7,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.service.PocketModeService
 import com.kutubuddin.sabeel.ui.navigation.SabeelNavHost
 import com.kutubuddin.sabeel.ui.tasbih.TasbihSideEffect
@@ -38,6 +41,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var hapticEngine: HapticEngine
 
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
     private val viewModel: TasbihViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +53,10 @@ class MainActivity : ComponentActivity() {
         observeServiceSideEffects()
 
         setContent {
-            SabeelTheme {
+            // Drive the theme from the SAVED setting, not isSystemInDarkTheme(),
+            // so the Settings Dark/Light toggle is a real, instant choice.
+            val theme by settingsRepository.theme.collectAsState(initial = "dark")
+            SabeelTheme(darkTheme = theme != "light") {
                 SabeelNavHost(
                     hapticEngine = hapticEngine,
                     modifier = Modifier.fillMaxSize()
