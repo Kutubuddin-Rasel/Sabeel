@@ -7,15 +7,21 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.service.PocketModeService
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
+import com.kutubuddin.sabeel.ui.i18n.UiText
+import com.kutubuddin.sabeel.ui.i18n.layoutDirectionFor
 import com.kutubuddin.sabeel.ui.navigation.SabeelNavHost
 import com.kutubuddin.sabeel.ui.tasbih.TasbihSideEffect
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
@@ -56,11 +62,23 @@ class MainActivity : ComponentActivity() {
             // Drive the theme from the SAVED setting, not isSystemInDarkTheme(),
             // so the Settings Dark/Light toggle is a real, instant choice.
             val theme by settingsRepository.theme.collectAsState(initial = "dark")
-            SabeelTheme(darkTheme = theme != "light") {
-                SabeelNavHost(
-                    hapticEngine = hapticEngine,
-                    modifier = Modifier.fillMaxSize()
-                )
+
+            // App language drives ALL chrome (via LocalStrings), numerals, and
+            // text direction — off the SAVED setting, not the system locale. A
+            // language change is a pure recomposition; no Activity recreation.
+            val language by settingsRepository.language.collectAsState(initial = "en")
+            val strings = remember(language) { UiText.resolve(language) }
+
+            CompositionLocalProvider(
+                LocalStrings provides strings,
+                LocalLayoutDirection provides layoutDirectionFor(language),
+            ) {
+                SabeelTheme(darkTheme = theme != "light") {
+                    SabeelNavHost(
+                        hapticEngine = hapticEngine,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }

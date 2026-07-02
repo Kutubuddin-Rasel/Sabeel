@@ -11,34 +11,34 @@ import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
-/** Type-safe 4-tab route definitions. */
+/**
+ * Type-safe 4-tab route definitions.
+ *
+ * Owns routes + icons only. Display labels are localized in [SabeelBottomBar]
+ * via `LocalStrings` (keeps the tab model free of presentation language).
+ */
 sealed class SabeelTab(
     val route: String,
-    val label: String,
     val icon: ImageVector,
     val selectedIcon: ImageVector
 ) {
     object Home : SabeelTab(
         route = "home",
-        label = "Home",
         icon = Icons.Outlined.Home,
         selectedIcon = Icons.Filled.Home
     )
     object Count : SabeelTab(
         route = "count",
-        label = "Count",
         icon = Icons.Outlined.Adjust,
         selectedIcon = Icons.Filled.Adjust
     )
     object Dhikr : SabeelTab(
         route = "dhikr",
-        label = "Dhikr",
         icon = Icons.Outlined.MenuBook,
         selectedIcon = Icons.Filled.MenuBook
     )
     object Settings : SabeelTab(
         route = "settings",
-        label = "Settings",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Filled.Settings
     )
