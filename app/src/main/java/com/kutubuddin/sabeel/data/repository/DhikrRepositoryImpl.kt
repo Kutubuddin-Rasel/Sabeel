@@ -6,6 +6,7 @@ import com.kutubuddin.sabeel.domain.model.DhikrCatalog
 import com.kutubuddin.sabeel.domain.model.DhikrCategory
 import com.kutubuddin.sabeel.domain.model.DhikrItem
 import com.kutubuddin.sabeel.domain.model.DhikrMeaning
+import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.domain.repository.DhikrRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -43,7 +44,7 @@ class DhikrRepositoryImpl @Inject constructor(
         transliteration = transliteration,
         meaning = DhikrMeaning(en = spiritualReward ?: displayName),
         defaultTarget = target,
-        spiritualReward = spiritualReward ?: "",
+        spiritualReward = LocalizedText(en = spiritualReward ?: ""),
         hadithRef = "",
         category = DhikrCategory.CUSTOM,
         isCustom = true
