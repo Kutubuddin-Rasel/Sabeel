@@ -31,7 +31,7 @@ object UiText {
     val greetingDefault = LocalizedText(en = "Assalamu alaikum", ur = "السلام علیکم", bn = "আসসালামু আলাইকুম")
 
     // ── Home: cards, headers, stats ───────────────────
-    val homeResume = LocalizedText(en = "Resume", ur = "جاری رکھیں", bn = "আবার শুরু")
+    val homeResume = LocalizedText(en = "Resume", ur = "دوبارہ شروع کریں", bn = "আবার শুরু")
     val homeTodaysSessions = LocalizedText(en = "Today's Sessions", ur = "آج کے سیشنز", bn = "আজকের সেশন")
     val homeAllTime = LocalizedText(en = "All Time", ur = "اب تک", bn = "সর্বকাল")
     val homeConsistency = LocalizedText(en = "Consistency", ur = "تسلسل", bn = "ধারাবাহিকতা")
@@ -69,7 +69,7 @@ object UiText {
     val settingsLanguageText = LocalizedText(en = "Language & Text", ur = "زبان اور متن", bn = "ভাষা ও লেখা")
     val settingsCountingBehaviour = LocalizedText(en = "Counting Behaviour", ur = "شمار کا انداز", bn = "গণনার আচরণ")
     val settingsDailyGoalHeader = LocalizedText(en = "Daily Goal", ur = "روزانہ ہدف", bn = "দৈনিক লক্ষ্য")
-    val settingsAbout = LocalizedText(en = "About", ur = "متعلق", bn = "সম্পর্কে")
+    val settingsAbout = LocalizedText(en = "About", ur = "تعارف", bn = "সম্পর্কে")
     val settingsTheme = LocalizedText(en = "Theme", ur = "تھیم", bn = "থিম")
     val settingsThemeDark = LocalizedText(en = "Dark", ur = "گہرا", bn = "গাঢ়")
     val settingsThemeLight = LocalizedText(en = "Light", ur = "ہلکا", bn = "হালকা")
@@ -78,7 +78,7 @@ object UiText {
     val settingsHapticOff = LocalizedText(en = "Off", ur = "بند", bn = "বন্ধ")
     val settingsHapticLight = LocalizedText(en = "Light", ur = "ہلکا", bn = "হালকা")
     val settingsHapticMedium = LocalizedText(en = "Medium", ur = "درمیانہ", bn = "মাঝারি")
-    val settingsHapticStrong = LocalizedText(en = "Strong", ur = "تیز", bn = "জোরালো")
+    val settingsHapticStrong = LocalizedText(en = "Strong", ur = "مضبوط", bn = "জোরালো")
     val settingsTranslit = LocalizedText(en = "Show Transliteration", ur = "نقل حرفی دکھائیں", bn = "প্রতিবর্ণীকরণ দেখান")
     val settingsTranslitDesc = LocalizedText(en = "Romanized pronunciation under Arabic", ur = "عربی کے نیچے رومن تلفظ", bn = "আরবির নিচে রোমান উচ্চারণ")
     val settingsSound = LocalizedText(en = "Sound on Milestone", ur = "سنگ میل پر آواز", bn = "মাইলফলকে শব্দ")
