@@ -7,19 +7,22 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kutubuddin.sabeel.data.local.db.dao.CustomDhikrDao
 import com.kutubuddin.sabeel.data.local.db.dao.DhikrSessionDao
 import com.kutubuddin.sabeel.data.local.db.dao.SakinahDao
+import com.kutubuddin.sabeel.data.local.db.dao.WirdDao
 import com.kutubuddin.sabeel.data.local.db.entity.CustomDhikrEntity
 import com.kutubuddin.sabeel.data.local.db.entity.DailyTargetEntity
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
 import com.kutubuddin.sabeel.data.local.db.entity.StreakEntity
+import com.kutubuddin.sabeel.data.local.db.entity.WirdItemEntity
 
 @Database(
     entities = [
         DailyTargetEntity::class,
         StreakEntity::class,
         DhikrSessionEntity::class,
-        CustomDhikrEntity::class
+        CustomDhikrEntity::class,
+        WirdItemEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class SabeelDatabase : RoomDatabase() {
@@ -27,6 +30,7 @@ abstract class SabeelDatabase : RoomDatabase() {
     abstract fun sakinahDao(): SakinahDao
     abstract fun dhikrSessionDao(): DhikrSessionDao
     abstract fun customDhikrDao(): CustomDhikrDao
+    abstract fun wirdDao(): WirdDao
 
     companion object {
         /**
@@ -58,6 +62,21 @@ abstract class SabeelDatabase : RoomDatabase() {
                         target INTEGER NOT NULL,
                         spiritualReward TEXT,
                         createdAt INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        /** v2 → v3: adds the wird_items table (the daily-wird plan). Purely structural. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS wird_items (
+                        dhikrKey TEXT PRIMARY KEY NOT NULL,
+                        target INTEGER NOT NULL,
+                        position INTEGER NOT NULL
                     )
                     """.trimIndent()
                 )

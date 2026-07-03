@@ -10,6 +10,7 @@ import com.kutubuddin.sabeel.data.local.db.SabeelDatabase
 import com.kutubuddin.sabeel.data.local.db.dao.CustomDhikrDao
 import com.kutubuddin.sabeel.data.local.db.dao.DhikrSessionDao
 import com.kutubuddin.sabeel.data.local.db.dao.SakinahDao
+import com.kutubuddin.sabeel.data.local.db.dao.WirdDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,7 +37,7 @@ object DataModule {
             SabeelDatabase::class.java,
             "sabeel-db"
         )
-        .addMigrations(SabeelDatabase.MIGRATION_1_2)
+        .addMigrations(SabeelDatabase.MIGRATION_1_2, SabeelDatabase.MIGRATION_2_3)
         .build()
 
     @Provides
@@ -52,4 +53,8 @@ object DataModule {
     @Singleton
     fun provideCustomDhikrDao(database: SabeelDatabase): CustomDhikrDao =
         database.customDhikrDao()
+
+    @Provides
+    @Singleton
+    fun provideWirdDao(database: SabeelDatabase): WirdDao = database.wirdDao()
 }
