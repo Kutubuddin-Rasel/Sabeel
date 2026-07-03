@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
+import com.kutubuddin.sabeel.domain.repository.WirdRepository
 import com.kutubuddin.sabeel.service.PocketModeService
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.UiText
@@ -50,6 +51,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var wirdRepository: WirdRepository
+
     private val viewModel: TasbihViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +61,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         observeServiceSideEffects()
+
+        // Seed the default daily wird on first launch (idempotent — no-op if non-empty).
+        lifecycleScope.launch { wirdRepository.seedDefaultIfEmpty() }
 
         setContent {
             // Drive the theme from the SAVED setting, not isSystemInDarkTheme(),
