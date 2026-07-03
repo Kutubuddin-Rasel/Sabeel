@@ -15,6 +15,7 @@ import com.kutubuddin.sabeel.domain.model.Streak
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -23,6 +24,16 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * Returns [active] with its target replaced by [override] when the override is a positive value.
+ *
+ * Scoped to a single resolved target: multi-step sequences (Tasbīḥ after Salah) are governed by
+ * their per-step targets and are unaffected by this override. The wird library picker (Task 11)
+ * therefore excludes sequence entries, so a wird item never launches an override onto a sequence.
+ */
+fun applyTargetOverride(active: ActiveDhikr, override: Int?): ActiveDhikr =
+    if (override != null && override > 0) active.copy(target = override) else active
 
 /**
  * Concrete implementation of TasbihRepository.
@@ -43,8 +54,10 @@ class TasbihRepositoryImpl @Inject constructor(
 ) : TasbihRepository {
 
     override val activeCount: Flow<Int>           = counterDataStore.counterValueFlow
-    override val activeDhikr: Flow<ActiveDhikr>   = counterDataStore.activeDhikrKeyFlow
-        .map { DhikrCatalog.resolve(it) }
+    override val activeDhikr: Flow<ActiveDhikr>   = combine(
+        counterDataStore.activeDhikrKeyFlow,
+        counterDataStore.activeTargetOverrideFlow
+    ) { key, override -> applyTargetOverride(DhikrCatalog.resolve(key), override) }
     override val isSmartFlowEnabled: Flow<Boolean> = counterDataStore.isSmartFlowEnabledFlow
     override val smartFlowVariant: Flow<SmartFlowVariant> = counterDataStore.smartFlowVariantFlow
     override val isPocketModeActive: Flow<Boolean> = counterDataStore.isPocketModeActiveFlow
@@ -82,7 +95,8 @@ class TasbihRepositoryImpl @Inject constructor(
         counterDataStore.incrementCounter()
         val currentCount = counterDataStore.counterValueFlow.first()
         val key          = counterDataStore.activeDhikrKeyFlow.first()
-        val resolved     = DhikrCatalog.resolve(key)
+        val override     = counterDataStore.activeTargetOverrideFlow.first()
+        val resolved     = applyTargetOverride(DhikrCatalog.resolve(key), override)
 
         // Keep DailyTarget in sync for legacy streak logic
         sakinahDao.insertDailyTarget(
@@ -107,8 +121,12 @@ class TasbihRepositoryImpl @Inject constructor(
         counterDataStore.resetCounter()
     }
 
-    override suspend fun setDhikr(key: String) = withContext(ioDispatcher) {
-        counterDataStore.setDhikrKey(key)
+    override suspend fun setDhikr(key: String, targetOverride: Int?) = withContext(ioDispatcher) {
+        if (targetOverride != null && targetOverride > 0) {
+            counterDataStore.setDhikrKeyWithTarget(key, targetOverride)
+        } else {
+            counterDataStore.setDhikrKey(key)
+        }
         counterDataStore.resetCounter()
     }
 

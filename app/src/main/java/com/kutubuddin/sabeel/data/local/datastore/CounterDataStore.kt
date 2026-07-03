@@ -20,6 +20,7 @@ class CounterDataStore @Inject constructor(
     companion object {
         val KEY_COUNTER_VALUE = intPreferencesKey("counter_value")
         val KEY_ACTIVE_DHIKR = stringPreferencesKey("active_dhikr")
+        val KEY_ACTIVE_TARGET_OVERRIDE = intPreferencesKey("active_target_override")
         val KEY_SMART_FLOW_ENABLED = booleanPreferencesKey("smart_flow_enabled")
         val KEY_SMART_FLOW_VARIANT = stringPreferencesKey("smart_flow_variant")
         val KEY_POCKET_MODE_ACTIVE = booleanPreferencesKey("pocket_mode_active")
@@ -36,6 +37,14 @@ class CounterDataStore @Inject constructor(
      */
     val activeDhikrKeyFlow: Flow<String> = dataStore.data.map { preferences ->
         preferences[KEY_ACTIVE_DHIKR] ?: DhikrType.SUBHANALLAH.name
+    }
+
+    /**
+     * A per-active override for the dhikr's target (e.g. tap-to-count from the
+     * Wird screen). Null when absent or 0, so the resolved catalog default applies.
+     */
+    val activeTargetOverrideFlow: Flow<Int?> = dataStore.data.map { preferences ->
+        preferences[KEY_ACTIVE_TARGET_OVERRIDE]?.takeIf { it > 0 }
     }
 
     val isSmartFlowEnabledFlow: Flow<Boolean> = dataStore.data.map { preferences ->
@@ -74,6 +83,14 @@ class CounterDataStore @Inject constructor(
     suspend fun setDhikrKey(key: String) {
         dataStore.edit { preferences ->
             preferences[KEY_ACTIVE_DHIKR] = key
+            preferences[KEY_ACTIVE_TARGET_OVERRIDE] = 0   // library launches use the default target
+        }
+    }
+
+    suspend fun setDhikrKeyWithTarget(key: String, target: Int) {
+        dataStore.edit { preferences ->
+            preferences[KEY_ACTIVE_DHIKR] = key
+            preferences[KEY_ACTIVE_TARGET_OVERRIDE] = target
         }
     }
 

@@ -276,10 +276,12 @@ open class FakeTasbihRepository : TasbihRepository {
         _smartFlowVariant.value = variant
     }
 
-    override suspend fun setDhikr(key: String) {
+    override suspend fun setDhikr(key: String, targetOverride: Int?) {
         if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
         setDhikrCalls++
-        _activeDhikr.value = DhikrCatalog.resolve(key)
+        _activeDhikr.value = com.kutubuddin.sabeel.data.repository.applyTargetOverride(
+            DhikrCatalog.resolve(key), targetOverride
+        )
         _activeCount.value = 0
     }
 

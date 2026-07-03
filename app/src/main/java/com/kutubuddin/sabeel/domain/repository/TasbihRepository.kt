@@ -19,7 +19,7 @@ interface TasbihRepository {
     suspend fun incrementCount(date: String): Int
     suspend fun decrementCount(): Int
     suspend fun resetCount()
-    suspend fun setDhikr(key: String)
+    suspend fun setDhikr(key: String, targetOverride: Int? = null)
     suspend fun setSmartFlowEnabled(enabled: Boolean)
     suspend fun setSmartFlowVariant(variant: SmartFlowVariant)
     suspend fun setPocketModeActive(active: Boolean)

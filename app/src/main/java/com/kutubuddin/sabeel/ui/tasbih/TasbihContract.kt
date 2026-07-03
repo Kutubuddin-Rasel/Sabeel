@@ -38,7 +38,7 @@ sealed interface TasbihIntent {
     object Increment : TasbihIntent
     object Decrement : TasbihIntent
     object Reset : TasbihIntent
-    data class SetDhikr(val key: String) : TasbihIntent
+    data class SetDhikr(val key: String, val target: Int? = null) : TasbihIntent
     data class SetSmartFlowEnabled(val enabled: Boolean) : TasbihIntent
     data class SetSmartFlowVariant(val variant: SmartFlowVariant) : TasbihIntent
     data class SetPocketModeActive(val active: Boolean) : TasbihIntent

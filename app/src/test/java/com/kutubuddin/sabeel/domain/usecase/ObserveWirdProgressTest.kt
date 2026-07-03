@@ -67,7 +67,7 @@ class ObserveWirdProgressTest {
         override suspend fun incrementCount(date: String) = 0
         override suspend fun decrementCount() = 0
         override suspend fun resetCount() {}
-        override suspend fun setDhikr(key: String) {}
+        override suspend fun setDhikr(key: String, targetOverride: Int?) {}
         override suspend fun setSmartFlowEnabled(enabled: Boolean) {}
         override suspend fun setSmartFlowVariant(variant: SmartFlowVariant) {}
         override suspend fun setPocketModeActive(active: Boolean) {}

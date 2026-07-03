@@ -38,6 +38,7 @@ class TasbihRepositoryImplTest {
         val date = "2026-06-30"
         coEvery { counterDataStore.counterValueFlow } returns flowOf(5)
         coEvery { counterDataStore.activeDhikrKeyFlow } returns flowOf("SUBHANALLAH")
+        coEvery { counterDataStore.activeTargetOverrideFlow } returns flowOf(null)
         coEvery { counterDataStore.incrementCounter() } just Runs
 
         val count = repository.incrementCount(date)
@@ -73,6 +74,18 @@ class TasbihRepositoryImplTest {
         repository.setDhikr("ALHAMDULILLAH")
 
         coVerify(exactly = 1) { counterDataStore.setDhikrKey("ALHAMDULILLAH") }
+        coVerify(exactly = 1) { counterDataStore.resetCounter() }
+    }
+
+    @Test
+    fun testSetDhikr_withPositiveOverride_routesToWithTargetSetter() = runTest(testDispatcher) {
+        coEvery { counterDataStore.setDhikrKeyWithTarget("ALHAMDULILLAH", 100) } just Runs
+        coEvery { counterDataStore.resetCounter() } just Runs
+
+        repository.setDhikr("ALHAMDULILLAH", 100)
+
+        coVerify(exactly = 1) { counterDataStore.setDhikrKeyWithTarget("ALHAMDULILLAH", 100) }
+        coVerify(exactly = 0) { counterDataStore.setDhikrKey(any()) }
         coVerify(exactly = 1) { counterDataStore.resetCounter() }
     }
 

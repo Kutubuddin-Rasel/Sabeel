@@ -83,6 +83,8 @@ class TasbihViewModel @Inject constructor(
                     }
                     val stepIndex = if (sequence != null)
                         currentState.stepIndex.coerceIn(0, sequence.steps.lastIndex) else 0
+                    // Sequence step targets are catalog-fixed and intentionally ignore any active
+                    // target override; the override only shapes the single-dhikr `dhikr.target` fallback.
                     val target = sequence?.steps?.get(stepIndex)?.target ?: dhikr.target
                     currentState.copy(
                         count = resolvedCount,
@@ -106,7 +108,7 @@ class TasbihViewModel @Inject constructor(
             is TasbihIntent.Increment -> handleIncrement()
             is TasbihIntent.Decrement -> handleDecrement()
             is TasbihIntent.Reset -> handleReset()
-            is TasbihIntent.SetDhikr -> handleSetDhikr(intent.key)
+            is TasbihIntent.SetDhikr -> handleSetDhikr(intent.key, intent.target)
             is TasbihIntent.SetSmartFlowEnabled -> handleSetSmartFlowEnabled(intent.enabled)
             is TasbihIntent.SetSmartFlowVariant -> handleSetSmartFlowVariant(intent.variant)
             is TasbihIntent.SetPocketModeActive -> handleSetPocketModeActive(intent.active)
@@ -218,13 +220,13 @@ class TasbihViewModel @Inject constructor(
 
     // ─── Settings ─────────────────────────────────────────────────────────────
 
-    private fun handleSetDhikr(key: String) {
+    private fun handleSetDhikr(key: String, target: Int? = null) {
         expectingReset = true
         lastSentCount = -1
         // Reset the sequence cursor so a freshly-selected dhikr starts from step 1.
         _state.update { it.copy(stepIndex = 0) }
         viewModelScope.launch {
-            repositoryMutex.withLock { repository.setDhikr(key) }
+            repositoryMutex.withLock { repository.setDhikr(key, target) }
         }
     }
 
