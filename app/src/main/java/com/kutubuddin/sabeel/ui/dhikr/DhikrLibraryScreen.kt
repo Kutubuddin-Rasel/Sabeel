@@ -21,11 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -151,6 +153,7 @@ private fun DhikrCard(
     onCountNow: () -> Unit
 ) {
     val strings = LocalStrings.current
+    val layoutDirection = LocalLayoutDirection.current
     val borderColor = if (isExpanded) SabeelColors.AccentTeal.copy(alpha = 0.6f)
                       else SabeelColors.BorderIdle
 
@@ -278,9 +281,11 @@ private fun DhikrCard(
                     colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
                     shape = RoundedCornerShape(12.dp)
                 ) {
+                    // The progress arrow points the way the language reads:
+                    // → for LTR, ← for RTL (Urdu).
+                    val arrow = if (layoutDirection == LayoutDirection.Rtl) "←" else "→"
                     Text(
-                        // Arrow direction is made RTL-aware in the RTL task.
-                        text = "${strings.dhikrCountNow}  →",
+                        text = "${strings.dhikrCountNow}  $arrow",
                         color = SabeelColors.Background,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
