@@ -9,4 +9,7 @@ interface SessionRepository {
     fun getTotalAllTime(): Flow<Int>
     fun getTotalSessionCount(): Flow<Int>
     suspend fun insertSession(session: DhikrSessionEntity)
+
+    /** Map of dhikrKey → total counted for the given date. */
+    fun getCountsByKeyForDate(dateKey: String): Flow<Map<String, Int>>
 }

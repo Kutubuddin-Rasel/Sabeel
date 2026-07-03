@@ -4,6 +4,7 @@ import com.kutubuddin.sabeel.data.local.db.dao.DhikrSessionDao
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
 import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,4 +24,7 @@ class SessionRepositoryImpl @Inject constructor(
 
     override suspend fun insertSession(session: DhikrSessionEntity) =
         dao.insertSession(session)
+
+    override fun getCountsByKeyForDate(dateKey: String): Flow<Map<String, Int>> =
+        dao.getCountsByKeyForDate(dateKey).map { rows -> rows.associate { it.dhikrKey to it.total } }
 }

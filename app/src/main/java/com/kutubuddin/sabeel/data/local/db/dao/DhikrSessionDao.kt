@@ -28,4 +28,8 @@ interface DhikrSessionDao {
     /** Total number of sessions ever. */
     @Query("SELECT COUNT(*) FROM dhikr_sessions")
     fun getTotalSessionCount(): Flow<Int>
+
+    /** Sum of counts per dhikr for a date — powers derived wird progress. */
+    @Query("SELECT dhikrKey AS dhikrKey, COALESCE(SUM(count), 0) AS total FROM dhikr_sessions WHERE dateKey = :dateKey GROUP BY dhikrKey")
+    fun getCountsByKeyForDate(dateKey: String): Flow<List<KeyCountRow>>
 }
