@@ -4,10 +4,12 @@ import com.kutubuddin.sabeel.data.repository.DhikrRepositoryImpl
 import com.kutubuddin.sabeel.data.repository.SessionRepositoryImpl
 import com.kutubuddin.sabeel.data.repository.SettingsRepositoryImpl
 import com.kutubuddin.sabeel.data.repository.TasbihRepositoryImpl
+import com.kutubuddin.sabeel.data.repository.WirdRepositoryImpl
 import com.kutubuddin.sabeel.domain.repository.DhikrRepository
 import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
+import com.kutubuddin.sabeel.domain.repository.WirdRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -29,4 +31,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+
+    @Binds @Singleton
+    abstract fun bindWirdRepository(impl: WirdRepositoryImpl): WirdRepository
 }
