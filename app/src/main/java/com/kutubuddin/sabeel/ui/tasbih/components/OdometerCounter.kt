@@ -6,8 +6,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.LayoutDirection
 import com.kutubuddin.sabeel.ui.i18n.localizeDigits
 
 @Composable
@@ -20,8 +23,12 @@ fun OdometerCounter(
     // ASCII digits drive the roll animation (stable ordering); the localized
     // glyph is substituted only at paint time inside the content lambda.
     val countString = count.toString().padStart(2, '0')
-    Row(modifier = modifier) {
-        countString.forEachIndexed { index, char ->
+    // Numbers read left-to-right in every language (Arabic-Indic digits too), so
+    // pin the digit row to LTR — otherwise under the app-wide RTL direction a
+    // two-digit count like ۱۲ would render mirrored as ۲۱.
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Row(modifier = modifier) {
+            countString.forEachIndexed { index, char ->
             AnimatedContent(
                 targetState = char,
                 transitionSpec = {
@@ -59,6 +66,7 @@ fun OdometerCounter(
                         fontFeatureSettings = "tnum"
                     )
                 )
+            }
             }
         }
     }

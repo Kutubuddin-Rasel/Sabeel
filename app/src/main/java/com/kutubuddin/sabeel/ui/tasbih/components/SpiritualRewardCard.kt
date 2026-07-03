@@ -20,6 +20,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
@@ -63,12 +64,18 @@ fun SpiritualRewardCard(
                 .clip(RoundedCornerShape(12.dp))
                 .background(SabeelColors.Surface)
                 .drawBehind {
-                    // 3dp left accent border in sage green
+                    // Leading-edge 3dp accent in sage green — follows text
+                    // direction so it sits on the right under RTL, mirroring the
+                    // start-padding below (DrawScope exposes layoutDirection).
                     val strokeWidth = 3.dp.toPx()
+                    val x = if (layoutDirection == LayoutDirection.Rtl)
+                        size.width - strokeWidth / 2f
+                    else
+                        strokeWidth / 2f
                     drawLine(
                         color = borderColor,
-                        start = Offset(strokeWidth / 2f, 0f),
-                        end = Offset(strokeWidth / 2f, size.height),
+                        start = Offset(x, 0f),
+                        end = Offset(x, size.height),
                         strokeWidth = strokeWidth,
                         cap = StrokeCap.Round
                     )
