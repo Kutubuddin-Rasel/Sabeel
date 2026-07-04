@@ -32,7 +32,6 @@ data class UiStrings(
     val homeTodaysSessions: String,
     val homeAllTime: String,
     val homeConsistency: String,
-    val homeDailyGoal: String,
     val homeTotalCounted: String,
     val homeSessions: String,
     val homeCompleted: String,
@@ -70,7 +69,6 @@ data class UiStrings(
     val settingsAppearance: String,
     val settingsLanguageText: String,
     val settingsCountingBehaviour: String,
-    val settingsDailyGoalHeader: String,
     val settingsAbout: String,
     val settingsTheme: String,
     val settingsThemeDark: String,
@@ -89,7 +87,6 @@ data class UiStrings(
     val settingsAutoResetDesc: String,
     val settingsShowStreaks: String,
     val settingsShowStreaksDesc: String,
-    val settingsDailyTarget: String,
     val settingsFont: String,
     val settingsVersion: String,
     // ── Dhikr Library ──

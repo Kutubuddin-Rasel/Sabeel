@@ -35,7 +35,6 @@ object UiText {
     val homeTodaysSessions = LocalizedText(en = "Today's Sessions", ur = "آج کے سیشنز", bn = "আজকের সেশন")
     val homeAllTime = LocalizedText(en = "All Time", ur = "اب تک", bn = "সর্বকাল")
     val homeConsistency = LocalizedText(en = "Consistency", ur = "تسلسل", bn = "ধারাবাহিকতা")
-    val homeDailyGoal = LocalizedText(en = "Daily Goal", ur = "روزانہ ہدف", bn = "দৈনিক লক্ষ্য")
     val homeTotalCounted = LocalizedText(en = "Total Counted", ur = "کل شمار", bn = "মোট গণনা")
     val homeSessions = LocalizedText(en = "Sessions", ur = "سیشنز", bn = "সেশন")
     val homeCompleted = LocalizedText(en = "Completed ✓", ur = "مکمل ✓", bn = "সম্পন্ন ✓")
@@ -80,7 +79,6 @@ object UiText {
     val settingsAppearance = LocalizedText(en = "Appearance", ur = "ظاہری شکل", bn = "অবয়ব")
     val settingsLanguageText = LocalizedText(en = "Language & Text", ur = "زبان اور متن", bn = "ভাষা ও লেখা")
     val settingsCountingBehaviour = LocalizedText(en = "Counting Behaviour", ur = "شمار کا انداز", bn = "গণনার আচরণ")
-    val settingsDailyGoalHeader = LocalizedText(en = "Daily Goal", ur = "روزانہ ہدف", bn = "দৈনিক লক্ষ্য")
     val settingsAbout = LocalizedText(en = "About", ur = "تعارف", bn = "সম্পর্কে")
     val settingsTheme = LocalizedText(en = "Theme", ur = "تھیم", bn = "থিম")
     val settingsThemeDark = LocalizedText(en = "Dark", ur = "گہرا", bn = "গাঢ়")
@@ -99,7 +97,6 @@ object UiText {
     val settingsAutoResetDesc = LocalizedText(en = "Counter resets when target is hit", ur = "ہدف پر پہنچنے پر شمار خودکار ری سیٹ ہو جاتا ہے", bn = "লক্ষ্যে পৌঁছালে গণনা রিসেট হয়")
     val settingsShowStreaks = LocalizedText(en = "Show Streaks", ur = "تسلسل دکھائیں", bn = "ধারাবাহিকতা দেখান")
     val settingsShowStreaksDesc = LocalizedText(en = "Hide consistency counts for pure ibadah", ur = "خالص عبادت کے لیے تسلسل چھپائیں", bn = "খাঁটি ইবাদতের জন্য ধারাবাহিকতা লুকান")
-    val settingsDailyTarget = LocalizedText(en = "Daily target", ur = "روزانہ ہدف", bn = "দৈনিক লক্ষ্য")
     val settingsFont = LocalizedText(en = "Font", ur = "فونٹ", bn = "ফন্ট")
     val settingsVersion = LocalizedText(en = "Version", ur = "ورژن", bn = "সংস্করণ")
 
@@ -137,7 +134,6 @@ object UiText {
         homeTodaysSessions = homeTodaysSessions.get(lang),
         homeAllTime = homeAllTime.get(lang),
         homeConsistency = homeConsistency.get(lang),
-        homeDailyGoal = homeDailyGoal.get(lang),
         homeTotalCounted = homeTotalCounted.get(lang),
         homeSessions = homeSessions.get(lang),
         homeCompleted = homeCompleted.get(lang),
@@ -172,7 +168,6 @@ object UiText {
         settingsAppearance = settingsAppearance.get(lang),
         settingsLanguageText = settingsLanguageText.get(lang),
         settingsCountingBehaviour = settingsCountingBehaviour.get(lang),
-        settingsDailyGoalHeader = settingsDailyGoalHeader.get(lang),
         settingsAbout = settingsAbout.get(lang),
         settingsTheme = settingsTheme.get(lang),
         settingsThemeDark = settingsThemeDark.get(lang),
@@ -191,7 +186,6 @@ object UiText {
         settingsAutoResetDesc = settingsAutoResetDesc.get(lang),
         settingsShowStreaks = settingsShowStreaks.get(lang),
         settingsShowStreaksDesc = settingsShowStreaksDesc.get(lang),
-        settingsDailyTarget = settingsDailyTarget.get(lang),
         settingsFont = settingsFont.get(lang),
         settingsVersion = settingsVersion.get(lang),
         dhikrSearchPlaceholder = dhikrSearchPlaceholder.get(lang),
