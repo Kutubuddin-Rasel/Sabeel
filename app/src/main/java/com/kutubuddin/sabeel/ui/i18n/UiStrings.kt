@@ -45,6 +45,10 @@ data class UiStrings(
     val wirdTitle: String,
     val wirdSetup: String,
     val wirdDoneOf: String,   // template: "%1$s of %2$s"
+    val wirdEditTitle: String,
+    val wirdEmpty: String,
+    val wirdEmptyHint: String,
+    val wirdAddDhikr: String,
     // ── Counting screen ──
     val countSmartFlow: String,
     val countConsistencyA11y: String, // template: "Consistency: %1$s days"

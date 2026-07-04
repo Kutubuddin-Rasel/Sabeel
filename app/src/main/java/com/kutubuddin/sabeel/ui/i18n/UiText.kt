@@ -49,6 +49,10 @@ object UiText {
     val wirdTitle = LocalizedText(en = "Today's Wird", ur = "آج کا وِرد", bn = "আজকের ওয়ির্দ")
     val wirdSetup = LocalizedText(en = "Set up", ur = "ترتیب دیں", bn = "সেট আপ করুন")
     val wirdDoneOf = LocalizedText(en = "%1\$s of %2\$s done", ur = "%2\$s میں سے %1\$s مکمل", bn = "%2\$s এর মধ্যে %1\$s সম্পন্ন")
+    val wirdEditTitle = LocalizedText(en = "Edit Wird", ur = "وِرد میں ترمیم کریں", bn = "ওয়ির্দ সম্পাদনা করুন")
+    val wirdEmpty = LocalizedText(en = "Your wird is empty", ur = "آپ کا وِرد خالی ہے", bn = "আপনার ওয়ির্দ খালি")
+    val wirdEmptyHint = LocalizedText(en = "Add adhkar to build your daily routine", ur = "اپنا روزانہ کا معمول بنانے کے لیے اذکار شامل کریں", bn = "দৈনিক রুটিন গড়তে আযকার যোগ করুন")
+    val wirdAddDhikr = LocalizedText(en = "Add dhikr", ur = "ذکر شامل کریں", bn = "যিকর যোগ করুন")
 
     // ── Counting screen ───────────────────────────────
     val countSmartFlow = LocalizedText(en = "Tasbīḥ after Salah", ur = "نماز کے بعد تسبیح", bn = "নামাযের পর তাসবিহ")
@@ -142,6 +146,10 @@ object UiText {
         wirdTitle = wirdTitle.get(lang),
         wirdSetup = wirdSetup.get(lang),
         wirdDoneOf = wirdDoneOf.get(lang),
+        wirdEditTitle = wirdEditTitle.get(lang),
+        wirdEmpty = wirdEmpty.get(lang),
+        wirdEmptyHint = wirdEmptyHint.get(lang),
+        wirdAddDhikr = wirdAddDhikr.get(lang),
         countSmartFlow = countSmartFlow.get(lang),
         countConsistencyA11y = countConsistencyA11y.get(lang),
         countStreakShort = countStreakShort.get(lang),

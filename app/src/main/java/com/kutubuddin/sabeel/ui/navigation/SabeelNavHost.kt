@@ -16,6 +16,7 @@ import com.kutubuddin.sabeel.ui.settings.SettingsScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.wird.WirdScreen
 
 /**
  * Root navigation graph — 4-tab bottom-nav architecture.
@@ -49,7 +50,17 @@ fun SabeelNavHost(
             composable(SabeelTab.Home.route) {
                 HomeScreen(
                     onResumeCounting = { navController.switchToCountTab() },
-                    onOpenWird = {}
+                    onOpenWird = { navController.navigate("wird") }
+                )
+            }
+
+            composable("wird") {
+                WirdScreen(
+                    onCountItem = { key, target ->
+                        tasbihViewModel.processIntent(com.kutubuddin.sabeel.ui.tasbih.TasbihIntent.SetDhikr(key, target))
+                        navController.switchToCountTab()
+                    },
+                    onEdit = { navController.navigate("wird/edit") }
                 )
             }
 
