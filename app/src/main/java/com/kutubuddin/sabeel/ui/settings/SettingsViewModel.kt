@@ -20,19 +20,18 @@ class SettingsViewModel @Inject constructor(
         combine(repository.theme, repository.language, repository.hapticsLevel) {
             theme, lang, haptics -> Triple(theme, lang, haptics)
         },
-        combine(repository.dailyGoal, repository.translitEnabled, repository.autoReset, repository.soundEnabled, repository.showStreaks) {
-            goal, translit, autoReset, sound, showStreaks -> listOf<Any>(goal, translit, autoReset, sound, showStreaks)
+        combine(repository.translitEnabled, repository.autoReset, repository.soundEnabled, repository.showStreaks) {
+            translit, autoReset, sound, showStreaks -> listOf<Any>(translit, autoReset, sound, showStreaks)
         }
     ) { (theme, lang, haptics), extras ->
         SettingsState(
             theme           = theme as String,
             language        = lang as String,
             hapticsLevel    = haptics as String,
-            dailyGoal       = extras[0] as Int,
-            translitEnabled = extras[1] as Boolean,
-            autoReset       = extras[2] as Boolean,
-            soundEnabled    = extras[3] as Boolean,
-            showStreaks     = extras[4] as Boolean
+            translitEnabled = extras[0] as Boolean,
+            autoReset       = extras[1] as Boolean,
+            soundEnabled    = extras[2] as Boolean,
+            showStreaks     = extras[3] as Boolean
         )
     }.stateIn(
         scope = viewModelScope,
@@ -45,7 +44,6 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.SetTheme    -> repository.setTheme(intent.theme)
             is SettingsIntent.SetLanguage -> repository.setLanguage(intent.lang)
             is SettingsIntent.SetHaptics  -> repository.setHaptics(intent.level)
-            is SettingsIntent.SetDailyGoal-> repository.setDailyGoal(intent.count)
             is SettingsIntent.SetTranslit -> repository.setTranslitEnabled(intent.on)
             is SettingsIntent.SetAutoReset-> repository.setAutoReset(intent.on)
             is SettingsIntent.SetSoundOn  -> repository.setSoundEnabled(intent.on)

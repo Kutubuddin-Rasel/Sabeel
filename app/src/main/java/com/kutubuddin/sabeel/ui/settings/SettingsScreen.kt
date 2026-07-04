@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
-import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
 @Composable
@@ -103,17 +102,6 @@ fun SettingsScreen(
                 description = strings.settingsShowStreaksDesc,
                 checked = state.showStreaks,
                 onCheckedChange = { viewModel.processIntent(SettingsIntent.SetShowStreaks(it)) }
-            )
-        }
-
-        item { Spacer(Modifier.height(4.dp)) }
-        item { SettingsHeader(strings.settingsDailyGoalHeader) }
-
-        item {
-            DailyGoalRow(
-                goal = state.dailyGoal,
-                language = state.language,
-                onGoalChange = { viewModel.processIntent(SettingsIntent.SetDailyGoal(it)) }
             )
         }
 
@@ -212,33 +200,6 @@ private fun SettingsToggleRow(
                 uncheckedBorderColor = SabeelColors.BorderIdle
             )
         )
-    }
-}
-
-@Composable
-private fun DailyGoalRow(goal: Int, language: String, onGoalChange: (Int) -> Unit) {
-    val strings = LocalStrings.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(SabeelColors.Surface)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(strings.settingsDailyTarget, fontSize = 14.sp, color = SabeelColors.TextPrimary, fontWeight = FontWeight.Medium)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            TextButton(
-                onClick = { if (goal > 50) onGoalChange(goal - 50) },
-                colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.AccentTeal)
-            ) { Text("−", fontSize = 20.sp) }
-            Text(goal.toLocalizedNumerals(language), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary)
-            TextButton(
-                onClick = { if (goal < 1000) onGoalChange(goal + 50) },
-                colors = ButtonDefaults.textButtonColors(contentColor = SabeelColors.AccentTeal)
-            ) { Text("+", fontSize = 20.sp) }
-        }
     }
 }
 

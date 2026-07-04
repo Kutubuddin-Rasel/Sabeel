@@ -42,6 +42,7 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     onResumeCounting: () -> Unit,
+    onOpenWird: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -99,7 +100,7 @@ fun HomeScreen(
 
         // ── Stats (demoted below the hero) ────────────────────────────────────
         item {
-            StreakGoalCard(state = state)
+            StreakGoalCard(state = state, onOpenWird = onOpenWird)
         }
 
         // ── Today's Sessions ──────────────────────────────────────────────────
@@ -166,15 +167,13 @@ private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> 
 }
 
 @Composable
-private fun StreakGoalCard(state: HomeState) {
+private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
     val strings = LocalStrings.current
-    val goalFraction = if (state.dailyGoal > 0)
-        (state.totalToday.toFloat() / state.dailyGoal).coerceIn(0f, 1f)
+    val fraction = if (state.wird.targetSum > 0)
+        (state.wird.countedSum.toFloat() / state.wird.targetSum).coerceIn(0f, 1f)
     else 0f
     val animatedProgress by animateFloatAsState(
-        targetValue = goalFraction,
-        animationSpec = tween(800),
-        label = "goal_progress"
+        targetValue = fraction, animationSpec = tween(800), label = "wird_progress"
     )
 
     Column(
@@ -182,75 +181,58 @@ private fun StreakGoalCard(state: HomeState) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(SabeelColors.Surface)
+            .clickable(onClick = onOpenWird)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Consistency — gentle and forgiving. We deliberately drop the "Best"
-        // comparison: it only invites self-judgment in an act of worship.
-        // Hidden entirely when the worshipper opts for pure ibadah (Settings).
         if (state.showStreaks) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Spa,
-                    contentDescription = null,
-                    tint = SabeelColors.AccentTeal,
-                    modifier = Modifier.size(18.dp)
-                )
+                Icon(Icons.Outlined.Spa, contentDescription = null,
+                    tint = SabeelColors.AccentTeal, modifier = Modifier.size(18.dp))
                 Text(strings.homeConsistency, fontSize = 11.sp, color = SabeelColors.TextSecondary)
                 Spacer(Modifier.weight(1f))
                 val streakDigits = state.currentStreak.toLocalizedNumerals(state.language)
                 Text(
-                    text = if (state.currentStreak == 1)
-                        strings.homeDayOne.format(streakDigits)
-                    else
-                        strings.homeDayOther.format(streakDigits),
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SabeelColors.TextPrimary
+                    text = if (state.currentStreak == 1) strings.homeDayOne.format(streakDigits)
+                           else strings.homeDayOther.format(streakDigits),
+                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary
                 )
             }
-
             HorizontalDivider(color = SabeelColors.Divider)
         }
 
-        // Daily goal
+        // Today's Wird summary (tappable → Wird screen)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(
-                    imageVector = Icons.Outlined.TrackChanges,
-                    contentDescription = null,
-                    tint = SabeelColors.TextSecondary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(strings.homeDailyGoal, fontSize = 13.sp, color = SabeelColors.TextSecondary)
+                Icon(Icons.Outlined.TrackChanges, contentDescription = null,
+                    tint = SabeelColors.TextSecondary, modifier = Modifier.size(16.dp))
+                Text(strings.wirdTitle, fontSize = 13.sp, color = SabeelColors.TextSecondary)
             }
             Text(
-                text = "${state.totalToday.toLocalizedNumerals(state.language)} / ${state.dailyGoal.toLocalizedNumerals(state.language)}",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = SabeelColors.TextPrimary
+                text = if (state.wird.isEmpty) strings.wirdSetup
+                       else strings.wirdDoneOf.format(
+                           state.wird.completed.toLocalizedNumerals(state.language),
+                           state.wird.total.toLocalizedNumerals(state.language)
+                       ),
+                fontSize = 13.sp, fontWeight = FontWeight.Medium, color = SabeelColors.TextPrimary
             )
         }
-        LinearProgressIndicator(
-            progress = { animatedProgress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)),
-            color = SabeelColors.AccentTeal,
-            trackColor = SabeelColors.ArcTrack,
-            strokeCap = StrokeCap.Round,
-            gapSize = 0.dp,
-            drawStopIndicator = {}
-        )
+        if (!state.wird.isEmpty) {
+            LinearProgressIndicator(
+                progress = { animatedProgress },
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                color = SabeelColors.AccentTeal, trackColor = SabeelColors.ArcTrack,
+                strokeCap = StrokeCap.Round, gapSize = 0.dp, drawStopIndicator = {}
+            )
+        }
     }
 }
 

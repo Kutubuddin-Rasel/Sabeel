@@ -8,10 +8,12 @@ import com.kutubuddin.sabeel.domain.model.Streak
 import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
+import com.kutubuddin.sabeel.domain.usecase.ObserveWirdProgress
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,7 +23,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val settingsRepository: SettingsRepository,
-    private val tasbihRepository: TasbihRepository
+    private val tasbihRepository: TasbihRepository,
+    private val observeWirdProgress: ObserveWirdProgress
 ) : ViewModel() {
 
     private val today = LocalDate.now().toString()
@@ -38,13 +41,13 @@ class HomeViewModel @Inject constructor(
     }
 
     private val counterGroup = combine(
-        settingsRepository.dailyGoal,
+        observeWirdProgress(today).map { it.toSummary() },
         tasbihRepository.activeCount,
         tasbihRepository.activeDhikr,
         tasbihRepository.streak,
         settingsRepository.showStreaks
-    ) { goal, lastCount, lastDhikr, streak, showStreaks ->
-        listOf<Any?>(goal, lastCount, lastDhikr, streak, showStreaks)
+    ) { wird, lastCount, lastDhikr, streak, showStreaks ->
+        listOf<Any?>(wird, lastCount, lastDhikr, streak, showStreaks)
     }
 
     val state: StateFlow<HomeState> = combine(sessionGroup, counterGroup) { s, c ->
@@ -55,7 +58,7 @@ class HomeViewModel @Inject constructor(
         val totalSessions= s[3] as Int
         val language     = s[4] as String
 
-        val dailyGoal    = c[0] as Int
+        val wird         = c[0] as WirdSummary
         val lastCount    = c[1] as Int
         val lastDhikr    = c[2] as ActiveDhikr
         val streak       = c[3] as? Streak
@@ -77,7 +80,7 @@ class HomeViewModel @Inject constructor(
         HomeState(
             todaysSessions = sessions,
             totalToday     = displayedToday(totalToday, lastCount, target),
-            dailyGoal      = dailyGoal,
+            wird           = wird,
             currentStreak  = displayedStreak(streak?.count ?: 0, lastCount),
             totalAllTime   = displayedAllTime(totalAllTime, lastCount, target),
             totalSessionCount = totalSessions,

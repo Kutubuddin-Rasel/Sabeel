@@ -48,7 +48,8 @@ fun SabeelNavHost(
         ) {
             composable(SabeelTab.Home.route) {
                 HomeScreen(
-                    onResumeCounting = { navController.switchToCountTab() }
+                    onResumeCounting = { navController.switchToCountTab() },
+                    onOpenWird = {}
                 )
             }
 

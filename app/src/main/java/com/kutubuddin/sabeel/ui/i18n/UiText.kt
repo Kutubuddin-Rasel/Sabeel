@@ -45,6 +45,11 @@ object UiText {
     val homeDayOne = LocalizedText(en = "%1\$s day", ur = "%1\$s دن", bn = "%1\$s দিন")
     val homeDayOther = LocalizedText(en = "%1\$s days", ur = "%1\$s دن", bn = "%1\$s দিন")
 
+    // ── Daily Wird ──────────────────────────────────
+    val wirdTitle = LocalizedText(en = "Today's Wird", ur = "آج کا وِرد", bn = "আজকের ওয়ির্দ")
+    val wirdSetup = LocalizedText(en = "Set up", ur = "ترتیب دیں", bn = "সেট আপ করুন")
+    val wirdDoneOf = LocalizedText(en = "%1\$s of %2\$s done", ur = "%2\$s میں سے %1\$s مکمل", bn = "%2\$s এর মধ্যে %1\$s সম্পন্ন")
+
     // ── Counting screen ───────────────────────────────
     val countSmartFlow = LocalizedText(en = "Tasbīḥ after Salah", ur = "نماز کے بعد تسبیح", bn = "নামাযের পর তাসবিহ")
     val countConsistencyA11y = LocalizedText(en = "Consistency: %1\$s days", ur = "تسلسل: %1\$s دن", bn = "ধারাবাহিকতা: %1\$s দিন")
@@ -134,6 +139,9 @@ object UiText {
         homeStartCounting = homeStartCounting.get(lang),
         homeDayOne = homeDayOne.get(lang),
         homeDayOther = homeDayOther.get(lang),
+        wirdTitle = wirdTitle.get(lang),
+        wirdSetup = wirdSetup.get(lang),
+        wirdDoneOf = wirdDoneOf.get(lang),
         countSmartFlow = countSmartFlow.get(lang),
         countConsistencyA11y = countConsistencyA11y.get(lang),
         countStreakShort = countStreakShort.get(lang),

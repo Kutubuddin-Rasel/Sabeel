@@ -41,6 +41,10 @@ data class UiStrings(
     val homeStartCounting: String,
     val homeDayOne: String,   // template: "%1$s day"
     val homeDayOther: String, // template: "%1$s days"
+    // ── Daily Wird ──
+    val wirdTitle: String,
+    val wirdSetup: String,
+    val wirdDoneOf: String,   // template: "%1$s of %2$s"
     // ── Counting screen ──
     val countSmartFlow: String,
     val countConsistencyA11y: String, // template: "Consistency: %1$s days"
