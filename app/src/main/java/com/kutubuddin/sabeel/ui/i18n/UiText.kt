@@ -53,6 +53,9 @@ object UiText {
     val wirdEmpty = LocalizedText(en = "Your wird is empty", ur = "آپ کا وِرد خالی ہے", bn = "আপনার ওয়ির্দ খালি")
     val wirdEmptyHint = LocalizedText(en = "Add adhkar to build your daily routine", ur = "اپنا روزانہ کا معمول بنانے کے لیے اذکار شامل کریں", bn = "দৈনিক রুটিন গড়তে আযকার যোগ করুন")
     val wirdAddDhikr = LocalizedText(en = "Add dhikr", ur = "ذکر شامل کریں", bn = "যিকর যোগ করুন")
+    val wirdReorder = LocalizedText(en = "Reorder", ur = "ترتیب بدلیں", bn = "ক্রম বদলান")
+    val wirdRemove = LocalizedText(en = "Remove from wird", ur = "وِرد سے ہٹائیں", bn = "ওয়ির্দ থেকে সরান")
+    val wirdTargetA11y = LocalizedText(en = "Target", ur = "ہدف", bn = "লক্ষ্য")
 
     // ── Counting screen ───────────────────────────────
     val countSmartFlow = LocalizedText(en = "Tasbīḥ after Salah", ur = "نماز کے بعد تسبیح", bn = "নামাযের পর তাসবিহ")
@@ -150,6 +153,9 @@ object UiText {
         wirdEmpty = wirdEmpty.get(lang),
         wirdEmptyHint = wirdEmptyHint.get(lang),
         wirdAddDhikr = wirdAddDhikr.get(lang),
+        wirdReorder = wirdReorder.get(lang),
+        wirdRemove = wirdRemove.get(lang),
+        wirdTargetA11y = wirdTargetA11y.get(lang),
         countSmartFlow = countSmartFlow.get(lang),
         countConsistencyA11y = countConsistencyA11y.get(lang),
         countStreakShort = countStreakShort.get(lang),

@@ -49,6 +49,9 @@ data class UiStrings(
     val wirdEmpty: String,
     val wirdEmptyHint: String,
     val wirdAddDhikr: String,
+    val wirdReorder: String,     // a11y: reorder up/down
+    val wirdRemove: String,      // a11y: remove from wird
+    val wirdTargetA11y: String,  // a11y: target stepper
     // ── Counting screen ──
     val countSmartFlow: String,
     val countConsistencyA11y: String, // template: "Consistency: %1$s days"

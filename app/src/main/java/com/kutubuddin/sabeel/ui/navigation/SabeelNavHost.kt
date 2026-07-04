@@ -16,6 +16,7 @@ import com.kutubuddin.sabeel.ui.settings.SettingsScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.wird.WirdEditScreen
 import com.kutubuddin.sabeel.ui.wird.WirdScreen
 
 /**
@@ -62,6 +63,10 @@ fun SabeelNavHost(
                     },
                     onEdit = { navController.navigate("wird/edit") }
                 )
+            }
+
+            composable("wird/edit") {
+                WirdEditScreen()
             }
 
             composable(SabeelTab.Count.route) {
