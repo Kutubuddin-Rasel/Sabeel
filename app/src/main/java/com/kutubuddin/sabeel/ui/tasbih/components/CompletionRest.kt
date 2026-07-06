@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,6 +60,7 @@ fun CompletionRest(
         modifier = modifier
             .fillMaxSize()
             .background(SabeelColors.Background.copy(alpha = 0.94f))
+            .navigationBarsPadding()
             // Consume all taps so they never reach the count surface beneath.
             .pointerInput(Unit) { detectTapGestures { } },
         contentAlignment = Alignment.Center
@@ -94,9 +97,13 @@ fun CompletionRest(
 
             Spacer(Modifier.height(12.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 OutlinedButton(
                     onClick = onFinish,
+                    modifier = Modifier.weight(1f),
                     border = BorderStroke(1.dp, SabeelColors.BorderIdle),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = SabeelColors.TextSecondary),
                     shape = RoundedCornerShape(12.dp)
@@ -105,6 +112,7 @@ fun CompletionRest(
                 }
                 Button(
                     onClick = onContinue,
+                    modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
                     shape = RoundedCornerShape(12.dp)
                 ) {
