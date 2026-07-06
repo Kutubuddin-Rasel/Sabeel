@@ -83,7 +83,7 @@ fun WirdEditScreen(
 
         Button(
             onClick = { showPicker = true },
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -104,7 +104,7 @@ fun WirdEditScreen(
                         }.padding(horizontal = 20.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(d.displayName, fontSize = 14.sp, color = SabeelColors.TextPrimary)
+                        Text(d.displayName.get(state.language), fontSize = 14.sp, color = SabeelColors.TextPrimary)
                         Text("${d.defaultTarget.toLocalizedNumerals(state.language)}×",
                             fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
                     }
