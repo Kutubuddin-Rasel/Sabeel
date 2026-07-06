@@ -15,7 +15,7 @@ package com.kutubuddin.sabeel.domain.model
 data class ActiveDhikr(
     val key: String,
     val arabicText: String,
-    val displayName: String,
+    val displayName: LocalizedText,
     val target: Int,
     val spiritualReward: LocalizedText,
     val hadithRef: String,
