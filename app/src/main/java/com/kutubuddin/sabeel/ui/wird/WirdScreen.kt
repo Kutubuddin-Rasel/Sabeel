@@ -75,8 +75,15 @@ fun WirdScreen(
                 Spacer(Modifier.height(6.dp))
                 Text(strings.wirdEmptyHint, fontSize = 12.sp, color = SabeelColors.TextHint)
                 Spacer(Modifier.height(16.dp))
-                Button(onClick = onEdit, colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal)) {
-                    Text(strings.wirdAddDhikr, color = SabeelColors.Background)
+                Button(
+                    onClick = onEdit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(strings.wirdAddDhikr, color = SabeelColors.Background, fontWeight = FontWeight.Bold)
                 }
             }
         } else {
@@ -125,7 +132,7 @@ private fun WirdItemRow(item: WirdProgressItem, language: String, onClick: () ->
             modifier = Modifier.size(20.dp)
         )
         Column(Modifier.weight(1f)) {
-            Text(item.displayName, fontSize = 14.sp, fontWeight = FontWeight.Medium,
+            Text(item.displayName.get(language), fontSize = 14.sp, fontWeight = FontWeight.Medium,
                 color = if (done) SabeelColors.SageGreen else SabeelColors.TextPrimary)
             Text(item.arabicText, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 style = arabicStyle.copy(fontSize = 16.sp, lineHeight = 24.sp), color = SabeelColors.ArabicText,

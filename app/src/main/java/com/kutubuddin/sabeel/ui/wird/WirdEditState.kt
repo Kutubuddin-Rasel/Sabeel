@@ -39,7 +39,7 @@ fun resolveWirdEditState(
     val byKey = catalog.associateBy { it.key }
     val rows = plan.mapNotNull { item ->
         byKey[item.dhikrKey]?.let {
-            WirdEditRow(item.dhikrKey, it.displayName, item.target, item.position)
+            WirdEditRow(item.dhikrKey, it.displayName.get(language), item.target, item.position)
         }
     }
     val addedKeys = plan.map { it.dhikrKey }.toSet()
