@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -147,8 +148,7 @@ fun TasbihContent(
                         )
                         Text(
                             text = strings.countSmartFlow,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleSmall,
                             color = SabeelColors.SmartFlowGold
                         )
                     }
@@ -175,7 +175,7 @@ fun TasbihContent(
                         Text(
                             text = strings.countStreakShort
                                 .format(state.currentStreak.toLocalizedNumerals(language)),
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = SabeelColors.TextSecondary
                         )
                     }
@@ -200,7 +200,7 @@ fun TasbihContent(
             // ── Arabic Dhikr Name ────────────────────────────────────────────
             TajweedText(
                 arabicText = displayArabic,
-                displayName = displayName,
+                displayName = displayName.get(language),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -227,17 +227,16 @@ fun TasbihContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             // ── Bottom Bar ───────────────────────────────────────────────────
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(bottom = 12.dp)
             ) {
                 // Decrement pill — hit area ≥48dp (WCAG/Material floor) for
                 // eyes-free use; the visible pill stays small via inner padding.
                 Box(
                     modifier = Modifier
+                        .align(Alignment.CenterStart)
                         .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(SabeelColors.CounterWhite.copy(alpha = 0.10f))
@@ -249,33 +248,30 @@ fun TasbihContent(
                         .pointerInput(Unit) {
                             detectTapGestures(onTap = { onDecrement() })
                         }
-                        .padding(horizontal = 18.dp, vertical = 10.dp),
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "−" + 1.toLocalizedNumerals(language),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.labelLarge,
                         color = SabeelColors.TextSecondary
                     )
                 }
 
                 Text(
                     text = strings.countTapHint,
-                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = SabeelColors.TextHint,
                     textAlign = TextAlign.Center
                 )
-
-                // Balanced spacer
-                Spacer(modifier = Modifier.width(56.dp))
             }
         }
 
         // ── Completion rest — calm, dismissible (replaces the 1200ms flash) ───
         if (showCelebration) {
             CompletionRest(
-                dhikrName = state.currentDhikr.displayName,
+                dhikrName = state.currentDhikr.displayName.get(language),
                 // NOTE: completion always reports the whole dhikr/sequence, not a step.
                 total = state.target,
                 language = language,
