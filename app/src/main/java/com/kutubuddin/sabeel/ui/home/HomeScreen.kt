@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -60,8 +61,7 @@ fun HomeScreen(
             Column {
                 Text(
                     text = strings.greetingText(state.greeting),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleLarge,
                     color = SabeelColors.TextPrimary
                 )
                 Spacer(Modifier.height(4.dp))
@@ -77,7 +77,7 @@ fun HomeScreen(
                 }
                 Text(
                     text = todayLabel,
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = SabeelColors.TextSecondary
                 )
             }
@@ -147,20 +147,18 @@ private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> 
                     tint = SabeelColors.AccentTeal,
                     modifier = Modifier.size(16.dp)
                 )
-                Text(strings.homeResume, fontSize = 12.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Medium)
+                Text(strings.homeResume, style = MaterialTheme.typography.labelMedium, color = SabeelColors.AccentTeal)
             }
             Spacer(Modifier.height(2.dp))
             Text(
-                text = session.displayName,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
+                text = session.displayName.get(language),
+                style = MaterialTheme.typography.titleMedium,
                 color = SabeelColors.TextPrimary
             )
         }
         Text(
             text = "${session.lastCount.toLocalizedNumerals(language)} / ${session.target.toLocalizedNumerals(language)}",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             color = SabeelColors.AccentTeal
         )
     }
@@ -193,13 +191,13 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
             ) {
                 Icon(Icons.Outlined.Spa, contentDescription = null,
                     tint = SabeelColors.AccentTeal, modifier = Modifier.size(18.dp))
-                Text(strings.homeConsistency, fontSize = 11.sp, color = SabeelColors.TextSecondary)
+                Text(strings.homeConsistency, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
                 Spacer(Modifier.weight(1f))
                 val streakDigits = state.currentStreak.toLocalizedNumerals(state.language)
                 Text(
                     text = if (state.currentStreak == 1) strings.homeDayOne.format(streakDigits)
                            else strings.homeDayOther.format(streakDigits),
-                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary
+                    style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary
                 )
             }
             HorizontalDivider(color = SabeelColors.Divider)
@@ -214,7 +212,7 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(Icons.Outlined.TrackChanges, contentDescription = null,
                     tint = SabeelColors.TextSecondary, modifier = Modifier.size(16.dp))
-                Text(strings.wirdTitle, fontSize = 13.sp, color = SabeelColors.TextSecondary)
+                Text(strings.wirdTitle, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
             }
             Text(
                 text = if (state.wird.isEmpty) strings.wirdSetup
@@ -222,7 +220,7 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
                            state.wird.completed.toLocalizedNumerals(state.language),
                            state.wird.total.toLocalizedNumerals(state.language)
                        ),
-                fontSize = 13.sp, fontWeight = FontWeight.Medium, color = SabeelColors.TextPrimary
+                style = MaterialTheme.typography.labelLarge, color = SabeelColors.TextPrimary
             )
         }
         if (!state.wird.isEmpty) {
@@ -239,7 +237,7 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
 @Composable
 private fun SessionRow(session: DhikrSessionEntity, language: String) {
     val strings = LocalStrings.current
-    val displayName = DhikrCatalog.displayNameFor(session.dhikrKey)
+    val displayName = DhikrCatalog.displayNameFor(session.dhikrKey).get(language)
 
     Row(
         modifier = Modifier
@@ -251,17 +249,16 @@ private fun SessionRow(session: DhikrSessionEntity, language: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(displayName, fontSize = 14.sp, color = SabeelColors.TextPrimary, fontWeight = FontWeight.Medium)
+            Text(displayName, style = MaterialTheme.typography.labelLarge, color = SabeelColors.TextPrimary)
             Text(
                 text = if (session.isComplete) strings.homeCompleted else strings.homePartial,
-                fontSize = 11.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = if (session.isComplete) SabeelColors.SageGreen else SabeelColors.TextSecondary
             )
         }
         Text(
             text = session.count.toLocalizedNumerals(language),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineSmall,
             color = SabeelColors.AccentTeal
         )
     }
@@ -286,8 +283,8 @@ private fun AllTimeCard(state: HomeState) {
 @Composable
 private fun AllTimeStat(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary)
-        Text(label, fontSize = 11.sp, color = SabeelColors.TextSecondary)
+        Text(value, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = SabeelColors.TextPrimary)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
     }
 }
 
@@ -295,9 +292,7 @@ private fun AllTimeStat(label: String, value: String) {
 private fun SectionHeader(text: String) {
     Text(
         text = text.uppercase(),
-        fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 1.5.sp,
+        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
         color = SabeelColors.TextSecondary
     )
 }
@@ -320,8 +315,7 @@ private fun HeroStartCard(onStart: () -> Unit) {
         Text("سَبِيل", fontSize = 30.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.55f))
         Text(
             text = strings.homeBeginToday,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleMedium,
             color = SabeelColors.TextPrimary
         )
         Row(
@@ -336,9 +330,8 @@ private fun HeroStartCard(onStart: () -> Unit) {
             )
             Text(
                 text = strings.homeStartCounting,
-                fontSize = 13.sp,
-                color = SabeelColors.AccentTeal,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.labelLarge,
+                color = SabeelColors.AccentTeal
             )
         }
     }

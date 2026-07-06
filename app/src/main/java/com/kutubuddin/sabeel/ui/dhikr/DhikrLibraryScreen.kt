@@ -274,6 +274,7 @@ private fun DhikrCard(
                     )
                 }
 
+                Spacer(Modifier.height(4.dp))
                 // Count Now button
                 Button(
                     onClick = onCountNow,
