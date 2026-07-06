@@ -54,11 +54,13 @@ private val SakinahLightScheme = lightColorScheme(
 @Composable
 fun SabeelTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    language: String = "en",
     content: @Composable () -> Unit
 ) {
     // No dynamicColor: the brand identity is fixed, never wallpaper-tinted.
     val colorScheme = if (darkTheme) SakinahDarkScheme else SakinahLightScheme
     val tokens = if (darkTheme) DarkSabeelColors else LightSabeelColors
+    val typography = getScaledTypography(language)
 
     CompositionLocalProvider(
         LocalAbsoluteTonalElevation provides 0.dp,
@@ -66,7 +68,7 @@ fun SabeelTheme(
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = Typography,
+            typography = typography,
             content = content
         )
     }
