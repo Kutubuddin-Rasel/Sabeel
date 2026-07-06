@@ -3,7 +3,7 @@ package com.kutubuddin.sabeel.domain.model
 /** A wird item resolved for display with today's derived progress folded in. */
 data class WirdProgressItem(
     val dhikrKey: String,
-    val displayName: String,
+    val displayName: LocalizedText,
     val arabicText: String,
     val transliteration: String?,
     val target: Int,

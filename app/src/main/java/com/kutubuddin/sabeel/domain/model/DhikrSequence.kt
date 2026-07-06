@@ -8,7 +8,7 @@ package com.kutubuddin.sabeel.domain.model
  */
 data class DhikrStep(
     val arabicText: String,
-    val displayName: String,
+    val displayName: LocalizedText,
     val transliteration: String,
     val target: Int
 )
@@ -20,6 +20,6 @@ data class DhikrStep(
  */
 data class DhikrSequence(
     val key: String,
-    val displayName: String,
+    val displayName: LocalizedText,
     val steps: List<DhikrStep>
 )
