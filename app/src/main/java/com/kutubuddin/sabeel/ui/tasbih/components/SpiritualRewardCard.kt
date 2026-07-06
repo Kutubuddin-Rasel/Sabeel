@@ -11,6 +11,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -86,18 +87,14 @@ fun SpiritualRewardCard(
             Column {
                 Text(
                     text = strings.countReward,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 1.5.sp,
+                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
                     color = SabeelColors.SageGreen
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = rewardText,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = SabeelColors.TextSecondary,
-                    lineHeight = 20.sp
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SabeelColors.TextSecondary
                 )
             }
         }
