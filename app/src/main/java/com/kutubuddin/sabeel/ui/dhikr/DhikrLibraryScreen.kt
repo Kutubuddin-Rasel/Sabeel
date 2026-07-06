@@ -193,7 +193,7 @@ private fun DhikrCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = item.displayName,
+                    text = item.displayName.get(language),
                     fontSize = 14.sp,
                     color = SabeelColors.TextPrimary,
                     fontWeight = FontWeight.Medium
