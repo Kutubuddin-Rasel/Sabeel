@@ -17,7 +17,7 @@ object DhikrCatalog {
         DhikrItem(
             key = DhikrType.SUBHANALLAH.name,
             arabicText = "سُبْحَانَ اللَّهِ",
-            displayName = "SubhanAllah",
+            displayName = LocalizedText(en = "SubhanAllah", ur = "سبحان اللہ", bn = "সুবহানাল্লাহ"),
             transliteration = "Subhāna Allāh",
             meaning = DhikrMeaning(
                 en = "Glorified is Allah",
@@ -36,7 +36,7 @@ object DhikrCatalog {
         DhikrItem(
             key = DhikrType.ALHAMDULILLAH.name,
             arabicText = "الْحَمْدُ لِلَّهِ",
-            displayName = "Alhamdulillah",
+            displayName = LocalizedText(en = "Alhamdulillah", ur = "الحمد للہ", bn = "আলহামদুলিল্লাহ"),
             transliteration = "Al-ḥamdu lillāh",
             meaning = DhikrMeaning(
                 en = "All praise is due to Allah",
@@ -55,7 +55,7 @@ object DhikrCatalog {
         DhikrItem(
             key = DhikrType.ALLAHU_AKBAR.name,
             arabicText = "اللَّهُ أَكْبَرُ",
-            displayName = "Allahu Akbar",
+            displayName = LocalizedText(en = "Allahu Akbar", ur = "اللہ اکبر", bn = "আল্লাহু আকবার"),
             transliteration = "Allāhu akbar",
             meaning = DhikrMeaning(
                 en = "Allah is the Greatest",
@@ -74,7 +74,11 @@ object DhikrCatalog {
         DhikrItem(
             key = "SMART_FLOW_CLASSIC",
             arabicText = "سُبْحَانَ اللَّهِ · الْحَمْدُ لِلَّهِ · اللَّهُ أَكْبَرُ",
-            displayName = "Tasbīḥ after Salah · Classic",
+            displayName = LocalizedText(
+                en = "Tasbih after Salah · Classic",
+                ur = "نماز کے بعد تسبیح · کلاسک",
+                bn = "নামাজের পরে তাসবিহ · ক্লাসিক"
+            ),
             transliteration = "SubhanAllah · Alhamdulillah · Allahu Akbar",
             meaning = DhikrMeaning(
                 en = "33 + 33 + 34 sequence after prayer",
@@ -95,7 +99,11 @@ object DhikrCatalog {
         DhikrItem(
             key = "SMART_FLOW_WITH_TAHLIL",
             arabicText = "سُبْحَانَ اللَّهِ · الْحَمْدُ لِلَّهِ · اللَّهُ أَكْبَرُ · لَا إِلَٰهَ إِلَّا اللَّهُ",
-            displayName = "Tasbīḥ after Salah · With Tahlīl",
+            displayName = LocalizedText(
+                en = "Tasbih after Salah · With Tahlil",
+                ur = "نماز کے بعد تسبیح · تہلیل کے ساتھ",
+                bn = "নামাজের পরে তাসবিহ · তাহলীল সহ"
+            ),
             transliteration = "SubhanAllah · Alhamdulillah · Allahu Akbar · La ilaha illallah",
             meaning = DhikrMeaning(
                 en = "33 + 33 + 33 + Tahlil sequence after prayer",
@@ -121,7 +129,7 @@ object DhikrCatalog {
         DhikrItem(
             key = DhikrType.ASTAGHFIRULLAH.name,
             arabicText = "أَسْتَغْفِرُ اللَّهَ",
-            displayName = "Astaghfirullah",
+            displayName = LocalizedText(en = "Astaghfirullah", ur = "استغفر اللہ", bn = "আস্তাগফিরুল্লাহ"),
             transliteration = "Astaghfiru Allāh",
             meaning = DhikrMeaning(
                 en = "I seek forgiveness from Allah",
@@ -140,7 +148,7 @@ object DhikrCatalog {
         DhikrItem(
             key = DhikrType.SUBHANALLAHI_WA_BIHAMDIHI.name,
             arabicText = "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
-            displayName = "SubhanAllahi wa bihamdihi",
+            displayName = LocalizedText(en = "SubhanAllahi wa bihamdihi", ur = "سبحان اللہ وبحمدہ", bn = "সুবহানাল্লাহি ওয়া বিহামদিহি"),
             transliteration = "Subhāna Allāhi wa biḥamdih",
             meaning = DhikrMeaning(
                 en = "Glorified is Allah and all praise is due to Him",
@@ -159,7 +167,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SUBHANALLAHI_L_AZIM",
             arabicText = "سُبْحَانَ اللَّهِ الْعَظِيمِ",
-            displayName = "SubhanAllahi l-Azim",
+            displayName = LocalizedText(en = "SubhanAllahi l-Azim", ur = "سبحان اللہ العظیم", bn = "সুবহানাল্লাহিল আজিম"),
             transliteration = "Subhāna Allāhi l-'aẓīm",
             meaning = DhikrMeaning(
                 en = "Glorified is Allah, the Magnificent",
@@ -183,7 +191,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "HASBIYALLAH",
             arabicText = "حَسْبِيَ اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ",
-            displayName = "Hasbiyallah",
+            displayName = LocalizedText(en = "Hasbiyallah", ur = "حسبی اللہ", bn = "হাসবিআল্লাহ"),
             transliteration = "Hasbiya Allāhu lā ilāha illā huwa",
             meaning = DhikrMeaning(
                 en = "Allah is sufficient for me; there is no god but He",
@@ -202,7 +210,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "MORNING_AOUDHU",
             arabicText = "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",
-            displayName = "Morning Protection Dua",
+            displayName = LocalizedText(en = "Morning Protection Dua", ur = "صبح کی حفاظتی دعا", bn = "সকালের সুরক্ষার দোয়া"),
             transliteration = "A'ūdhu bikalimatillāhi t-tāmmāti min sharri mā khalaqa",
             meaning = DhikrMeaning(
                 en = "I seek refuge in the perfect words of Allah from the evil of what He created",
@@ -220,8 +228,8 @@ object DhikrCatalog {
         ),
         DhikrItem(
             key = "MORNING_TAHLIL",
-            arabicText = "لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ",
-            displayName = "Morning Tahlil",
+            arabicText = "لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيکَ لَهُ",
+            displayName = LocalizedText(en = "Morning Tahlil", ur = "صبح کی تہلیل", bn = "সকালের তাহলীল"),
             transliteration = "Lā ilāha illā Allāhu waḥdahu lā sharīka lah",
             meaning = DhikrMeaning(
                 en = "There is no god but Allah, alone, without partner",
@@ -240,7 +248,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "MORNING_TASBIH",
             arabicText = "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
-            displayName = "Morning Tasbih",
+            displayName = LocalizedText(en = "Morning Tasbih", ur = "صبح کی تسبیح", bn = "সকালের তাসবিহ"),
             transliteration = "Subhāna Allāhi wa biḥamdih",
             meaning = DhikrMeaning(
                 en = "Glorified is Allah and all praise is due to Him",
@@ -263,8 +271,8 @@ object DhikrCatalog {
     private val evening = listOf(
         DhikrItem(
             key = "EVENING_TAHLIL",
-            arabicText = "لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ",
-            displayName = "Evening Tahlil",
+            arabicText = "لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيکَ لَهُ",
+            displayName = LocalizedText(en = "Evening Tahlil", ur = "شام کی تہلیل", bn = "সন্ধ্যার তাহলীল"),
             transliteration = "Lā ilāha illā Allāhu waḥdahu lā sharīka lah",
             meaning = DhikrMeaning(
                 en = "There is no god but Allah, alone, without partner",
@@ -283,12 +291,12 @@ object DhikrCatalog {
         DhikrItem(
             key = "EVENING_TASBIH",
             arabicText = "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
-            displayName = "Evening Tasbih",
+            displayName = LocalizedText(en = "Evening Tasbih", ur = "شام کی تسبیح", bn = "সন্ধ্যার তাসবিহ"),
             transliteration = "Subhāna Allāhi wa biḥamdih",
             meaning = DhikrMeaning(
                 en = "Glorified is Allah and all praise is due to Him",
                 ur = "اللہ پاک ہے اور اس کے لیے تعریف ہے",
-                bn = "আল্লাহ পবিত্র এবং তাঁর প্রশংসা"
+                bn = "আল্লাহ পবিত্র and তাঁর প্রশংসা"
             ),
             defaultTarget = 100,
             spiritualReward = LocalizedText(
@@ -302,7 +310,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "EVENING_ISTIGHFAR",
             arabicText = "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
-            displayName = "Evening Istighfar",
+            displayName = LocalizedText(en = "Evening Istighfar", ur = "شام کا استغفار", bn = "সন্ধ্যার ইস্তিগফার"),
             transliteration = "Astaghfiru Allāha wa atūbu ilayh",
             meaning = DhikrMeaning(
                 en = "I seek forgiveness from Allah and repent to Him",
@@ -326,7 +334,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SALAWAT_SHORT",
             arabicText = "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ",
-            displayName = "Salawat (Short)",
+            displayName = LocalizedText(en = "Salawat (Short)", ur = "درود (مختصر)", bn = "দরূদ (সংক্ষিপ্ত)"),
             transliteration = "Allāhumma ṣalli 'alā Muḥammad",
             meaning = DhikrMeaning(
                 en = "O Allah, send blessings upon Muhammad",
@@ -345,7 +353,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SALAWAT_100",
             arabicText = "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَىٰ نَبِيِّنَا مُحَمَّدٍ",
-            displayName = "Salawat × 100",
+            displayName = LocalizedText(en = "Salawat × 100", ur = "درود × ۱۰۰", bn = "দরূদ × ১০০"),
             transliteration = "Allāhumma ṣalli wa sallim 'alā nabiyyinā Muḥammad",
             meaning = DhikrMeaning(
                 en = "O Allah, send peace and blessings upon our Prophet Muhammad",
@@ -364,7 +372,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SALAWAT_IBRAHIMIYYA",
             arabicText = "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ",
-            displayName = "Salawat Ibrahimiyya",
+            displayName = LocalizedText(en = "Salawat Ibrahimiyya", ur = "درود ابراہیمی", bn = "দরূদে ইব্রাহিম"),
             transliteration = "Allāhumma ṣalli 'alā Muḥammadin wa 'alā āli Muḥammad",
             meaning = DhikrMeaning(
                 en = "O Allah, send blessings upon Muhammad and his family as You blessed Ibrahim",
@@ -388,7 +396,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "ISTIGHFAR_AZIM",
             arabicText = "أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ",
-            displayName = "Istighfar al-Azim",
+            displayName = LocalizedText(en = "Istighfar al-Azim", ur = "استغفار عظیم", bn = "ইস্তিগফারে আজিম"),
             transliteration = "Astaghfiru Allāha l-'aẓīma lladhī lā ilāha illā huwa",
             meaning = DhikrMeaning(
                 en = "I seek forgiveness from Allah the Magnificent, besides Whom there is no god",
@@ -407,7 +415,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "SAYYID_ISTIGHFAR",
             arabicText = "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ خَلَقْتَنِي",
-            displayName = "Sayyid al-Istighfar",
+            displayName = LocalizedText(en = "Sayyid al-Istighfar", ur = "سید الاستغفار", bn = "সাইয়িদুল ইস্তিগফার"),
             transliteration = "Allāhumma anta rabbī lā ilāha illā anta khalaqtanī",
             meaning = DhikrMeaning(
                 en = "O Allah, You are my Lord. There is no god but You. You created me.",
@@ -430,8 +438,8 @@ object DhikrCatalog {
     private val tahlil = listOf(
         DhikrItem(
             key = DhikrType.TAHLIL.name,
-            arabicText = "لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ",
-            displayName = "Tahlil (Full)",
+            arabicText = "لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيکَ لَهُ",
+            displayName = LocalizedText(en = "Tahlil (Full)", ur = "تہلیل (مکمل)", bn = "তাহলীল (পূর্ণ)"),
             transliteration = "Lā ilāha illā Allāhu waḥdahu lā sharīka lah",
             meaning = DhikrMeaning(
                 en = "There is no god but Allah, alone, without partner",
@@ -450,7 +458,7 @@ object DhikrCatalog {
         DhikrItem(
             key = "TAHLIL_SIMPLE",
             arabicText = "لَا إِلَٰهَ إِلَّا اللَّهُ",
-            displayName = "Tahlil (Simple)",
+            displayName = LocalizedText(en = "Tahlil (Simple)", ur = "تہلیل (مختصر)", bn = "তাহলীল (সরল)"),
             transliteration = "Lā ilāha illā Allāh",
             meaning = DhikrMeaning(
                 en = "There is no god but Allah",
@@ -479,26 +487,36 @@ object DhikrCatalog {
     // Built from the same phrases used elsewhere in the catalog so there is one
     // source of truth for each Arabic string.
 
-    private val stepSubhan = DhikrStep("سُبْحَانَ اللَّهِ", "SubhanAllah", "Subhāna Allāh", 33)
-    private val stepHamd = DhikrStep("الْحَمْدُ لِلَّهِ", "Alhamdulillah", "Al-ḥamdu lillāh", 33)
-    private val stepAkbar34 = DhikrStep("اللَّهُ أَكْبَرُ", "Allahu Akbar", "Allāhu akbar", 34)
+    private val stepSubhan = DhikrStep("سُبْحَانَ اللَّهِ", LocalizedText(en = "SubhanAllah", ur = "سبحان اللہ", bn = "সুবহানাল্লাহ"), "Subhāna Allāh", 33)
+    private val stepHamd = DhikrStep("الْحَمْدُ لِلَّهِ", LocalizedText(en = "Alhamdulillah", ur = "الحمد للہ", bn = "আলহামদুলিল্লাহ"), "Al-ḥamdu lillāh", 33)
+    private val stepAkbar34 = DhikrStep("اللَّهُ أَكْبَرُ", LocalizedText(en = "Allahu Akbar", ur = "اللہ اکبر", bn = "আল্লাহু আকবার"), "Allāhu akbar", 34)
     private val stepAkbar33 = stepAkbar34.copy(target = 33)
-    private val stepTahlil = DhikrStep("لَا إِلَٰهَ إِلَّا اللَّهُ", "La ilaha illallah", "Lā ilāha illā Allāh", 1)
+    private val stepTahlil = DhikrStep("لَا إِلَٰهَ إِلَّا اللَّهُ", LocalizedText(en = "La ilaha illallah", ur = "لا الہ الا اللہ", bn = "লা ইলাহা ইল্লাল্লাহ"), "Lā ilāha illā Allāh", 1)
 
     /**
      * Human-readable name for a stored key, or the raw key if it isn't a built-in
      * entry (e.g. a custom dhikr). Used for labelling saved sessions.
      */
-    fun displayNameFor(key: String): String = byKey[key]?.displayName ?: key
+    fun displayNameFor(key: String): LocalizedText = byKey[key]?.displayName ?: LocalizedText(en = key, ur = key, bn = key)
 
     /** Returns the multi-step sequence for a post-Salah entry key, or null. */
     fun sequenceFor(key: String): DhikrSequence? = when (key) {
         "SMART_FLOW_CLASSIC" -> DhikrSequence(
-            key, "Tasbīḥ after Salah · Classic",
+            key,
+            LocalizedText(
+                en = "Tasbīḥ after Salah · Classic",
+                ur = "نماز کے بعد تسبیح · کلاسک",
+                bn = "নামাজের পরে তাসবিহ · ক্লাসিক"
+            ),
             listOf(stepSubhan, stepHamd, stepAkbar34)
         )
         "SMART_FLOW_WITH_TAHLIL" -> DhikrSequence(
-            key, "Tasbīḥ after Salah · With Tahlīl",
+            key,
+            LocalizedText(
+                en = "Tasbīḥ after Salah · With Tahlīl",
+                ur = "نماز کے بعد تسبیح · تہلیل کے ساتھ",
+                bn = "নামাজের পরে তাসবিহ · তাহলীল সহ"
+            ),
             listOf(stepSubhan, stepHamd, stepAkbar33, stepTahlil)
         )
         else -> null

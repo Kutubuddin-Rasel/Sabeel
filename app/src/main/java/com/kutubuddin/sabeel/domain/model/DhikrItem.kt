@@ -12,7 +12,7 @@ package com.kutubuddin.sabeel.domain.model
 data class DhikrItem(
     val key: String,
     val arabicText: String,
-    val displayName: String,
+    val displayName: LocalizedText,
     val transliteration: String?,
     val meaning: DhikrMeaning,
     val defaultTarget: Int,
@@ -26,7 +26,9 @@ data class DhikrItem(
     /** Returns true if the search query matches this item. */
     fun matches(query: String): Boolean {
         val q = query.trim()
-        return displayName.contains(q, ignoreCase = true) ||
+        return displayName.en.contains(q, ignoreCase = true) ||
+               displayName.ur.contains(q, ignoreCase = true) ||
+               displayName.bn.contains(q, ignoreCase = true) ||
                arabicText.contains(q) ||
                transliteration?.contains(q, ignoreCase = true) == true ||
                category.displayName.contains(q, ignoreCase = true)
