@@ -40,7 +40,7 @@ class DhikrRepositoryImpl @Inject constructor(
     private fun CustomDhikrEntity.toDhikrItem() = DhikrItem(
         key = id,
         arabicText = arabicText,
-        displayName = displayName,
+        displayName = LocalizedText(en = displayName, ur = displayName, bn = displayName),
         transliteration = transliteration,
         meaning = DhikrMeaning(en = spiritualReward ?: displayName),
         defaultTarget = target,
