@@ -1,5 +1,6 @@
 package com.kutubuddin.sabeel.ui.home
 
+import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.domain.model.WirdProgress
 import com.kutubuddin.sabeel.domain.model.WirdProgressItem
 import org.junit.Assert.assertEquals
@@ -10,7 +11,7 @@ import org.junit.Test
 class WirdSummaryTest {
 
     private fun item(target: Int, count: Int) =
-        WirdProgressItem("k$target", "n", "a", null, target, count, 0)
+        WirdProgressItem("k$target", LocalizedText(en = "n"), "a", null, target, count, 0)
 
     @Test
     fun toSummary_mapsCountsAndEmptiness() {
