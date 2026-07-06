@@ -1,6 +1,7 @@
 package com.kutubuddin.sabeel.ui.home
 
 import com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity
+import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.domain.model.WirdProgress
 
 data class HomeState(
@@ -19,7 +20,7 @@ data class HomeState(
 /** Non-null only when the user has an in-progress (incomplete) session. */
 data class ResumeSession(
     val dhikrKey: String,
-    val displayName: String,
+    val displayName: LocalizedText,
     val lastCount: Int,
     val target: Int
 )
