@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -121,9 +122,7 @@ fun SettingsScreen(
 private fun SettingsHeader(text: String) {
     Text(
         text = text.uppercase(),
-        fontSize = 10.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 1.8.sp,
+        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.8.sp),
         color = SabeelColors.TextSecondary,
         modifier = Modifier.padding(bottom = 4.dp)
     )
@@ -144,22 +143,29 @@ private fun SettingsSegmentRow(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(label, fontSize = 14.sp, color = SabeelColors.TextPrimary, fontWeight = FontWeight.Medium)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             options.forEach { (value, display) ->
                 val isSelected = selected == value
                 Box(
                     modifier = Modifier
+                        .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .background(if (isSelected) SabeelColors.AccentTeal else SabeelColors.SurfaceElevated)
                         .clickable { onSelect(value) }
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                        .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = display,
-                        fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        ),
                         color = if (isSelected) SabeelColors.Background else SabeelColors.TextSecondary
                     )
                 }
@@ -185,8 +191,8 @@ private fun SettingsToggleRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, fontSize = 14.sp, color = SabeelColors.TextPrimary, fontWeight = FontWeight.Medium)
-            Text(description, fontSize = 11.sp, color = SabeelColors.TextSecondary)
+            Text(label, style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary)
+            Text(description, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
         }
         Switch(
             checked = checked,
@@ -214,7 +220,7 @@ private fun SettingsInfoRow(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 14.sp, color = SabeelColors.TextPrimary)
-        Text(value, fontSize = 13.sp, color = SabeelColors.TextSecondary)
+        Text(label, style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
     }
 }
