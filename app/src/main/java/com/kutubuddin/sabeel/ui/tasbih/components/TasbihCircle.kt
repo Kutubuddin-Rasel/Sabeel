@@ -9,6 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -194,11 +195,7 @@ fun TasbihCircle(
                 OdometerCounter(
                     count = count,
                     language = language,
-                    style = TextStyle(
-                        color = SabeelColors.CounterWhite,
-                        fontSize = 80.sp,
-                        fontWeight = FontWeight.Medium  // Medium (not Bold) reduces OLED bloom at 80sp
-                    )
+                    style = MaterialTheme.typography.displayLarge.copy(color = SabeelColors.CounterWhite)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -206,11 +203,7 @@ fun TasbihCircle(
                 // "of 33" sub-label
                 Text(
                     text = strings.countOf.format(target.toLocalizedNumerals(language)),
-                    style = TextStyle(
-                        color = SabeelColors.TextSecondary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal
-                    )
+                    style = MaterialTheme.typography.bodyLarge.copy(color = SabeelColors.TextSecondary)
                 )
             }
         }
