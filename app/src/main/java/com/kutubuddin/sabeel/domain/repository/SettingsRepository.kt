@@ -11,6 +11,7 @@ interface SettingsRepository {
     val soundEnabled: Flow<Boolean>
     val showStreaks: Flow<Boolean>   // consistency counts visible, or hidden for pure ibadah
     val autoProgressWird: Flow<Boolean>
+    val isSmartFlowEnabled: Flow<Boolean>
 
     suspend fun setTheme(theme: String)
     suspend fun setLanguage(lang: String)
@@ -20,4 +21,5 @@ interface SettingsRepository {
     suspend fun setSoundEnabled(on: Boolean)
     suspend fun setShowStreaks(on: Boolean)
     suspend fun setAutoProgressWird(on: Boolean)
+    suspend fun setSmartFlowEnabled(on: Boolean)
 }
