@@ -13,6 +13,9 @@ import com.kutubuddin.sabeel.domain.model.DhikrCategory
  * without filling it there is a compile error, and vice-versa.
  */
 data class UiStrings(
+    // ── Generic navigation / chrome a11y ──────────────
+    val a11yBack: String,
+    val a11yDismiss: String,
     // ── Bottom navigation ─────────────────────────────
     val navHome: String,
     val navCount: String,
@@ -51,6 +54,10 @@ data class UiStrings(
     val wirdReorder: String,     // a11y: reorder up/down
     val wirdRemove: String,      // a11y: remove from wird
     val wirdTargetA11y: String,  // a11y: target stepper
+    val wirdDone: String,        // "Done" action on the Wird Edit top bar
+    val wirdEditCta: String,        // labeled edit-goal chip on Home ("Edit")
+    val wirdGoalHintTitle: String,   // one-time discoverability hint title
+    val wirdGoalHintBody: String,    // one-time discoverability hint body
     // ── Counting screen ──
     val countSmartFlow: String,
     val countConsistencyA11y: String, // template: "Consistency: %1$s days"
@@ -89,6 +96,8 @@ data class UiStrings(
     val settingsShowStreaksDesc: String,
     val settingsAutoProgressWird: String,
     val settingsAutoProgressWirdDesc: String,
+    val settingsSmartFlow: String,
+    val settingsSmartFlowDesc: String,
     val settingsFont: String,
     val settingsVersion: String,
     // ── Dhikr Library ──

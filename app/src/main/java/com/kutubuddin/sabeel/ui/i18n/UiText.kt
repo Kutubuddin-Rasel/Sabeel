@@ -14,6 +14,10 @@ import com.kutubuddin.sabeel.domain.model.LocalizedText
  * language can reorder — note the `$` is escaped as `\$` in Kotlin literals.
  */
 object UiText {
+    // ── Generic navigation / chrome a11y ──────────────
+    val a11yBack = LocalizedText(en = "Back", ur = "واپس", bn = "ফিরে যান")
+    val a11yDismiss = LocalizedText(en = "Dismiss", ur = "برخاست کریں", bn = "বাতিল করুন")
+
     // ── Bottom navigation ─────────────────────────────
     val navHome = LocalizedText(en = "Home", ur = "ہوم", bn = "হোম")
     val navCount = LocalizedText(en = "Count", ur = "شمار", bn = "গণনা")
@@ -55,9 +59,22 @@ object UiText {
     val wirdReorder = LocalizedText(en = "Reorder", ur = "ترتیب بدلیں", bn = "ক্রম বদলান")
     val wirdRemove = LocalizedText(en = "Remove from wird", ur = "وِرد سے ہٹائیں", bn = "ওয়ির্দ থেকে সরান")
     val wirdTargetA11y = LocalizedText(en = "Target", ur = "ہدف", bn = "লক্ষ্য")
+    val wirdDone = LocalizedText(en = "Done", ur = "مکمل", bn = "সম্পন্ন")
+    val wirdEditCta = LocalizedText(en = "Edit", ur = "ترمیم", bn = "সম্পাদনা")
+    val wirdGoalHintTitle = LocalizedText(
+        en = "Set your daily goal",
+        ur = "اپنا روزانہ ہدف مقرر کریں",
+        bn = "আপনার দৈনিক লক্ষ্য নির্ধারণ করুন"
+    )
+    val wirdGoalHintBody = LocalizedText(
+        en = "Tap Edit next to Today's Wird to add or change dhikr targets.",
+        ur = "ذکر کے اہداف شامل یا تبدیل کرنے کے لیے آج کے وِرد کے ساتھ ترمیم پر ٹیپ کریں۔",
+        bn = "যিকিরের লক্ষ্য যোগ বা পরিবর্তন করতে আজকের ওয়ির্দের পাশে সম্পাদনা-এ ট্যাপ করুন।"
+    )
+
 
     // ── Counting screen ───────────────────────────────
-    val countSmartFlow = LocalizedText(en = "Tasbīḥ after Salah", ur = "نماز کے بعد تسبیح", bn = "নামাযের পর তাসবিহ")
+    val countSmartFlow = LocalizedText(en = "Tasbih after Salah", ur = "نماز کے بعد تسبیح", bn = "নামাযের পর তাসবিহ")
     val countConsistencyA11y = LocalizedText(en = "Consistency: %1\$s days", ur = "تسلسل: %1\$s دن", bn = "ধারাবাহিকতা: %1\$s দিন")
     val countStreakShort = LocalizedText(en = "%1\$sd", ur = "%1\$s دن", bn = "%1\$s দিন")
     val countUndo = LocalizedText(en = "Undo last count", ur = "آخری شمار واپس لیں", bn = "শেষ গণনা ফিরিয়ে নিন")
@@ -99,6 +116,8 @@ object UiText {
     val settingsShowStreaksDesc = LocalizedText(en = "Hide consistency counts for pure ibadah", ur = "خالص عبادت کے لیے تسلسل چھپائیں", bn = "খাঁটি ইবাদতের জন্য ধারাবাহিকতা লুকান")
     val settingsAutoProgressWird = LocalizedText(en = "Wird Auto-Progression", ur = "وِرد خودکار ترقی", bn = "ওয়ির্দ স্বয়ংক্রিয় অগ্রগতি")
     val settingsAutoProgressWirdDesc = LocalizedText(en = "Automatically transition to the next Dhikr in your daily Wird", ur = "اپنے روزمرہ کے وِرد میں خود بخود اگلے ذکر پر جائیں", bn = "স্বয়ংক্রিয়ভাবে আপনার দৈনন্দিন ওয়ির্দের পরবর্তী যিকিরে যান")
+    val settingsSmartFlow = LocalizedText(en = "Smart Flow Sequence", ur = "اسمارٹ فلو سلسلہ", bn = "স্মার্ট ফ্লো সিকোয়েন্স")
+    val settingsSmartFlowDesc = LocalizedText(en = "Automatically transition through multi-step Dhikrs (e.g., Tasbih after Salah)", ur = "خود بخود متعدد مراحل والے اذکار میں آگے بڑھیں", bn = "স্বয়ংক্রিয়ভাবে বহু-ধাপ যিকিরে (যেমন, নামাজের পর তাসবিহ) অগ্রসর হন")
     val settingsFont = LocalizedText(en = "Font", ur = "فونٹ", bn = "ফন্ট")
     val settingsVersion = LocalizedText(en = "Version", ur = "ورژن", bn = "সংস্করণ")
 
@@ -120,6 +139,8 @@ object UiText {
     val catCustom = LocalizedText(en = "My Dhikr", ur = "میرا ذکر", bn = "আমার যিকির")
 
     fun resolve(lang: String) = UiStrings(
+        a11yBack = a11yBack.get(lang),
+        a11yDismiss = a11yDismiss.get(lang),
         navHome = navHome.get(lang),
         navCount = navCount.get(lang),
         navDhikr = navDhikr.get(lang),
@@ -154,6 +175,10 @@ object UiText {
         wirdReorder = wirdReorder.get(lang),
         wirdRemove = wirdRemove.get(lang),
         wirdTargetA11y = wirdTargetA11y.get(lang),
+        wirdDone = wirdDone.get(lang),
+        wirdEditCta = wirdEditCta.get(lang),
+        wirdGoalHintTitle = wirdGoalHintTitle.get(lang),
+        wirdGoalHintBody = wirdGoalHintBody.get(lang),
         countSmartFlow = countSmartFlow.get(lang),
         countConsistencyA11y = countConsistencyA11y.get(lang),
         countStreakShort = countStreakShort.get(lang),
@@ -190,6 +215,8 @@ object UiText {
         settingsShowStreaksDesc = settingsShowStreaksDesc.get(lang),
         settingsAutoProgressWird = settingsAutoProgressWird.get(lang),
         settingsAutoProgressWirdDesc = settingsAutoProgressWirdDesc.get(lang),
+        settingsSmartFlow = settingsSmartFlow.get(lang),
+        settingsSmartFlowDesc = settingsSmartFlowDesc.get(lang),
         settingsFont = settingsFont.get(lang),
         settingsVersion = settingsVersion.get(lang),
         dhikrSearchPlaceholder = dhikrSearchPlaceholder.get(lang),
