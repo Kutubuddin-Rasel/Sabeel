@@ -11,11 +11,12 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.media.VolumeProviderCompat
 import com.kutubuddin.sabeel.MainActivity
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
-import com.kutubuddin.sabeel.domain.repository.TasbihRepository
+import com.kutubuddin.sabeel.domain.repository.TasbihCounterMutator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,26 +30,22 @@ import javax.inject.Inject
  * Foreground service that intercepts hardware volume keys to act as a
  * eyes-free counter while the screen is off (Pocket Mode).
  *
- * Architecture:
- * - Uses MediaSessionCompat + VolumeProviderCompat(VOLUME_CONTROL_RELATIVE) to
- *   intercept volume events WITHOUT Accessibility Service (as per PRD §3B).
- * - Both Vol Up and Vol Down increment the counter — this is intentional so
- *   users can count with either thumb regardless of phone orientation.
- * - Haptic feedback fires synchronously; repository write is async via coroutine.
- * - SRP: this service owns ONLY the volume-key-to-increment bridge. All state
- *   management remains in TasbihViewModel/TasbihRepository.
+ * ISP + DIP: depends on [TasbihCounterMutator] — the ONE method this class
+ * calls is [TasbihCounterMutator.incrementCount] — never the full
+ * [com.kutubuddin.sabeel.domain.repository.TasbihRepository]. A foreground
+ * service bridging volume keys has no business depending on Smart Flow
+ * config, Pocket Mode config, or streak reads.
  */
 @AndroidEntryPoint
 class PocketModeService : Service() {
 
     @Inject lateinit var hapticEngine: HapticEngine
-    @Inject lateinit var repository: TasbihRepository
+    @Inject lateinit var counterMutator: TasbihCounterMutator
 
     private var mediaSession: MediaSessionCompat? = null
     private val channelId = "pocket_mode_channel"
     private val notificationId = 1001
 
-    // Scoped to the service lifetime; cancelled in onDestroy()
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onCreate() {
@@ -110,15 +107,12 @@ class PocketModeService : Service() {
                 100,
                 50
             ) {
+                @RequiresApi(Build.VERSION_CODES.O)
                 override fun onAdjustVolume(direction: Int) {
-                    // Both Vol Up (+1) and Vol Down (-1) increment the counter.
-                    // This is intentional: either thumb, any orientation, counts.
                     if (direction == 1 || direction == -1) {
-                        // Fire haptic synchronously — user expects immediate tactile feedback
                         hapticEngine.playIncrementTick()
-                        // Persist increment asynchronously — never block the haptic thread
                         serviceScope.launch {
-                            repository.incrementCount(LocalDate.now().toString())
+                            counterMutator.incrementCount(LocalDate.now().toString())
                         }
                     }
                 }
