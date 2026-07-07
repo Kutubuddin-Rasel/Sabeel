@@ -18,32 +18,45 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * via `LocalStrings` (keeps the tab model free of presentation language).
  */
 sealed class SabeelTab(
-    val route: String,
+    val graphRoute: String,
+    val startRoute: String,
     val icon: ImageVector,
     val selectedIcon: ImageVector
 ) {
     object Home : SabeelTab(
-        route = "home",
+        graphRoute = "home_graph",
+        startRoute = "home",
         icon = Icons.Outlined.Home,
         selectedIcon = Icons.Filled.Home
     )
     object Count : SabeelTab(
-        route = "count",
+        graphRoute = "count_graph",
+        startRoute = "count",
         icon = Icons.Outlined.Adjust,
         selectedIcon = Icons.Filled.Adjust
     )
     object Dhikr : SabeelTab(
-        route = "dhikr",
+        graphRoute = "dhikr_graph",
+        startRoute = "dhikr",
         icon = Icons.Outlined.MenuBook,
         selectedIcon = Icons.Filled.MenuBook
     )
     object Settings : SabeelTab(
-        route = "settings",
+        graphRoute = "settings_graph",
+        startRoute = "settings",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Filled.Settings
     )
 
     companion object {
         val all = listOf(Home, Count, Dhikr, Settings)
+
+        /**
+         * True when [route] is one of the 4 top-level tab destinations.
+         * Sub-screens pushed on top of a tab (e.g. "wird", "wird/edit") return
+         * false — [SabeelNavHost] uses this to hide the bottom bar on those
+         * screens.
+         */
+        fun isTopLevelRoute(route: String?): Boolean = route != null && all.any { it.startRoute == route || it.graphRoute == route }
     }
 }

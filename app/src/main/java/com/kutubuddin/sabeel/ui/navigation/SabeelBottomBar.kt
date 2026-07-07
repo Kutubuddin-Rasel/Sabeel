@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
@@ -21,7 +23,7 @@ fun SabeelBottomBar(
     navController: NavHostController = rememberNavController()
 ) {
     val backStack by navController.currentBackStackEntryAsState()
-    val currentRoute = backStack?.destination?.route
+    val currentDestination = backStack?.destination
     val strings = LocalStrings.current
 
     NavigationBar(
@@ -29,14 +31,17 @@ fun SabeelBottomBar(
         tonalElevation = 0.dp
     ) {
         SabeelTab.all.forEach { tab ->
-            val selected = currentRoute == tab.route
+            val selected = currentDestination?.hierarchy?.any { it.route == tab.graphRoute } == true
             val label = strings.labelFor(tab)
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    if (currentRoute != tab.route) {
-                        navController.navigate(tab.route) {
-                            popUpTo(SabeelTab.Count.route) {
+                    if (selected) {
+                        // Double-Tap to Root: pop back to the root of the selected graph
+                        navController.popBackStack(route = tab.startRoute, inclusive = false)
+                    } else {
+                        navController.navigate(tab.graphRoute) {
+                            popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
                             launchSingleTop = true

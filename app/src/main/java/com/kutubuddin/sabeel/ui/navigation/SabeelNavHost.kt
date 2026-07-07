@@ -1,37 +1,50 @@
 package com.kutubuddin.sabeel.ui.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.dhikr.DhikrLibraryScreen
 import com.kutubuddin.sabeel.ui.home.HomeScreen
 import com.kutubuddin.sabeel.ui.settings.SettingsScreen
 import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
+import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.wird.WirdEditScreen
 import com.kutubuddin.sabeel.ui.wird.WirdScreen
 import com.kutubuddin.sabeel.ui.wird.WirdViewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+
+/** Sub-screen routes pushed on top of a tab — deliberately absent from [SabeelTab.all]. */
+private object WirdRoutes {
+    const val WIRD = "wird"
+    const val WIRD_EDIT = "wird/edit"
+}
 
 /**
- * Root navigation graph — 4-tab bottom-nav architecture.
+ * Root navigation graph — DIP: the top-level route graph is where ViewModels
+ * are instantiated (`hiltViewModel()`) and handed down as data/callbacks; no
+ * nested Composable in this app instantiates its own dependencies.
  *
- * Key design decisions:
- *  - Count tab is the start destination (fastest path to prayer).
- *  - TasbihViewModel is Activity-scoped via hiltViewModel() at the NavHost level
- *    so both Count and Dhikr tabs share the same instance.
- *  - saveState/restoreState on each tab switch preserves per-tab scroll state.
+ * [settingsViewModel]'s state is the single source of truth for `language`/
+ * `showStreaks` across tabs — [TasbihScreen] now receives them as plain
+ * params instead of re-deriving them from a second ViewModel instance.
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SabeelNavHost(
     hapticEngine: HapticEngine,
@@ -39,93 +52,104 @@ fun SabeelNavHost(
 ) {
     val navController = rememberNavController()
 
-    // Activity-scoped — shared between Count tab and Dhikr tab's "Count Now" action
     val tasbihViewModel: TasbihViewModel = hiltViewModel()
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val wirdViewModel: WirdViewModel = hiltViewModel()
 
-    val settingsState by settingsViewModel.state.collectAsState()
-    val wirdState by wirdViewModel.state.collectAsState()
+    val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
+    val wirdUiState by wirdViewModel.state.collectAsStateWithLifecycle()
     val language = settingsState.language
+
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val showBottomBar = SabeelTab.isTopLevelRoute(backStackEntry?.destination?.route)
 
     Scaffold(
         modifier = modifier,
         containerColor = SabeelColors.Background,
-        bottomBar = { SabeelBottomBar(navController = navController) }
+        bottomBar = {
+            if (showBottomBar) {
+                SabeelBottomBar(navController = navController)
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = SabeelTab.Count.route,
+            startDestination = SabeelTab.Count.graphRoute,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(SabeelTab.Home.route) {
-                HomeScreen(
-                    onResumeCounting = { navController.switchToCountTab() },
-                    onOpenWird = { navController.navigate("wird") }
-                )
+            navigation(startDestination = SabeelTab.Home.startRoute, route = SabeelTab.Home.graphRoute) {
+                composable(SabeelTab.Home.startRoute) {
+                    HomeScreen(
+                        onResumeCounting = { navController.switchToCountTab() },
+                        onOpenWird = { navController.navigate(WirdRoutes.WIRD) },
+                        onEditWird = { navController.navigate(WirdRoutes.WIRD_EDIT) }
+                    )
+                }
+
+                composable(WirdRoutes.WIRD) {
+                    WirdScreen(
+                        onCountItem = { key, target ->
+                            tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key, target))
+                            // Destroy completed flow so it isn't saved in the tab backstack
+                            navController.popBackStack(SabeelTab.Home.startRoute, inclusive = false)
+                            navController.switchToCountTab()
+                        },
+                        onEdit = { navController.navigate(WirdRoutes.WIRD_EDIT) },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(WirdRoutes.WIRD_EDIT) {
+                    WirdEditScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
-            composable("wird") {
-                WirdScreen(
-                    onCountItem = { key, target ->
-                        tasbihViewModel.processIntent(com.kutubuddin.sabeel.ui.tasbih.TasbihIntent.SetDhikr(key, target))
-                        navController.switchToCountTab()
-                    },
-                    onEdit = { navController.navigate("wird/edit") }
-                )
-            }
+            navigation(startDestination = SabeelTab.Count.startRoute, route = SabeelTab.Count.graphRoute) {
+                composable(SabeelTab.Count.startRoute) {
+                    val nextWirdItem = if (settingsState.autoProgressWird)
+                        wirdUiState.progress.nextIncompleteItem else null
 
-            composable("wird/edit") {
-                WirdEditScreen()
-            }
-
-            composable(SabeelTab.Count.route) {
-                // If Auto-Progress is enabled, resolve the next incomplete item.
-                val nextWirdItem = if (settingsState.autoProgressWird) wirdState.nextIncompleteItem else null
-
-                TasbihScreen(
-                    viewModel = tasbihViewModel,
-                    hapticEngine = hapticEngine,
-                    nextWirdItemName = nextWirdItem?.displayName?.get(language),
-                    onContinueWird = nextWirdItem?.let { item ->
-                        {
-                            tasbihViewModel.processIntent(
-                                com.kutubuddin.sabeel.ui.tasbih.TasbihIntent.SetDhikr(item.dhikrKey, item.target)
-                            )
+                    TasbihScreen(
+                        viewModel = tasbihViewModel,
+                        hapticEngine = hapticEngine,
+                        language = language,
+                        showStreaks = settingsState.showStreaks,
+                        nextWirdItemName = nextWirdItem?.displayName?.get(language),
+                        onContinueWird = nextWirdItem?.let { item ->
+                            {
+                                tasbihViewModel.processIntent(
+                                    TasbihIntent.SetDhikr(item.dhikrKey, item.target)
+                                )
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
 
-            composable(SabeelTab.Dhikr.route) {
-                DhikrLibraryScreen(
-                    tasbihViewModel = tasbihViewModel,
-                    onCountNow = { navController.switchToCountTab() }
-                )
+            navigation(startDestination = SabeelTab.Dhikr.startRoute, route = SabeelTab.Dhikr.graphRoute) {
+                composable(SabeelTab.Dhikr.startRoute) {
+                    DhikrLibraryScreen(
+                        tasbihViewModel = tasbihViewModel,
+                        onCountNow = { navController.switchToCountTab() }
+                    )
+                }
             }
 
-            composable(SabeelTab.Settings.route) {
-                SettingsScreen()
+            navigation(startDestination = SabeelTab.Settings.startRoute, route = SabeelTab.Settings.graphRoute) {
+                composable(SabeelTab.Settings.startRoute) {
+                    SettingsScreen()
+                }
             }
         }
     }
 }
 
-/**
- * Switch to the Count tab exactly as tapping it in the bottom bar does.
- *
- * The Resume (Home) and Count-Now (Dhikr) actions previously used a bare
- * `navigate(Count) { launchSingleTop; restoreState }` without the bottom bar's
- * `popUpTo(Count) { saveState }`. That mismatch left an inconsistent back stack
- * and swallowed the first tap — so it took two presses to actually land on Count.
- * Routing both entry points through this one helper keeps navigation coherent.
- */
 private fun NavHostController.switchToCountTab() {
-    navigate(SabeelTab.Count.route) {
-        popUpTo(SabeelTab.Count.route) { saveState = true }
+    navigate(SabeelTab.Count.graphRoute) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
 }
-
-
