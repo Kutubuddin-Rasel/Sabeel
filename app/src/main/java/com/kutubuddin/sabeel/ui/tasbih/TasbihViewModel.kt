@@ -38,9 +38,7 @@ class TasbihViewModel @Inject constructor(
     private val _effect = MutableSharedFlow<TasbihSideEffect>(replay = 0)
     val effect: Flow<TasbihSideEffect> = _effect.asSharedFlow()
 
-    private val repositoryMutex = Mutex()
-    private var lastSentCount: Int = -1
-    private var expectingReset: Boolean = false
+    private val intentMutex = Mutex()
 
     init {
         observeRepositoryState()
@@ -54,7 +52,8 @@ class TasbihViewModel @Inject constructor(
                 repository.isSmartFlowEnabled,
                 repository.smartFlowVariant,
                 repository.isPocketModeActive,
-                repository.streak
+                repository.streak,
+                repository.activeStepIndex
             ) { values ->
                 val count = values[0] as Int
                 val dhikr = values[1] as ActiveDhikr
@@ -63,6 +62,7 @@ class TasbihViewModel @Inject constructor(
                 val pocketActive = values[4] as Boolean
                 @Suppress("UNCHECKED_CAST")
                 val streak = values[5] as? com.kutubuddin.sabeel.domain.model.Streak
+                val repoStepIndex = values[6] as Int
 
                 // A sequence is active only when the entry declares one AND the
                 // user has Smart Flow enabled; otherwise it counts as a single dhikr.
@@ -70,24 +70,13 @@ class TasbihViewModel @Inject constructor(
                     DhikrCatalog.sequenceFor(dhikr.sequenceKey) else null
 
                 _state.update { currentState ->
-                    val resolvedCount = when {
-                        expectingReset -> {
-                            if (count == 0) { expectingReset = false; 0 }
-                            else currentState.count
-                        }
-                        lastSentCount != -1 -> {
-                            if (count < lastSentCount) currentState.count
-                            else { if (count >= lastSentCount) lastSentCount = -1; count }
-                        }
-                        else -> count
-                    }
                     val stepIndex = if (sequence != null)
-                        currentState.stepIndex.coerceIn(0, sequence.steps.lastIndex) else 0
+                        repoStepIndex.coerceIn(0, sequence.steps.lastIndex) else 0
                     // Sequence step targets are catalog-fixed and intentionally ignore any active
                     // target override; the override only shapes the single-dhikr `dhikr.target` fallback.
                     val target = sequence?.steps?.get(stepIndex)?.target ?: dhikr.target
                     currentState.copy(
-                        count = resolvedCount,
+                        count = count,
                         currentDhikr = dhikr,
                         sequence = sequence,
                         stepIndex = stepIndex,
@@ -104,22 +93,26 @@ class TasbihViewModel @Inject constructor(
     }
 
     fun processIntent(intent: TasbihIntent) {
-        when (intent) {
-            is TasbihIntent.Increment -> handleIncrement()
-            is TasbihIntent.Decrement -> handleDecrement()
-            is TasbihIntent.Reset -> handleReset()
-            is TasbihIntent.SetDhikr -> handleSetDhikr(intent.key, intent.target)
-            is TasbihIntent.SetSmartFlowEnabled -> handleSetSmartFlowEnabled(intent.enabled)
-            is TasbihIntent.SetSmartFlowVariant -> handleSetSmartFlowVariant(intent.variant)
-            is TasbihIntent.SetPocketModeActive -> handleSetPocketModeActive(intent.active)
-            is TasbihIntent.SyncProgress -> syncCurrentProgressToRoom()
-            is TasbihIntent.ClearError -> _state.update { it.copy(error = null) }
+        viewModelScope.launch {
+            intentMutex.withLock {
+                when (intent) {
+                    is TasbihIntent.Increment -> handleIncrement()
+                    is TasbihIntent.Decrement -> handleDecrement()
+                    is TasbihIntent.Reset -> handleReset()
+                    is TasbihIntent.SetDhikr -> handleSetDhikr(intent.key, intent.target)
+                    is TasbihIntent.SetSmartFlowEnabled -> handleSetSmartFlowEnabled(intent.enabled)
+                    is TasbihIntent.SetSmartFlowVariant -> handleSetSmartFlowVariant(intent.variant)
+                    is TasbihIntent.SetPocketModeActive -> handleSetPocketModeActive(intent.active)
+                    is TasbihIntent.SyncProgress -> syncCurrentProgressToRoom()
+                    is TasbihIntent.ClearError -> _state.update { it.copy(error = null) }
+                }
+            }
         }
     }
 
     // ─── Increment ────────────────────────────────────────────────────────────
 
-    private fun handleIncrement() {
+    private suspend fun handleIncrement() {
         var hapticTypeToPlay: HapticType = HapticType.TICK
         var showCelebration = false
         var completedKey: String? = null
@@ -127,144 +120,128 @@ class TasbihViewModel @Inject constructor(
         var shouldResetRepoCount = false
         var shouldIncrementRepoCount = false
 
-        _state.update { currentState ->
-            val sequence = currentState.sequence
-            if (currentState.isSmartFlowEnabled && sequence != null) {
-                // ── Multi-step Tasbīḥ after Salah ──────────────────────────────
-                val result = advance(sequence, currentState.stepIndex, currentState.count)
-                when {
-                    !result.stepCompleted -> {
-                        hapticTypeToPlay = HapticType.TICK
-                        shouldIncrementRepoCount = true
-                        lastSentCount = result.stepCount; expectingReset = false
-                        currentState.copy(count = result.stepCount)
-                    }
-                    result.sequenceCompleted -> {
-                        // The whole sequence is done — record one session for it.
-                        hapticTypeToPlay = HapticType.THUD; showCelebration = true
-                        completedKey = sequence.key
-                        completedTarget = sequence.steps.sumOf { it.target }
-                        shouldResetRepoCount = true
-                        expectingReset = true; lastSentCount = -1
-                        currentState.copy(count = 0, stepIndex = 0, target = sequence.steps.first().target)
-                    }
-                    else -> {
-                        // An intermediate step finished — advance the tracker, no session yet.
-                        hapticTypeToPlay = HapticType.CLICK
-                        shouldResetRepoCount = true
-                        expectingReset = true; lastSentCount = -1
-                        val nextTarget = sequence.steps[result.stepIndex].target
-                        currentState.copy(count = 0, stepIndex = result.stepIndex, target = nextTarget)
-                    }
-                }
-            } else {
-                // ── Standard single-dhikr counting ─────────────────────────────
-                val nextCount = currentState.count + 1
-                if (nextCount >= currentState.target) {
-                    hapticTypeToPlay = HapticType.THUD; showCelebration = true
-                    completedKey = currentState.currentDhikr.key
-                    completedTarget = currentState.target
-                    shouldResetRepoCount = true
-                    expectingReset = true; lastSentCount = -1
-                    currentState.copy(count = 0)
-                } else {
+        val currentState = _state.value
+        val sequence = currentState.sequence
+        val newState = if (currentState.isSmartFlowEnabled && sequence != null) {
+            // ── Multi-step Tasbīḥ after Salah ──────────────────────────────
+            val result = advance(sequence, currentState.stepIndex, currentState.count)
+            when {
+                !result.stepCompleted -> {
                     hapticTypeToPlay = HapticType.TICK
                     shouldIncrementRepoCount = true
-                    lastSentCount = nextCount; expectingReset = false
-                    currentState.copy(count = nextCount)
+                    currentState.copy(count = result.stepCount)
+                }
+                result.sequenceCompleted -> {
+                    // The whole sequence is done — record one session for it.
+                    hapticTypeToPlay = HapticType.THUD; showCelebration = true
+                    completedKey = sequence.key
+                    completedTarget = sequence.steps.sumOf { it.target }
+                    shouldResetRepoCount = true
+                    repository.setStepIndex(0)
+                    currentState.copy(count = 0, stepIndex = 0, target = sequence.steps.first().target)
+                }
+                else -> {
+                    // An intermediate step finished — advance the tracker, no session yet.
+                    hapticTypeToPlay = HapticType.CLICK
+                    shouldResetRepoCount = true
+                    val nextTarget = sequence.steps[result.stepIndex].target
+                    repository.setStepIndex(result.stepIndex)
+                    currentState.copy(count = 0, stepIndex = result.stepIndex, target = nextTarget)
                 }
             }
-        }
-
-        viewModelScope.launch {
-            _effect.emit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay))
-            if (showCelebration) _effect.emit(TasbihSideEffect.ShowCelebration)
-        }
-
-        val dateString = LocalDate.now().toString()
-        viewModelScope.launch {
-            repositoryMutex.withLock {
-                completedKey?.let { repository.completeDhikrTarget(dateString, it, completedTarget) }
-                if (shouldResetRepoCount) repository.resetCount()
-                else if (shouldIncrementRepoCount) repository.incrementCount(dateString)
+        } else {
+            // ── Standard single-dhikr counting ─────────────────────────────
+            val nextCount = currentState.count + 1
+            if (nextCount >= currentState.target) {
+                hapticTypeToPlay = HapticType.THUD; showCelebration = true
+                completedKey = currentState.currentDhikr.key
+                completedTarget = currentState.target
+                shouldResetRepoCount = true
+                currentState.copy(count = 0)
+            } else {
+                hapticTypeToPlay = HapticType.TICK
+                shouldIncrementRepoCount = true
+                currentState.copy(count = nextCount)
             }
         }
+
+        _state.value = newState
+
+        _effect.emit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay))
+        if (showCelebration) _effect.emit(TasbihSideEffect.ShowCelebration)
+
+        val dateString = LocalDate.now().toString()
+        completedKey?.let { repository.completeDhikrTarget(dateString, it, completedTarget) }
+        if (shouldResetRepoCount) repository.resetCount()
+        else if (shouldIncrementRepoCount) repository.incrementCount(dateString)
     }
 
     // ─── Decrement ────────────────────────────────────────────────────────────
 
-    private fun handleDecrement() {
-        _state.update { currentState ->
-            val newCount = maxOf(0, currentState.count - 1)
-            lastSentCount = newCount
-            currentState.copy(count = newCount)
-        }
-        viewModelScope.launch {
-            repositoryMutex.withLock { repository.decrementCount() }
+    private suspend fun handleDecrement() {
+        val currentState = _state.value
+        val sequence = currentState.sequence
+
+        if (currentState.isSmartFlowEnabled && sequence != null && currentState.count == 0 && currentState.stepIndex > 0) {
+            val prevIndex = currentState.stepIndex - 1
+            val prevTarget = sequence.steps[prevIndex].target
+            val prevCount = prevTarget - 1
+            
+            repository.setStepIndex(prevIndex)
+            repository.setCount(prevCount)
+            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.TICK))
+        } else {
+            _state.update { state ->
+                val newCount = maxOf(0, state.count - 1)
+                state.copy(count = newCount)
+            }
+            repository.decrementCount()
         }
     }
 
     // ─── Reset ────────────────────────────────────────────────────────────────
 
-    private fun handleReset() {
-        expectingReset = true
-        lastSentCount = -1
-        _state.update { it.copy(count = 0) }
-        viewModelScope.launch {
-            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.THUD))
+    private suspend fun handleReset() {
+        val currentState = _state.value
+        val sequence = currentState.sequence
+
+        if (currentState.isSmartFlowEnabled && sequence != null) {
+            repository.setStepIndex(0)
+            _state.update { it.copy(count = 0, stepIndex = 0, target = sequence.steps.first().target) }
+        } else {
+            _state.update { it.copy(count = 0) }
         }
-        viewModelScope.launch {
-            repositoryMutex.withLock { repository.resetCount() }
-        }
+        _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.THUD))
+        repository.resetCount()
     }
 
     // ─── Settings ─────────────────────────────────────────────────────────────
 
-    private fun handleSetDhikr(key: String, target: Int? = null) {
-        expectingReset = true
-        lastSentCount = -1
+    private suspend fun handleSetDhikr(key: String, target: Int? = null) {
         // Reset the sequence cursor so a freshly-selected dhikr starts from step 1.
         _state.update { it.copy(stepIndex = 0) }
-        viewModelScope.launch {
-            repositoryMutex.withLock { repository.setDhikr(key, target) }
-        }
+        repository.setDhikr(key, target)
     }
 
-    private fun handleSetSmartFlowEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            repositoryMutex.withLock { repository.setSmartFlowEnabled(enabled) }
-        }
+    private suspend fun handleSetSmartFlowEnabled(enabled: Boolean) {
+        repository.setSmartFlowEnabled(enabled)
     }
 
-    private fun handleSetSmartFlowVariant(variant: SmartFlowVariant) {
-        viewModelScope.launch {
-            repositoryMutex.withLock { repository.setSmartFlowVariant(variant) }
-        }
+    private suspend fun handleSetSmartFlowVariant(variant: SmartFlowVariant) {
+        repository.setSmartFlowVariant(variant)
     }
 
-    private fun handleSetPocketModeActive(active: Boolean) {
-        viewModelScope.launch {
-            repositoryMutex.withLock { repository.setPocketModeActive(active) }
-            // Instruct MainActivity to start/stop the foreground service
-            _effect.emit(
-                if (active) TasbihSideEffect.StartPocketModeService
-                else TasbihSideEffect.StopPocketModeService
-            )
-        }
+    private suspend fun handleSetPocketModeActive(active: Boolean) {
+        repository.setPocketModeActive(active)
+        // Instruct MainActivity to start/stop the foreground service
+        _effect.emit(
+            if (active) TasbihSideEffect.StartPocketModeService
+            else TasbihSideEffect.StopPocketModeService
+        )
     }
 
-    private fun syncCurrentProgressToRoom() {
-        val currentState = _state.value
-        val dateString = LocalDate.now().toString()
-        viewModelScope.launch {
-            repositoryMutex.withLock {
-                repository.completeDhikrTarget(
-                    date = dateString,
-                    dhikrKey = currentState.currentDhikr.key,
-                    targetCount = currentState.count
-                )
-            }
-        }
+    private suspend fun syncCurrentProgressToRoom() {
+        repository.flushToDisk()
     }
 
     companion object {

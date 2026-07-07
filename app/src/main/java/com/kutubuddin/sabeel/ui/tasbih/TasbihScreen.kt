@@ -17,6 +17,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,47 +33,55 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
-import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
 import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
 import com.kutubuddin.sabeel.ui.tasbih.components.SequenceTracker
 import com.kutubuddin.sabeel.ui.tasbih.components.SpiritualRewardCard
 import com.kutubuddin.sabeel.ui.tasbih.components.TasbihCircle
 import com.kutubuddin.sabeel.ui.tasbih.components.TajweedText
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
-import com.kutubuddin.sabeel.ui.theme.UthmanicHafsFontFamily
 
+/**
+ * Route-level wrapper (SRP/DIP): owns [viewModel] (injected by the caller —
+ * [com.kutubuddin.sabeel.ui.navigation.SabeelNavHost] — never defaulted here)
+ * and the effect-collection side of the counting screen. [language]/
+ * [showStreaks] are plain display data, not services, so they arrive as
+ * simple parameters from the SAME settings state the NavHost already
+ * collects — this screen no longer instantiates its own second
+ * `SettingsViewModel` to re-derive values the caller already has.
+ */
 @Composable
 fun TasbihScreen(
     viewModel: TasbihViewModel,
     hapticEngine: HapticEngine,
+    language: String = "en",
+    showStreaks: Boolean = true,
     nextWirdItemName: String? = null,
     onContinueWird: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
-    settingsViewModel: SettingsViewModel = hiltViewModel()
+    modifier: Modifier = Modifier
 ) {
-    val state by viewModel.state.collectAsState()
-    val settingsState by settingsViewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var showCelebration by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Collect transient side-effects
-    LaunchedEffect(viewModel.effect) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is TasbihSideEffect.PlayHaptic -> {
-                    when (effect.type) {
-                        HapticType.TICK  -> hapticEngine.playIncrementTick()
-                        HapticType.CLICK -> hapticEngine.playMilestoneClick()
-                        HapticType.THUD  -> hapticEngine.playCompletionThud()
+    LaunchedEffect(viewModel.effect, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is TasbihSideEffect.PlayHaptic -> {
+                        when (effect.type) {
+                            HapticType.TICK  -> hapticEngine.playIncrementTick()
+                            HapticType.CLICK -> hapticEngine.playMilestoneClick()
+                            HapticType.THUD  -> hapticEngine.playCompletionThud()
+                        }
                     }
+                    is TasbihSideEffect.ShowCelebration -> showCelebration = true
+                    is TasbihSideEffect.ShowToast -> {}
+                    is TasbihSideEffect.StartPocketModeService -> {}
+                    is TasbihSideEffect.StopPocketModeService -> {}
                 }
-                is TasbihSideEffect.ShowCelebration -> showCelebration = true
-                is TasbihSideEffect.ShowToast -> {}
-                is TasbihSideEffect.StartPocketModeService -> {}
-                is TasbihSideEffect.StopPocketModeService -> {}
             }
         }
     }
@@ -77,8 +89,8 @@ fun TasbihScreen(
     TasbihContent(
         state = state,
         showCelebration = showCelebration,
-        showStreaks = settingsState.showStreaks,
-        language = settingsState.language,
+        showStreaks = showStreaks,
+        language = language,
         onCelebrationEnd = { showCelebration = false },
         onIncrement = { viewModel.processIntent(TasbihIntent.Increment) },
         onDecrement = { viewModel.processIntent(TasbihIntent.Decrement) },
@@ -89,6 +101,11 @@ fun TasbihScreen(
     )
 }
 
+/**
+ * Pure, stateless rendering (SRP): a function of [state] and plain display
+ * params only, emitting every intent via a trailing lambda. No ViewModel
+ * reference, no DI — fully previewable/testable in isolation.
+ */
 @Composable
 fun TasbihContent(
     state: TasbihState,
@@ -104,8 +121,6 @@ fun TasbihContent(
     language: String = "en"
 ) {
     val strings = LocalStrings.current
-    // When a Tasbīḥ-after-Salah sequence is active, the header tracks the current
-    // step; otherwise it shows the single selected dhikr.
     val activeStep = state.sequence?.steps?.getOrNull(state.stepIndex)
     val displayArabic = activeStep?.arabicText ?: state.currentDhikr.arabicText
     val displayName = activeStep?.displayName ?: state.currentDhikr.displayName
@@ -114,9 +129,6 @@ fun TasbihContent(
         modifier = modifier
             .fillMaxSize()
             .background(SabeelColors.Background)
-            // Counting is intentionally confined to the circle (below) — a single
-            // focal point. Eyes-free counting is served by Pocket Mode's volume
-            // keys, so the whole screen no longer acts as a tap target.
     ) {
         Column(
             modifier = Modifier
@@ -124,7 +136,6 @@ fun TasbihContent(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ── Top Bar ─────────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -132,10 +143,8 @@ fun TasbihContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Spacer to preserve top-bar layout (back button removed — bottom nav handles navigation)
                 Spacer(Modifier.size(48.dp))
 
-                // Smart Flow indicator
                 AnimatedVisibility(
                     visible = state.isSmartFlowEnabled,
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMedium)),
@@ -159,9 +168,6 @@ fun TasbihContent(
                     }
                 }
 
-                // Consistency — calm icon, no fire/loss framing. Hidden at zero so
-                // a first-timer is never greeted by a cold "0", and hidden entirely
-                // when the worshipper opts for pure ibadah (Settings › Show Streaks).
                 if (showStreaks && state.currentStreak > 0) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -191,7 +197,6 @@ fun TasbihContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // ── Sequence progress (post-Salah only) ──────────────────────────
             state.sequence?.let { seq ->
                 SequenceTracker(
                     stepIndex = state.stepIndex,
@@ -202,7 +207,6 @@ fun TasbihContent(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // ── Arabic Dhikr Name ────────────────────────────────────────────
             TajweedText(
                 arabicText = displayArabic,
                 displayName = displayName.get(language),
@@ -211,8 +215,6 @@ fun TasbihContent(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // ── Circle Tap Button ────────────────────────────────────────────
-            // The sole counting affordance: tap to count, long press to reset.
             TasbihCircle(
                 count = state.count,
                 target = state.target,
@@ -223,7 +225,6 @@ fun TasbihContent(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // ── Spiritual Reward Card ────────────────────────────────────────
             SpiritualRewardCard(
                 reward = state.currentDhikr.spiritualReward.get(language),
                 modifier = Modifier.fillMaxWidth()
@@ -231,14 +232,11 @@ fun TasbihContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Bottom Bar ───────────────────────────────────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
             ) {
-                // Decrement pill — hit area ≥48dp (WCAG/Material floor) for
-                // eyes-free use; the visible pill stays small via inner padding.
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
@@ -273,20 +271,18 @@ fun TasbihContent(
             }
         }
 
-        // ── Completion rest — calm, dismissible (replaces the 1200ms flash) ───
         if (showCelebration) {
             CompletionRest(
                 dhikrName = state.currentDhikr.displayName.get(language),
-                // NOTE: completion always reports the whole dhikr/sequence, not a step.
                 total = state.target,
                 language = language,
-                onContinue = { 
+                onContinue = {
                     if (onContinueWird != null) {
                         onContinueWird()
                     } else {
-                        onReset() 
+                        onReset()
                     }
-                    onCelebrationEnd() 
+                    onCelebrationEnd()
                 },
                 onFinish = onCelebrationEnd,
                 nextWirdItemName = nextWirdItemName
