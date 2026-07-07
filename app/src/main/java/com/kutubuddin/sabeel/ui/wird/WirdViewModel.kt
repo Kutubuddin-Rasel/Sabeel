@@ -4,31 +4,48 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kutubuddin.sabeel.domain.model.WirdProgress
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
+import com.kutubuddin.sabeel.domain.usecase.MarkWirdGoalHintSeen
 import com.kutubuddin.sabeel.domain.usecase.ObserveWirdProgress
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
+/** Singular, immutable UI state for [WirdScreen] — today's progress + display language. */
+data class WirdUiState(
+    val progress: WirdProgress = WirdProgress(emptyList()),
+    val language: String = "en"
+)
+
+/**
+ * SRP: exposes exactly one [StateFlow] of one immutable [WirdUiState] — no
+ * parallel StateFlows for the screen to desync on.
+ * DIP: depends only on the [ObserveWirdProgress] use case and the
+ * [SettingsRepository] interface, never a concrete DAO/DataStore.
+ */
 @HiltViewModel
 class WirdViewModel @Inject constructor(
     observeWirdProgress: ObserveWirdProgress,
-    settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository,
+    private val markWirdGoalHintSeen: MarkWirdGoalHintSeen
 ) : ViewModel() {
 
     private val today = LocalDate.now().toString()
 
-    val state: StateFlow<WirdProgress> = observeWirdProgress(today).stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = WirdProgress(emptyList())
-    )
+    val state: StateFlow<WirdUiState> = combine(
+        observeWirdProgress(today),
+        settingsRepository.language
+    ) { progress, language -> WirdUiState(progress, language) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = WirdUiState()
+        )
 
-    val language: StateFlow<String> = settingsRepository.language.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = "en"
-    )
+    /** Fired by this screen's persistent Edit-Wird entry point. */
+    fun onWirdEditEntryUsed() = viewModelScope.launch { markWirdGoalHintSeen() }
 }
