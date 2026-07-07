@@ -36,6 +36,7 @@ fun FluidWaveBackground(
     // Pre-allocate paths to avoid allocations during draw phase
     val androidPath = remember { AndroidPath() }
     val composePath = remember { androidPath.asComposePath() }
+    val lastProgressRef = remember { floatArrayOf(-1f) }
 
     // Animate the morph progress based on counting progress
     val animProgress = remember { Animatable(0f) }
@@ -104,8 +105,11 @@ fun FluidWaveBackground(
                         radius = (minDim * 0.75f) / 2f * pulse
                     )
                 } else {
-                    // Update the pre-allocated path with the morph progress
-                    morph.toPath(progress = progress, path = androidPath)
+                    // Only update path if the progress actually changed (or on first frame)
+                    if (progress != lastProgressRef[0]) {
+                        morph.toPath(progress = progress, path = androidPath)
+                        lastProgressRef[0] = progress
+                    }
 
                     // Center and scale the shape. Normal bounds are -1 to 1 (diameter = 2)
                     val baseScale = (minDim * 0.75f) / 2f
