@@ -114,19 +114,7 @@ val Typography = Typography(
     )
 )
 
-/**
- * Dynamically scales the entire typography set for languages with smaller
- * optical sizes (like Urdu or Bengali) to maintain consistent readability.
- */
-fun getScaledTypography(languageCode: String): Typography {
-    val scale = when (languageCode) {
-        "ur" -> 2
-        "bn" -> 1
-        else -> 0
-    }
-    
-    if (scale == 0) return Typography
-
+private fun scaleTypography(scale: Int): Typography {
     return Typography(
         displayLarge = Typography.displayLarge.copy(
             fontSize = (Typography.displayLarge.fontSize.value + scale).sp,
@@ -169,6 +157,22 @@ fun getScaledTypography(languageCode: String): Typography {
             lineHeight = (Typography.labelMedium.lineHeight.value + scale).sp
         )
     )
+}
+
+private val TypographyUrdu = scaleTypography(2)
+private val TypographyBengali = scaleTypography(1)
+
+/**
+ * Dynamically scales the entire typography set for languages with smaller
+ * optical sizes (like Urdu or Bengali) to maintain consistent readability.
+ * Uses cached instances to prevent cascading recomposition.
+ */
+fun getScaledTypography(languageCode: String): Typography {
+    return when (languageCode) {
+        "ur" -> TypographyUrdu
+        "bn" -> TypographyBengali
+        else -> Typography
+    }
 }
 
 /**
