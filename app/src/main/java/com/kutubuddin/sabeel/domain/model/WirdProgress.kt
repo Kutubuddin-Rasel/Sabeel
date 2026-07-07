@@ -21,6 +21,8 @@ data class WirdProgress(val items: List<WirdProgressItem>) {
     /** Sum-based bar fill: each item contributes at most its target. */
     val countedSum: Int get() = items.sumOf { minOf(it.countToday, it.target) }
     val targetSum: Int get() = items.sumOf { it.target }
+    
+    val nextIncompleteItem: WirdProgressItem? get() = items.firstOrNull { !it.isComplete }
 }
 
 /**

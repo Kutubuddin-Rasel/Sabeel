@@ -24,6 +24,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val KEY_AUTO_RESET       = booleanPreferencesKey("settings_auto_reset")
         val KEY_SOUND_ENABLED    = booleanPreferencesKey("settings_sound")
         val KEY_SHOW_STREAKS     = booleanPreferencesKey("settings_show_streaks")
+        val KEY_AUTO_PROGRESS_WIRD = booleanPreferencesKey("settings_auto_progress_wird")
     }
 
     override val theme: Flow<String> = dataStore.data.map { it[KEY_THEME] ?: "dark" }
@@ -33,6 +34,7 @@ class SettingsRepositoryImpl @Inject constructor(
     override val autoReset: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_RESET] ?: false }
     override val soundEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SOUND_ENABLED] ?: false }
     override val showStreaks: Flow<Boolean> = dataStore.data.map { it[KEY_SHOW_STREAKS] ?: true }
+    override val autoProgressWird: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_PROGRESS_WIRD] ?: true }
 
     override suspend fun setTheme(theme: String) = dataStore.edit { it[KEY_THEME] = theme }.let {}
     override suspend fun setLanguage(lang: String) = dataStore.edit { it[KEY_LANGUAGE] = lang }.let {}
@@ -41,4 +43,5 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setAutoReset(on: Boolean) = dataStore.edit { it[KEY_AUTO_RESET] = on }.let {}
     override suspend fun setSoundEnabled(on: Boolean) = dataStore.edit { it[KEY_SOUND_ENABLED] = on }.let {}
     override suspend fun setShowStreaks(on: Boolean) = dataStore.edit { it[KEY_SHOW_STREAKS] = on }.let {}
+    override suspend fun setAutoProgressWird(on: Boolean) = dataStore.edit { it[KEY_AUTO_PROGRESS_WIRD] = on }.let {}
 }
