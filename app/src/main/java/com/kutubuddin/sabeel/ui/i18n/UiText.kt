@@ -97,6 +97,8 @@ object UiText {
     val settingsAutoResetDesc = LocalizedText(en = "Counter resets when target is hit", ur = "ہدف پر پہنچنے پر شمار خودکار ری سیٹ ہو جاتا ہے", bn = "লক্ষ্যে পৌঁছালে গণনা রিসেট হয়")
     val settingsShowStreaks = LocalizedText(en = "Show Streaks", ur = "تسلسل دکھائیں", bn = "ধারাবাহিকতা দেখান")
     val settingsShowStreaksDesc = LocalizedText(en = "Hide consistency counts for pure ibadah", ur = "خالص عبادت کے لیے تسلسل چھپائیں", bn = "খাঁটি ইবাদতের জন্য ধারাবাহিকতা লুকান")
+    val settingsAutoProgressWird = LocalizedText(en = "Wird Auto-Progression", ur = "وِرد خودکار ترقی", bn = "ওয়ির্দ স্বয়ংক্রিয় অগ্রগতি")
+    val settingsAutoProgressWirdDesc = LocalizedText(en = "Automatically transition to the next Dhikr in your daily Wird", ur = "اپنے روزمرہ کے وِرد میں خود بخود اگلے ذکر پر جائیں", bn = "স্বয়ংক্রিয়ভাবে আপনার দৈনন্দিন ওয়ির্দের পরবর্তী যিকিরে যান")
     val settingsFont = LocalizedText(en = "Font", ur = "فونٹ", bn = "ফন্ট")
     val settingsVersion = LocalizedText(en = "Version", ur = "ورژن", bn = "সংস্করণ")
 
@@ -186,6 +188,8 @@ object UiText {
         settingsAutoResetDesc = settingsAutoResetDesc.get(lang),
         settingsShowStreaks = settingsShowStreaks.get(lang),
         settingsShowStreaksDesc = settingsShowStreaksDesc.get(lang),
+        settingsAutoProgressWird = settingsAutoProgressWird.get(lang),
+        settingsAutoProgressWirdDesc = settingsAutoProgressWirdDesc.get(lang),
         settingsFont = settingsFont.get(lang),
         settingsVersion = settingsVersion.get(lang),
         dhikrSearchPlaceholder = dhikrSearchPlaceholder.get(lang),

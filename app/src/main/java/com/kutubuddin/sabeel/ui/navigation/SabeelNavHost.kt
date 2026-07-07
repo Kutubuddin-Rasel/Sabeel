@@ -13,11 +13,15 @@ import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.dhikr.DhikrLibraryScreen
 import com.kutubuddin.sabeel.ui.home.HomeScreen
 import com.kutubuddin.sabeel.ui.settings.SettingsScreen
+import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
 import com.kutubuddin.sabeel.ui.tasbih.TasbihScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.wird.WirdEditScreen
 import com.kutubuddin.sabeel.ui.wird.WirdScreen
+import com.kutubuddin.sabeel.ui.wird.WirdViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 /**
  * Root navigation graph — 4-tab bottom-nav architecture.
@@ -37,6 +41,12 @@ fun SabeelNavHost(
 
     // Activity-scoped — shared between Count tab and Dhikr tab's "Count Now" action
     val tasbihViewModel: TasbihViewModel = hiltViewModel()
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val wirdViewModel: WirdViewModel = hiltViewModel()
+
+    val settingsState by settingsViewModel.state.collectAsState()
+    val wirdState by wirdViewModel.state.collectAsState()
+    val language = settingsState.language
 
     Scaffold(
         modifier = modifier,
@@ -70,9 +80,20 @@ fun SabeelNavHost(
             }
 
             composable(SabeelTab.Count.route) {
+                // If Auto-Progress is enabled, resolve the next incomplete item.
+                val nextWirdItem = if (settingsState.autoProgressWird) wirdState.nextIncompleteItem else null
+
                 TasbihScreen(
                     viewModel = tasbihViewModel,
-                    hapticEngine = hapticEngine
+                    hapticEngine = hapticEngine,
+                    nextWirdItemName = nextWirdItem?.displayName?.get(language),
+                    onContinueWird = nextWirdItem?.let { item ->
+                        {
+                            tasbihViewModel.processIntent(
+                                com.kutubuddin.sabeel.ui.tasbih.TasbihIntent.SetDhikr(item.dhikrKey, item.target)
+                            )
+                        }
+                    }
                 )
             }
 
