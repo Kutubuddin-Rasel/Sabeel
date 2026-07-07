@@ -86,6 +86,27 @@ fun TasbihCircle(
         )
     }
 
+    // Pre-allocate brushes to avoid object allocation during animation draw phase
+    val sweepGradient = remember(arcStartColor, arcEndColor) {
+        Brush.sweepGradient(
+            colorStops = arrayOf(
+                0.0f to arcStartColor,
+                1.0f to arcEndColor
+            )
+        )
+    }
+
+    val circleEdgeColor = SabeelColors.CircleEdge
+    val circleCenterColor = SabeelColors.CircleCenter
+    val radialGradient = remember(circleEdgeColor, circleCenterColor) {
+        Brush.radialGradient(
+            colors = listOf(
+                circleEdgeColor,  // Center — slightly lighter
+                circleCenterColor  // Edge — deepest black
+            )
+        )
+    }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -151,12 +172,7 @@ fun TasbihCircle(
             // milestone completion flash so it stays meaningful.
             if (sweepAngle.value > 0f) {
                 drawArc(
-                    brush = Brush.sweepGradient(
-                        colorStops = arrayOf(
-                            0.0f to arcStartColor,
-                            1.0f to arcEndColor
-                        )
-                    ),
+                    brush = sweepGradient,
                     startAngle = -90f,
                     sweepAngle = sweepAngle.value,
                     useCenter = false,
@@ -173,14 +189,7 @@ fun TasbihCircle(
             modifier = Modifier
                 .size(diameter)
                 .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            SabeelColors.CircleEdge,  // Center — slightly lighter
-                            SabeelColors.CircleCenter  // Edge — deepest black
-                        )
-                    )
-                )
+                .background(radialGradient)
                 .border(
                     width = 0.5.dp,
                     color = SabeelColors.CircleBorder,
