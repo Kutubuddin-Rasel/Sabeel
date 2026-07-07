@@ -52,6 +52,7 @@ fun CompletionRest(
     total: Int,
     onContinue: () -> Unit,
     onFinish: () -> Unit,
+    nextWirdItemName: String? = null,
     modifier: Modifier = Modifier,
     language: String = "en"
 ) {
@@ -97,6 +98,15 @@ fun CompletionRest(
 
             Spacer(Modifier.height(12.dp))
 
+            if (nextWirdItemName != null) {
+                Text(
+                    text = "${strings.countContinue}: $nextWirdItemName",
+                    fontSize = 13.sp,
+                    color = SabeelColors.SmartFlowGold,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -116,7 +126,8 @@ fun CompletionRest(
                     colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(strings.countContinue, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SabeelColors.Background)
+                    val continueText = if (nextWirdItemName != null) "${strings.countContinue} →" else strings.countContinue
+                    Text(continueText, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SabeelColors.Background)
                 }
             }
         }

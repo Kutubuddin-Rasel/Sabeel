@@ -46,6 +46,8 @@ import com.kutubuddin.sabeel.ui.theme.UthmanicHafsFontFamily
 fun TasbihScreen(
     viewModel: TasbihViewModel,
     hapticEngine: HapticEngine,
+    nextWirdItemName: String? = null,
+    onContinueWird: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -81,6 +83,8 @@ fun TasbihScreen(
         onIncrement = { viewModel.processIntent(TasbihIntent.Increment) },
         onDecrement = { viewModel.processIntent(TasbihIntent.Decrement) },
         onReset = { viewModel.processIntent(TasbihIntent.Reset) },
+        nextWirdItemName = nextWirdItemName,
+        onContinueWird = onContinueWird,
         modifier = modifier
     )
 }
@@ -93,6 +97,8 @@ fun TasbihContent(
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onReset: () -> Unit,
+    nextWirdItemName: String? = null,
+    onContinueWird: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     showStreaks: Boolean = true,
     language: String = "en"
@@ -274,8 +280,16 @@ fun TasbihContent(
                 // NOTE: completion always reports the whole dhikr/sequence, not a step.
                 total = state.target,
                 language = language,
-                onContinue = { onReset(); onCelebrationEnd() },
-                onFinish = onCelebrationEnd
+                onContinue = { 
+                    if (onContinueWird != null) {
+                        onContinueWird()
+                    } else {
+                        onReset() 
+                    }
+                    onCelebrationEnd() 
+                },
+                onFinish = onCelebrationEnd,
+                nextWirdItemName = nextWirdItemName
             )
         }
     }
