@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,13 +41,42 @@ import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.theme.arabicStyle
 
+/**
+ * Route-level wrapper (SRP/DIP): sole owner of [viewModel] injection and state
+ * collection, and the only place that knows [tasbihViewModel] exists — the
+ * cross-screen "Count Now" wiring is resolved here, not inside the reusable
+ * rendering below.
+ */
 @Composable
 fun DhikrLibraryScreen(
     tasbihViewModel: TasbihViewModel,
     onCountNow: () -> Unit,
     viewModel: DhikrViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    DhikrLibraryContent(
+        state = state,
+        onSearch = viewModel::onSearch,
+        onToggleExpand = viewModel::onToggleExpand,
+        onCountNow = { key ->
+            tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key))
+            onCountNow()
+        }
+    )
+}
+
+/**
+ * Pure, stateless catalog rendering (SRP): a function of [state] only,
+ * emitting intent via the trailing lambdas. Has no knowledge of
+ * [TasbihViewModel] or any other screen's ViewModel type.
+ */
+@Composable
+fun DhikrLibraryContent(
+    state: DhikrLibraryState,
+    onSearch: (String) -> Unit,
+    onToggleExpand: (String) -> Unit,
+    onCountNow: (key: String) -> Unit
+) {
     val strings = LocalStrings.current
 
     Column(
@@ -54,16 +84,14 @@ fun DhikrLibraryScreen(
             .fillMaxSize()
             .background(SabeelColors.Background)
     ) {
-        // ── Search bar ────────────────────────────────────────────────────────
         SearchBar(
             query = state.searchQuery,
-            onQueryChange = viewModel::onSearch,
+            onQueryChange = onSearch,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         )
 
-        // ── Catalog list ──────────────────────────────────────────────────────
         if (state.categorized.isEmpty()) {
             EmptySearchResult(query = state.searchQuery)
         } else {
@@ -72,10 +100,6 @@ fun DhikrLibraryScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 state.categorized.forEach { (category, items) ->
-                    // Sticky category header. NOTE: LazyColumn shares ONE key
-                    // namespace across headers AND items, so a bare category.name
-                    // ("TAHLIL") collides with a dhikr key ("TAHLIL") and crashes.
-                    // Prefix to keep the two namespaces disjoint.
                     stickyHeader(key = "header_${category.name}") {
                         CategoryHeader(strings.categoryLabel(category))
                     }
@@ -84,13 +108,8 @@ fun DhikrLibraryScreen(
                             item = item,
                             language = state.language,
                             isExpanded = state.expandedKey == item.key,
-                            onToggle = { viewModel.onToggleExpand(item.key) },
-                            onCountNow = {
-                                // Any catalog key is countable — the ViewModel resolves
-                                // it against the full catalog, no enum coercion needed.
-                                tasbihViewModel.processIntent(TasbihIntent.SetDhikr(item.key))
-                                onCountNow()
-                            }
+                            onToggle = { onToggleExpand(item.key) },
+                            onCountNow = { onCountNow(item.key) }
                         )
                     }
                 }
@@ -155,7 +174,7 @@ private fun DhikrCard(
     val strings = LocalStrings.current
     val layoutDirection = LocalLayoutDirection.current
     val borderColor = if (isExpanded) SabeelColors.AccentTeal.copy(alpha = 0.6f)
-                      else SabeelColors.BorderIdle
+    else SabeelColors.BorderIdle
 
     Column(
         modifier = Modifier
@@ -165,18 +184,11 @@ private fun DhikrCard(
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(onClick = onToggle)
     ) {
-        // ── Collapsed card ────────────────────────────────────────────────────
-        // Arabic spans the full width on top; the English name and target badge
-        // share the bottom baseline — no diagonal dead space.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
-            // Arabic — let the engine clip on a grapheme boundary (never .take(40),
-            // which cuts mid-ligature), RTL-aligned in both states.
-            // One Arabic source of truth: truncates to a single line collapsed,
-            // expands to the full (multi-line) text on tap — no duplicate below.
             Text(
                 text = item.arabicText,
                 maxLines = if (isExpanded) Int.MAX_VALUE else 1,
@@ -198,7 +210,6 @@ private fun DhikrCard(
                     color = SabeelColors.TextPrimary,
                     fontWeight = FontWeight.Medium
                 )
-                // Target badge
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
@@ -210,7 +221,6 @@ private fun DhikrCard(
             }
         }
 
-        // ── Expanded details ──────────────────────────────────────────────────
         AnimatedVisibility(
             visible = isExpanded,
             enter = expandVertically(),
@@ -224,15 +234,10 @@ private fun DhikrCard(
             ) {
                 HorizontalDivider(color = SabeelColors.Divider)
 
-                // (Arabic is rendered once in the collapsed header, which expands
-                // to full multi-line text above — no duplicate here.)
-
-                // Transliteration
                 item.transliteration?.let {
                     Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary, fontStyle = FontStyle.Italic)
                 }
 
-                // Meaning in selected language
                 val meaning = when (language) {
                     "ur" -> item.meaning.ur.ifBlank { item.meaning.en }
                     "bn" -> item.meaning.bn.ifBlank { item.meaning.en }
@@ -240,7 +245,6 @@ private fun DhikrCard(
                 }
                 Text(meaning, fontSize = 13.sp, color = SabeelColors.TextPrimary)
 
-                // Spiritual reward — localized to the selected language.
                 val reward = item.spiritualReward.get(language)
                 if (reward.isNotBlank()) {
                     Row(
@@ -264,7 +268,6 @@ private fun DhikrCard(
                     }
                 }
 
-                // Hadith reference — the trust anchor, so it must be legible.
                 if (item.hadithRef.isNotBlank()) {
                     Text(
                         text = strings.dhikrRef.format(localizeHadithRef(item.hadithRef, language)),
@@ -275,15 +278,12 @@ private fun DhikrCard(
                 }
 
                 Spacer(Modifier.height(4.dp))
-                // Count Now button
                 Button(
                     onClick = onCountNow,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    // The progress arrow points the way the language reads:
-                    // → for LTR, ← for RTL (Urdu).
                     val arrow = if (layoutDirection == LayoutDirection.Rtl) "←" else "→"
                     Text(
                         text = "${strings.dhikrCountNow}  $arrow",
