@@ -87,6 +87,8 @@ data class UiStrings(
     val settingsAutoResetDesc: String,
     val settingsShowStreaks: String,
     val settingsShowStreaksDesc: String,
+    val settingsAutoProgressWird: String,
+    val settingsAutoProgressWirdDesc: String,
     val settingsFont: String,
     val settingsVersion: String,
     // ── Dhikr Library ──
