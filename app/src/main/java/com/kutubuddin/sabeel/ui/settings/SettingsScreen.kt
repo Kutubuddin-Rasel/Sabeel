@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,11 +19,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
+/** Route-level wrapper (SRP/DIP): sole owner of [viewModel] injection and state collection. */
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    SettingsContent(state = state, onIntent = viewModel::processIntent)
+}
+
+/**
+ * Pure, stateless settings rendering (SRP): a function of [state] only,
+ * emitting every change via [onIntent]. No ViewModel reference.
+ */
+@Composable
+fun SettingsContent(
+    state: SettingsState,
+    onIntent: (SettingsIntent) -> Unit
+) {
     val strings = LocalStrings.current
 
     LazyColumn(
@@ -39,7 +53,7 @@ fun SettingsScreen(
                 label = strings.settingsTheme,
                 options = listOf("dark" to strings.settingsThemeDark, "light" to strings.settingsThemeLight),
                 selected = state.theme,
-                onSelect = { viewModel.processIntent(SettingsIntent.SetTheme(it)) }
+                onSelect = { onIntent(SettingsIntent.SetTheme(it)) }
             )
         }
 
@@ -47,13 +61,11 @@ fun SettingsScreen(
         item { SettingsHeader(strings.settingsLanguageText) }
 
         item {
-            // Language endonyms stay in their own script regardless of app
-            // language — that is how a user recognises their own language.
             SettingsSegmentRow(
                 label = strings.settingsLanguage,
                 options = listOf("en" to "English", "ur" to "اردو", "bn" to "বাংলা"),
                 selected = state.language,
-                onSelect = { viewModel.processIntent(SettingsIntent.SetLanguage(it)) }
+                onSelect = { onIntent(SettingsIntent.SetLanguage(it)) }
             )
         }
         item {
@@ -61,7 +73,7 @@ fun SettingsScreen(
                 label = strings.settingsTranslit,
                 description = strings.settingsTranslitDesc,
                 checked = state.translitEnabled,
-                onCheckedChange = { viewModel.processIntent(SettingsIntent.SetTranslit(it)) }
+                onCheckedChange = { onIntent(SettingsIntent.SetTranslit(it)) }
             )
         }
 
@@ -78,7 +90,7 @@ fun SettingsScreen(
                     "strong" to strings.settingsHapticStrong
                 ),
                 selected = state.hapticsLevel,
-                onSelect = { viewModel.processIntent(SettingsIntent.SetHaptics(it)) }
+                onSelect = { onIntent(SettingsIntent.SetHaptics(it)) }
             )
         }
         item {
@@ -86,7 +98,7 @@ fun SettingsScreen(
                 label = strings.settingsSound,
                 description = strings.settingsSoundDesc,
                 checked = state.soundEnabled,
-                onCheckedChange = { viewModel.processIntent(SettingsIntent.SetSoundOn(it)) }
+                onCheckedChange = { onIntent(SettingsIntent.SetSoundOn(it)) }
             )
         }
         item {
@@ -94,7 +106,7 @@ fun SettingsScreen(
                 label = strings.settingsAutoReset,
                 description = strings.settingsAutoResetDesc,
                 checked = state.autoReset,
-                onCheckedChange = { viewModel.processIntent(SettingsIntent.SetAutoReset(it)) }
+                onCheckedChange = { onIntent(SettingsIntent.SetAutoReset(it)) }
             )
         }
         item {
@@ -102,7 +114,7 @@ fun SettingsScreen(
                 label = strings.settingsShowStreaks,
                 description = strings.settingsShowStreaksDesc,
                 checked = state.showStreaks,
-                onCheckedChange = { viewModel.processIntent(SettingsIntent.SetShowStreaks(it)) }
+                onCheckedChange = { onIntent(SettingsIntent.SetShowStreaks(it)) }
             )
         }
         item {
@@ -110,7 +122,15 @@ fun SettingsScreen(
                 label = strings.settingsAutoProgressWird,
                 description = strings.settingsAutoProgressWirdDesc,
                 checked = state.autoProgressWird,
-                onCheckedChange = { viewModel.processIntent(SettingsIntent.SetAutoProgressWird(it)) }
+                onCheckedChange = { onIntent(SettingsIntent.SetAutoProgressWird(it)) }
+            )
+        }
+        item {
+            SettingsToggleRow(
+                label = strings.settingsSmartFlow,
+                description = strings.settingsSmartFlowDesc,
+                checked = state.isSmartFlowEnabled,
+                onCheckedChange = { onIntent(SettingsIntent.SetSmartFlowEnabled(it)) }
             )
         }
 

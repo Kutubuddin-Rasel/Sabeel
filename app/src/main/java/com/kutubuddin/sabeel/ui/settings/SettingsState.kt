@@ -8,7 +8,8 @@ data class SettingsState(
     val autoReset: Boolean = false,
     val soundEnabled: Boolean = false,
     val showStreaks: Boolean = true,
-    val autoProgressWird: Boolean = true
+    val autoProgressWird: Boolean = true,
+    val isSmartFlowEnabled: Boolean = true
 )
 
 sealed class SettingsIntent {
@@ -20,4 +21,5 @@ sealed class SettingsIntent {
     data class SetSoundOn(val on: Boolean) : SettingsIntent()
     data class SetShowStreaks(val on: Boolean) : SettingsIntent()
     data class SetAutoProgressWird(val on: Boolean) : SettingsIntent()
+    data class SetSmartFlowEnabled(val on: Boolean) : SettingsIntent()
 }

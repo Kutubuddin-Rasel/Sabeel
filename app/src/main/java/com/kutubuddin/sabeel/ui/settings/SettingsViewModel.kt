@@ -20,8 +20,8 @@ class SettingsViewModel @Inject constructor(
         combine(repository.theme, repository.language, repository.hapticsLevel) {
             theme, lang, haptics -> Triple(theme, lang, haptics)
         },
-        combine(repository.translitEnabled, repository.autoReset, repository.soundEnabled, repository.showStreaks, repository.autoProgressWird) {
-            translit, autoReset, sound, showStreaks, autoProgressWird -> listOf<Any>(translit, autoReset, sound, showStreaks, autoProgressWird)
+        combine(repository.translitEnabled, repository.autoReset, repository.soundEnabled, repository.showStreaks, repository.autoProgressWird, repository.isSmartFlowEnabled) {
+            args: Array<Boolean> -> args.toList()
         }
     ) { (theme, lang, haptics), extras ->
         SettingsState(
@@ -32,7 +32,8 @@ class SettingsViewModel @Inject constructor(
             autoReset       = extras[1] as Boolean,
             soundEnabled    = extras[2] as Boolean,
             showStreaks     = extras[3] as Boolean,
-            autoProgressWird = extras[4] as Boolean
+            autoProgressWird = extras[4] as Boolean,
+            isSmartFlowEnabled = extras[5] as Boolean
         )
     }.stateIn(
         scope = viewModelScope,
@@ -50,6 +51,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.SetSoundOn  -> repository.setSoundEnabled(intent.on)
             is SettingsIntent.SetShowStreaks -> repository.setShowStreaks(intent.on)
             is SettingsIntent.SetAutoProgressWird -> repository.setAutoProgressWird(intent.on)
+            is SettingsIntent.SetSmartFlowEnabled -> repository.setSmartFlowEnabled(intent.on)
         }
     }
 }
