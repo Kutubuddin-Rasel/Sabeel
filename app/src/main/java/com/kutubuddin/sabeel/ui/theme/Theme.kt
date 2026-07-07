@@ -7,8 +7,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import android.app.Activity
+import androidx.core.view.WindowCompat
 
 /**
  * "Sakīnah Night" — the real Sabeel scheme, built from [SabeelColors].
@@ -57,10 +61,19 @@ fun SabeelTheme(
     language: String = "en",
     content: @Composable () -> Unit
 ) {
-    // No dynamicColor: the brand identity is fixed, never wallpaper-tinted.
     val colorScheme = if (darkTheme) SakinahDarkScheme else SakinahLightScheme
     val tokens = if (darkTheme) DarkSabeelColors else LightSabeelColors
     val typography = getScaledTypography(language)
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
 
     CompositionLocalProvider(
         LocalAbsoluteTonalElevation provides 0.dp,
