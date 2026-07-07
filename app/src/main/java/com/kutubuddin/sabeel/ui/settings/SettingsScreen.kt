@@ -105,6 +105,14 @@ fun SettingsScreen(
                 onCheckedChange = { viewModel.processIntent(SettingsIntent.SetShowStreaks(it)) }
             )
         }
+        item {
+            SettingsToggleRow(
+                label = strings.settingsAutoProgressWird,
+                description = strings.settingsAutoProgressWirdDesc,
+                checked = state.autoProgressWird,
+                onCheckedChange = { viewModel.processIntent(SettingsIntent.SetAutoProgressWird(it)) }
+            )
+        }
 
         item { Spacer(Modifier.height(4.dp)) }
         item { SettingsHeader(strings.settingsAbout) }
