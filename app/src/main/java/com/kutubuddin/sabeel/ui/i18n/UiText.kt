@@ -50,7 +50,21 @@ object UiText {
 
     // ── Daily Wird ──────────────────────────────────
     val wirdTitle = LocalizedText(en = "Today's Wird", ur = "آج کا وِرد", bn = "আজকের ওয়ির্দ")
-    val wirdSetup = LocalizedText(en = "Set up", ur = "ترتیب دیں", bn = "সেট আপ করুন")
+    // NOTE: replaces the old `wirdSetup` ("Set up") now that Home's empty
+    // state is a full self-explanatory card instead of a bare label next to
+    // a separate Edit chip. ur/bn below are my best-effort drafts, not a
+    // native-speaker review — worth a check before shipping, same as any
+    // new string here.
+    val wirdSetupTitle = LocalizedText(
+        en = "Set your daily wird",
+        ur = "اپنا روزانہ وِرد مقرر کریں",
+        bn = "আপনার দৈনিক ওয়ির্দ নির্ধারণ করুন"
+    )
+    val wirdSetupSubtitle = LocalizedText(
+        en = "Choose the dhikr you want to complete each day.",
+        ur = "وہ اذکار منتخب کریں جو آپ روزانہ مکمل کرنا چاہتے ہیں۔",
+        bn = "প্রতিদিন সম্পন্ন করতে চান এমন যিকির নির্বাচন করুন।"
+    )
     val wirdDoneOf = LocalizedText(en = "%1\$s of %2\$s done", ur = "%2\$s میں سے %1\$s مکمل", bn = "%2\$s এর মধ্যে %1\$s সম্পন্ন")
     val wirdEditTitle = LocalizedText(en = "Edit Wird", ur = "وِرد میں ترمیم کریں", bn = "ওয়ির্দ সম্পাদনা করুন")
     val wirdEmpty = LocalizedText(en = "Your wird is empty", ur = "آپ کا وِرد خالی ہے", bn = "আপনার ওয়ির্দ খালি")
@@ -83,6 +97,9 @@ object UiText {
     val countComplete = LocalizedText(en = "%1\$s complete", ur = "%1\$s مکمل", bn = "%1\$s সম্পন্ন")
     val countFinish = LocalizedText(en = "Finish", ur = "ختم", bn = "শেষ")
     val countContinue = LocalizedText(en = "Continue", ur = "جاری رکھیں", bn = "চালিয়ে যান")
+    val countAgain = LocalizedText(en = "Count Again", ur = "دوبارہ شمار کریں", bn = "আবার গণনা করুন")
+    val countDailyGoalCompleted = LocalizedText(en = "Daily Goal Completed", ur = "روزانہ ہدف مکمل", bn = "দৈনিক লক্ষ্য সম্পন্ন")
+    val countAlhamdulillah = LocalizedText(en = "Alhamdulillah", ur = "الحمدللہ", bn = "আলহামদুলিল্লাহ")
     val countStepOf = LocalizedText(en = "Step %1\$s of %2\$s", ur = "مرحلہ %1\$s از %2\$s", bn = "ধাপ %1\$s / %2\$s")
     val countReward = LocalizedText(en = "SPIRITUAL REWARD", ur = "روحانی اجر", bn = "আধ্যাত্মিক সওয়াব")
     val countCircleA11y = LocalizedText(
@@ -166,7 +183,8 @@ object UiText {
         homeDayOne = homeDayOne.get(lang),
         homeDayOther = homeDayOther.get(lang),
         wirdTitle = wirdTitle.get(lang),
-        wirdSetup = wirdSetup.get(lang),
+        wirdSetupTitle = wirdSetupTitle.get(lang),
+        wirdSetupSubtitle = wirdSetupSubtitle.get(lang),
         wirdDoneOf = wirdDoneOf.get(lang),
         wirdEditTitle = wirdEditTitle.get(lang),
         wirdEmpty = wirdEmpty.get(lang),
@@ -188,6 +206,9 @@ object UiText {
         countComplete = countComplete.get(lang),
         countFinish = countFinish.get(lang),
         countContinue = countContinue.get(lang),
+        countAgain = countAgain.get(lang),
+        countDailyGoalCompleted = countDailyGoalCompleted.get(lang),
+        countAlhamdulillah = countAlhamdulillah.get(lang),
         countStepOf = countStepOf.get(lang),
         countReward = countReward.get(lang),
         countCircleA11y = countCircleA11y.get(lang),

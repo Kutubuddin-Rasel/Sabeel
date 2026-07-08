@@ -45,7 +45,8 @@ data class UiStrings(
     val homeDayOther: String, // template: "%1$s days"
     // ── Daily Wird ──
     val wirdTitle: String,
-    val wirdSetup: String,
+    val wirdSetupTitle: String,     // empty-state card title on Home ("Set your daily wird")
+    val wirdSetupSubtitle: String,  // empty-state card subtitle on Home
     val wirdDoneOf: String,   // template: "%1$s of %2$s"
     val wirdEditTitle: String,
     val wirdEmpty: String,
@@ -55,9 +56,9 @@ data class UiStrings(
     val wirdRemove: String,      // a11y: remove from wird
     val wirdTargetA11y: String,  // a11y: target stepper
     val wirdDone: String,        // "Done" action on the Wird Edit top bar
-    val wirdEditCta: String,        // labeled edit-goal chip on Home ("Edit")
-    val wirdGoalHintTitle: String,   // one-time discoverability hint title
-    val wirdGoalHintBody: String,    // one-time discoverability hint body
+    val wirdEditCta: String,        // labeled edit action, now shown only on WirdScreen's top bar
+    val wirdGoalHintTitle: String,   // WirdEditScreen empty-state title
+    val wirdGoalHintBody: String,    // WirdEditScreen empty-state body
     // ── Counting screen ──
     val countSmartFlow: String,
     val countConsistencyA11y: String, // template: "Consistency: %1$s days"
@@ -68,6 +69,9 @@ data class UiStrings(
     val countComplete: String,        // template: "%1$s complete"
     val countFinish: String,
     val countContinue: String,
+    val countAgain: String,
+    val countDailyGoalCompleted: String,
+    val countAlhamdulillah: String,
     val countStepOf: String,          // template: "Step %1$s of %2$s"
     val countReward: String,
     val countCircleA11y: String,      // template: "Count %1$s of %2$s. Tap to count. Long press to reset."
