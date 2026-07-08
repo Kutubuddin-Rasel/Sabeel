@@ -99,7 +99,7 @@ class TasbihViewModel @Inject constructor(
                     is TasbihIntent.Increment -> handleIncrement()
                     is TasbihIntent.Decrement -> handleDecrement()
                     is TasbihIntent.Reset -> handleReset()
-                    is TasbihIntent.SetDhikr -> handleSetDhikr(intent.key, intent.target)
+                    is TasbihIntent.SetDhikr -> handleSetDhikr(intent.key, intent.target, intent.origin)
                     is TasbihIntent.SetSmartFlowEnabled -> handleSetSmartFlowEnabled(intent.enabled)
                     is TasbihIntent.SetSmartFlowVariant -> handleSetSmartFlowVariant(intent.variant)
                     is TasbihIntent.SetPocketModeActive -> handleSetPocketModeActive(intent.active)
@@ -217,9 +217,10 @@ class TasbihViewModel @Inject constructor(
 
     // ─── Settings ─────────────────────────────────────────────────────────────
 
-    private suspend fun handleSetDhikr(key: String, target: Int? = null) {
-        // Reset the sequence cursor so a freshly-selected dhikr starts from step 1.
-        _state.update { it.copy(stepIndex = 0) }
+    private suspend fun handleSetDhikr(key: String, target: Int? = null, origin: SessionOrigin = SessionOrigin.LIBRARY) {
+        // Reset the sequence cursor so a freshly-selected dhikr starts from step 1,
+        // and capture the session origin for context-aware completion UI.
+        _state.update { it.copy(stepIndex = 0, sessionOrigin = origin) }
         repository.setDhikr(key, target)
     }
 

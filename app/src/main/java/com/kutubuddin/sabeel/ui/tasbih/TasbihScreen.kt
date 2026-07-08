@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
+import com.kutubuddin.sabeel.ui.tasbih.components.CompletionContext
 import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
 import com.kutubuddin.sabeel.ui.tasbih.components.SequenceTracker
 import com.kutubuddin.sabeel.ui.tasbih.components.SpiritualRewardCard
@@ -58,8 +59,12 @@ fun TasbihScreen(
     hapticEngine: HapticEngine,
     language: String = "en",
     showStreaks: Boolean = true,
+    isDailyGoalFinished: Boolean = false,
+    isDhikrInDailyGoal: Boolean = false,
     nextWirdItemName: String? = null,
     onContinueWird: (() -> Unit)? = null,
+    onNavigateHome: () -> Unit = {},
+    onNavigateLibrary: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -95,8 +100,12 @@ fun TasbihScreen(
         onIncrement = { viewModel.processIntent(TasbihIntent.Increment) },
         onDecrement = { viewModel.processIntent(TasbihIntent.Decrement) },
         onReset = { viewModel.processIntent(TasbihIntent.Reset) },
+        isDailyGoalFinished = isDailyGoalFinished,
+        isDhikrInDailyGoal = isDhikrInDailyGoal,
         nextWirdItemName = nextWirdItemName,
         onContinueWird = onContinueWird,
+        onNavigateHome = onNavigateHome,
+        onNavigateLibrary = onNavigateLibrary,
         modifier = modifier
     )
 }
@@ -114,8 +123,12 @@ fun TasbihContent(
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onReset: () -> Unit,
+    isDailyGoalFinished: Boolean = false,
+    isDhikrInDailyGoal: Boolean = false,
     nextWirdItemName: String? = null,
     onContinueWird: (() -> Unit)? = null,
+    onNavigateHome: () -> Unit = {},
+    onNavigateLibrary: () -> Unit = {},
     modifier: Modifier = Modifier,
     showStreaks: Boolean = true,
     language: String = "en"
@@ -124,6 +137,9 @@ fun TasbihContent(
     val activeStep = state.sequence?.steps?.getOrNull(state.stepIndex)
     val displayArabic = activeStep?.arabicText ?: state.currentDhikr.arabicText
     val displayName = activeStep?.displayName ?: state.currentDhikr.displayName
+    
+    val currentDhikrKey = state.currentDhikr.key
+    val wasDailyGoalCompleteBeforeSession = remember(currentDhikrKey) { isDailyGoalFinished }
 
     Box(
         modifier = modifier
@@ -272,19 +288,46 @@ fun TasbihContent(
         }
 
         if (showCelebration) {
+            val context = when {
+                state.sessionOrigin == SessionOrigin.DAILY_GOAL && !wasDailyGoalCompleteBeforeSession && isDailyGoalFinished -> CompletionContext.VICTORY
+                state.sessionOrigin == SessionOrigin.DAILY_GOAL && !isDailyGoalFinished -> CompletionContext.FLOW
+                state.sessionOrigin == SessionOrigin.LIBRARY && !wasDailyGoalCompleteBeforeSession && isDailyGoalFinished -> CompletionContext.VICTORY
+                else -> CompletionContext.AD_HOC
+            }
+            
             CompletionRest(
                 dhikrName = state.currentDhikr.displayName.get(language),
                 total = state.target,
+                context = context,
                 language = language,
-                onContinue = {
-                    if (onContinueWird != null) {
-                        onContinueWird()
-                    } else {
-                        onReset()
+                onPrimaryAction = {
+                    when (context) {
+                        CompletionContext.VICTORY -> {
+                            onCelebrationEnd()
+                            onNavigateHome()
+                        }
+                        CompletionContext.AD_HOC -> {
+                            onReset()
+                            onCelebrationEnd()
+                        }
+                        CompletionContext.FLOW -> {
+                            if (onContinueWird != null) {
+                                onContinueWird()
+                            } else {
+                                onReset()
+                            }
+                            onCelebrationEnd()
+                        }
                     }
-                    onCelebrationEnd()
                 },
-                onFinish = onCelebrationEnd,
+                onSecondaryAction = if (context == CompletionContext.VICTORY) null else {
+                    {
+                        onCelebrationEnd()
+                        if (context == CompletionContext.AD_HOC) {
+                            onNavigateLibrary()
+                        }
+                    }
+                },
                 nextWirdItemName = nextWirdItemName
             )
         }
