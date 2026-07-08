@@ -37,11 +37,24 @@ import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.theme.arabicStyle
 
 /**
+ * The context of the current completion, determining the UI state.
+ */
+enum class CompletionContext {
+    /** Doing a daily goal, but more dhikrs remain. */
+    FLOW,
+    /** Completed the final dhikr of the entire daily goal. */
+    VICTORY,
+    /** Doing an ad-hoc dhikr outside of the daily goal. */
+    AD_HOC
+}
+
+/**
  * A calm, dismissible completion state shown when a dhikr target is reached.
  *
- * Replaces the previous 1200ms auto-clearing "flash": worship deserves a pause,
- * not a strobe. The worshipper chooses when to move on — Continue (start a fresh
- * round) or Finish (leave the count and step away).
+ * Adapts its UI based on the [CompletionContext]:
+ * - [CompletionContext.FLOW]: Offers to continue to the next step.
+ * - [CompletionContext.VICTORY]: Celebrates the full daily goal completion.
+ * - [CompletionContext.AD_HOC]: Offers to restart or finish the free counting session.
  *
  * Renders as a full-screen scrim that consumes taps, so the underlying
  * tap-to-count surface never fires while resting here.
@@ -50,8 +63,9 @@ import com.kutubuddin.sabeel.ui.theme.arabicStyle
 fun CompletionRest(
     dhikrName: String,
     total: Int,
-    onContinue: () -> Unit,
-    onFinish: () -> Unit,
+    context: CompletionContext,
+    onPrimaryAction: () -> Unit,
+    onSecondaryAction: (() -> Unit)?,
     nextWirdItemName: String? = null,
     modifier: Modifier = Modifier,
     language: String = "en"
@@ -71,37 +85,56 @@ fun CompletionRest(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(horizontal = 40.dp)
         ) {
+            val iconTint = if (context == CompletionContext.VICTORY) SabeelColors.SmartFlowGold else SabeelColors.AccentTeal
+            val arabicText = if (context == CompletionContext.VICTORY) strings.countAlhamdulillah else "تَمَّ"
+            
             Icon(
                 imageVector = Icons.Outlined.CheckCircle,
                 contentDescription = null,
-                tint = SabeelColors.AccentTeal,
-                modifier = Modifier.size(56.dp)
+                tint = iconTint,
+                modifier = Modifier.size(if (context == CompletionContext.VICTORY) 72.dp else 56.dp)
             )
-            // "Tamma" — completed.
+            
             Text(
-                text = "تَمَّ",
-                color = SabeelColors.AccentTeal,
-                style = arabicStyle.copy(fontSize = 40.sp, lineHeight = 64.sp),
+                text = arabicText,
+                color = iconTint,
+                style = arabicStyle.copy(
+                    fontSize = if (context == CompletionContext.VICTORY) 48.sp else 40.sp, 
+                    lineHeight = if (context == CompletionContext.VICTORY) 72.sp else 64.sp
+                ),
                 textAlign = TextAlign.Center
             )
+            
+            val statusText = if (context == CompletionContext.VICTORY) {
+                strings.countDailyGoalCompleted
+            } else {
+                strings.countComplete.format(total.toLocalizedNumerals(language))
+            }
+            
             Text(
-                text = strings.countComplete.format(total.toLocalizedNumerals(language)),
+                text = statusText,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = SabeelColors.TextPrimary
+                color = SabeelColors.TextPrimary,
+                textAlign = TextAlign.Center
             )
-            Text(
-                text = dhikrName,
-                fontSize = 14.sp,
-                color = SabeelColors.TextSecondary
-            )
+            
+            if (context != CompletionContext.VICTORY) {
+                Text(
+                    text = dhikrName,
+                    fontSize = 14.sp,
+                    color = SabeelColors.TextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 
-            if (nextWirdItemName != null) {
+            if (context == CompletionContext.FLOW && nextWirdItemName != null) {
                 Text(
                     text = "${strings.countContinue}: $nextWirdItemName",
-                    fontSize = 13.sp,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
                     color = SabeelColors.SmartFlowGold,
                     textAlign = TextAlign.Center
                 )
@@ -111,23 +144,34 @@ fun CompletionRest(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedButton(
-                    onClick = onFinish,
-                    modifier = Modifier.weight(1f),
-                    border = BorderStroke(1.dp, SabeelColors.BorderIdle),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SabeelColors.TextSecondary),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(strings.countFinish, fontSize = 14.sp)
+                if (onSecondaryAction != null) {
+                    OutlinedButton(
+                        onClick = onSecondaryAction,
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, SabeelColors.BorderIdle),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = SabeelColors.TextSecondary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        val secondaryText = if (context == CompletionContext.AD_HOC) strings.countFinish else strings.countFinish
+                        Text(secondaryText, fontSize = 14.sp)
+                    }
                 }
+                
+                val primaryColor = if (context == CompletionContext.VICTORY) SabeelColors.SmartFlowGold else SabeelColors.AccentTeal
+                val primaryTextColor = if (context == CompletionContext.VICTORY) SabeelColors.Background else SabeelColors.Background
+                
                 Button(
-                    onClick = onContinue,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
+                    onClick = onPrimaryAction,
+                    modifier = if (onSecondaryAction != null) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    val continueText = if (nextWirdItemName != null) "${strings.countContinue} →" else strings.countContinue
-                    Text(continueText, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SabeelColors.Background)
+                    val primaryText = when (context) {
+                        CompletionContext.VICTORY -> strings.wirdDone
+                        CompletionContext.AD_HOC -> strings.countAgain
+                        CompletionContext.FLOW -> if (nextWirdItemName != null) "${strings.countContinue} →" else strings.countContinue
+                    }
+                    Text(primaryText, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = primaryTextColor)
                 }
             }
         }
