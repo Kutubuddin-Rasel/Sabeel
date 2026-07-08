@@ -21,6 +21,7 @@ import com.kutubuddin.sabeel.ui.dhikr.DhikrLibraryScreen
 import com.kutubuddin.sabeel.ui.home.HomeScreen
 import com.kutubuddin.sabeel.ui.settings.SettingsScreen
 import com.kutubuddin.sabeel.ui.settings.SettingsViewModel
+import com.kutubuddin.sabeel.ui.tasbih.SessionOrigin
 import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
@@ -43,6 +44,10 @@ private object WirdRoutes {
  * [settingsViewModel]'s state is the single source of truth for `language`/
  * `showStreaks` across tabs — [TasbihScreen] now receives them as plain
  * params instead of re-deriving them from a second ViewModel instance.
+ *
+ * Home no longer wires an `onEditWird` callback: [WirdRoutes.WIRD_EDIT] is
+ * reachable only from [WirdScreen]'s own `onEdit`, which is the single edit
+ * entry point for the daily plan now that Home's `EditGoalChip` is gone.
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -81,15 +86,14 @@ fun SabeelNavHost(
                 composable(SabeelTab.Home.startRoute) {
                     HomeScreen(
                         onResumeCounting = { navController.switchToCountTab() },
-                        onOpenWird = { navController.navigate(WirdRoutes.WIRD) },
-                        onEditWird = { navController.navigate(WirdRoutes.WIRD_EDIT) }
+                        onOpenWird = { navController.navigate(WirdRoutes.WIRD) }
                     )
                 }
 
                 composable(WirdRoutes.WIRD) {
                     WirdScreen(
                         onCountItem = { key, target ->
-                            tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key, target))
+                            tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key, target, SessionOrigin.DAILY_GOAL))
                             // Destroy completed flow so it isn't saved in the tab backstack
                             navController.popBackStack(SabeelTab.Home.startRoute, inclusive = false)
                             navController.switchToCountTab()
@@ -108,6 +112,11 @@ fun SabeelNavHost(
 
             navigation(startDestination = SabeelTab.Count.startRoute, route = SabeelTab.Count.graphRoute) {
                 composable(SabeelTab.Count.startRoute) {
+                    val tasbihState by tasbihViewModel.state.collectAsStateWithLifecycle()
+                    val currentDhikrKey = tasbihState.currentDhikr.key
+                    val isDailyGoalFinished = wirdUiState.progress.allComplete
+                    val isDhikrInDailyGoal = wirdUiState.progress.items.any { it.dhikrKey == currentDhikrKey }
+
                     val nextWirdItem = if (settingsState.autoProgressWird)
                         wirdUiState.progress.nextIncompleteItem else null
 
@@ -116,12 +125,28 @@ fun SabeelNavHost(
                         hapticEngine = hapticEngine,
                         language = language,
                         showStreaks = settingsState.showStreaks,
+                        isDailyGoalFinished = isDailyGoalFinished,
+                        isDhikrInDailyGoal = isDhikrInDailyGoal,
                         nextWirdItemName = nextWirdItem?.displayName?.get(language),
                         onContinueWird = nextWirdItem?.let { item ->
                             {
                                 tasbihViewModel.processIntent(
-                                    TasbihIntent.SetDhikr(item.dhikrKey, item.target)
+                                    TasbihIntent.SetDhikr(item.dhikrKey, item.target, SessionOrigin.DAILY_GOAL)
                                 )
+                            }
+                        },
+                        onNavigateHome = {
+                            navController.navigate(SabeelTab.Home.graphRoute) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onNavigateLibrary = {
+                            navController.navigate(SabeelTab.Dhikr.graphRoute) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
