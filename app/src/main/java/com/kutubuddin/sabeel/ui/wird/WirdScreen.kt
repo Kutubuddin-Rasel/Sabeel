@@ -1,6 +1,5 @@
 package com.kutubuddin.sabeel.ui.wird
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,6 +57,13 @@ fun WirdScreen(
 /**
  * Pure, stateless read-only view of today's wird progress — a function of
  * [progress]/[language] only, emitting intent via the trailing lambdas.
+ *
+ * Edit has exactly one entry point on this screen: the labeled action in the
+ * top bar, shown only once there's a plan to edit. The old always-visible
+ * bottom button that duplicated it has been removed — two "Edit" affordances
+ * for one action was clutter, not a safety net. The empty state below has
+ * its own single CTA instead, so there's never more than one way to start
+ * editing from any given moment on this screen.
  */
 @Composable
 fun WirdContent(
@@ -81,41 +86,33 @@ fun WirdContent(
             onBack = onBack,
             backContentDescription = strings.a11yBack,
             actions = {
-                Icon(
-                    imageVector = Icons.Outlined.Edit,
-                    contentDescription = strings.wirdEditTitle,
-                    tint = SabeelColors.AccentTeal,
-                    modifier = Modifier
-                        .padding(end = 12.dp)
-                        .size(22.dp)
-                        .clickable(onClick = onEdit)
-                )
+                if (progress.items.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .defaultMinSize(minWidth = 44.dp, minHeight = 44.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable(onClick = onEdit)
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = null,
+                            tint = SabeelColors.AccentTeal,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = strings.wirdEditCta,
+                            color = SabeelColors.AccentTeal,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
             }
         )
-
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                strings.wirdDoneOf.format(
-                    progress.completed.toLocalizedNumerals(language),
-                    progress.total.toLocalizedNumerals(language)
-                ),
-                fontSize = 13.sp, color = SabeelColors.TextSecondary
-            )
-            if (progress.total > 0) {
-                val fraction = if (progress.targetSum > 0)
-                    (progress.countedSum.toFloat() / progress.targetSum).coerceIn(0f, 1f) else 0f
-                LinearProgressIndicator(
-                    progress = { fraction },
-                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                    color = SabeelColors.AccentTeal, trackColor = SabeelColors.ArcTrack,
-                    strokeCap = StrokeCap.Round, gapSize = 0.dp, drawStopIndicator = {}
-                )
-            }
-        }
-        HorizontalDivider(color = SabeelColors.Divider)
 
         if (progress.items.isEmpty()) {
             Column(
@@ -139,6 +136,24 @@ fun WirdContent(
                 }
             }
         } else {
+            // The ring now carries the "how much is done" job that the old
+            // header Text + LinearProgressIndicator did — real per-item
+            // completion drives slice opacity, and the completed/total
+            // count sits in the center, so there's one progress statement
+            // on this screen instead of two that could disagree.
+            WirdVisualRing(
+                slices = progress.items.map { WirdRingSlice(target = it.target, isComplete = it.isComplete) },
+                modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+            ) {
+                Text(
+                    text = "${progress.completed.toLocalizedNumerals(language)}/${progress.total.toLocalizedNumerals(language)}",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SabeelColors.TextPrimary
+                )
+            }
+            HorizontalDivider(color = SabeelColors.Divider)
+
             LazyColumn(
                 Modifier.weight(1f),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
@@ -148,24 +163,6 @@ fun WirdContent(
                     WirdItemRow(item, language) { onCountItem(item.dhikrKey, item.target) }
                 }
                 item { Spacer(Modifier.height(8.dp)) }
-            }
-
-            // Second, always-visible entry point to the same edit action as the
-            // top-bar icon — mirrors the empty-state CTA below so the
-            // "add/update daily goal" affordance never depends on noticing a
-            // single small icon.
-            OutlinedButton(
-                onClick = onEdit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = SabeelColors.AccentTeal),
-                border = BorderStroke(1.dp, SabeelColors.AccentTeal),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(strings.wirdEditTitle, fontWeight = FontWeight.Bold)
             }
         }
     }

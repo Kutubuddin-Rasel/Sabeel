@@ -12,12 +12,16 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +30,11 @@ import com.kutubuddin.sabeel.ui.components.SabeelTopBar
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import kotlinx.coroutines.delay
 
 /**
  * Route-level wrapper (DIP): sole owner of ViewModel injection, state
@@ -39,7 +48,18 @@ fun WirdEditScreen(
     viewModel: WirdEditViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var showPicker by remember { mutableStateOf(false) }
+    var showPicker by rememberSaveable { mutableStateOf(false) }
+    var hasAutoOpened by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(state.rows.isEmpty()) {
+        if (state.rows.isEmpty() && !hasAutoOpened) {
+            delay(50) // Prevent flash during initial DB load
+            if (state.rows.isEmpty()) {
+                showPicker = true
+                hasAutoOpened = true
+            }
+        }
+    }
 
     WirdEditContent(
         state = state,
@@ -77,6 +97,8 @@ fun WirdEditContent(
 ) {
     val strings = LocalStrings.current
 
+    var expandedKey by remember { mutableStateOf<String?>(null) }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -101,40 +123,120 @@ fun WirdEditContent(
         )
         HorizontalDivider(color = SabeelColors.Divider)
 
-        LazyColumn(
-            Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        // Allocation only — every slice is `isComplete = true` so the ring
+        // reads as pure composition here, not daily progress. Compare with
+        // WirdScreen, where the same composable is fed real completion state.
+        WirdVisualRing(
+            slices = state.rows.map { WirdRingSlice(target = it.target) },
+            modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
         ) {
-            items(state.rows, key = { it.dhikrKey }) { row ->
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                        .background(SabeelColors.Surface).padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Column {
-                        Icon(Icons.Outlined.KeyboardArrowUp, contentDescription = strings.wirdReorder,
-                            tint = SabeelColors.TextSecondary,
-                            modifier = Modifier.size(18.dp).clickable { onMove(row.dhikrKey, true) })
-                        Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = strings.wirdReorder,
-                            tint = SabeelColors.TextSecondary,
-                            modifier = Modifier.size(18.dp).clickable { onMove(row.dhikrKey, false) })
+            val totalTarget = state.rows.sumOf { it.target }
+            Text(
+                text = totalTarget.toLocalizedNumerals(state.language),
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = SabeelColors.TextPrimary
+            )
+        }
+
+        if (state.rows.isEmpty()) {
+            Column(
+                Modifier.weight(1f).fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Outlined.Spa, contentDescription = null, tint = SabeelColors.GoldPrimary, modifier = Modifier.size(48.dp))
+                Spacer(Modifier.height(16.dp))
+                Text(strings.wirdGoalHintTitle, style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary)
+                Spacer(Modifier.height(8.dp))
+                Text(strings.wirdGoalHintBody, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        } else {
+            LazyColumn(
+                Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(state.rows, key = { it.dhikrKey }) { row ->
+                    val isExpanded = expandedKey == row.dhikrKey
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SabeelColors.Surface)
+                            .clickable { expandedKey = if (isExpanded) null else row.dhikrKey }
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = row.displayName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = SabeelColors.TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${row.target.toLocalizedNumerals(state.language)}×",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SabeelColors.AccentTeal
+                            )
+                        }
+
+                        AnimatedVisibility(
+                            visible = isExpanded,
+                            enter = expandVertically(animationSpec = tween(300)),
+                            exit = shrinkVertically(animationSpec = tween(300))
+                        ) {
+                            Column(Modifier.padding(top = 16.dp)) {
+                                HorizontalDivider(color = SabeelColors.Divider)
+                                Spacer(Modifier.height(16.dp))
+
+                                // Target Adjuster row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(strings.wirdTargetA11y, style = MaterialTheme.typography.labelMedium, color = SabeelColors.TextSecondary)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        PresetChip(33, state.language) { onUpdateTarget(row.dhikrKey, 33) }
+                                        PresetChip(100, state.language) { onUpdateTarget(row.dhikrKey, 100) }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(SabeelColors.SurfaceElevated)
+                                        ) {
+                                            Icon(Icons.Filled.Remove, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.clickable { onUpdateTarget(row.dhikrKey, row.target - 1) }.padding(8.dp).size(20.dp))
+                                            Icon(Icons.Filled.Add, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.clickable { onUpdateTarget(row.dhikrKey, row.target + 1) }.padding(8.dp).size(20.dp))
+                                        }
+                                    }
+                                }
+
+                                Spacer(Modifier.height(16.dp))
+
+                                // Action row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Icon(Icons.Outlined.KeyboardArrowUp, contentDescription = strings.wirdReorder, tint = SabeelColors.TextSecondary, modifier = Modifier.clip(CircleShape).clickable { onMove(row.dhikrKey, true) }.padding(8.dp).size(24.dp))
+                                        Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = strings.wirdReorder, tint = SabeelColors.TextSecondary, modifier = Modifier.clip(CircleShape).clickable { onMove(row.dhikrKey, false) }.padding(8.dp).size(24.dp))
+                                    }
+                                    Icon(Icons.Outlined.Delete, contentDescription = strings.wirdRemove, tint = Color(0xFFE57373), modifier = Modifier.clip(CircleShape).clickable { onRemove(row.dhikrKey) }.padding(8.dp).size(24.dp))
+                                }
+                            }
+                        }
                     }
-                    Text(row.displayName, Modifier.weight(1f), fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium, color = SabeelColors.TextPrimary)
-                    Icon(Icons.Filled.Remove, contentDescription = strings.wirdTargetA11y,
-                        tint = SabeelColors.AccentTeal,
-                        modifier = Modifier.size(22.dp).clickable { onUpdateTarget(row.dhikrKey, row.target - 1) })
-                    Text(row.target.toLocalizedNumerals(state.language), fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold, color = SabeelColors.TextPrimary,
-                        modifier = Modifier.widthIn(min = 32.dp))
-                    Icon(Icons.Filled.Add, contentDescription = strings.wirdTargetA11y,
-                        tint = SabeelColors.AccentTeal,
-                        modifier = Modifier.size(22.dp).clickable { onUpdateTarget(row.dhikrKey, row.target + 1) })
-                    Icon(Icons.Outlined.Delete, contentDescription = strings.wirdRemove,
-                        tint = SabeelColors.TextSecondary,
-                        modifier = Modifier.size(20.dp).clickable { onRemove(row.dhikrKey) })
                 }
             }
         }
@@ -168,5 +270,19 @@ fun WirdEditContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PresetChip(target: Int, language: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(SabeelColors.SurfaceElevated)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("${target.toLocalizedNumerals(language)}×", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = SabeelColors.TextPrimary)
     }
 }
