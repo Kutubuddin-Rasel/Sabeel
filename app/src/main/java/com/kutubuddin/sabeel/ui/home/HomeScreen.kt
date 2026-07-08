@@ -2,8 +2,6 @@ package com.kutubuddin.sabeel.ui.home
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,59 +11,63 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.kutubuddin.sabeel.domain.model.WirdGoalHintState
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.UiStrings
 import com.kutubuddin.sabeel.ui.i18n.localizeDigits
 import com.kutubuddin.sabeel.ui.i18n.toGroupedLocalizedNumerals
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.wird.WirdSegmentedProgress
 import java.util.Locale
 
 /**
  * Route-level wrapper (DIP): the ONLY place in this file that injects a
  * ViewModel or collects a Flow. All rendering is delegated to the stateless
  * [HomeContent].
+ *
+ * `onEditWird` has been removed from this screen's API: editing the plan is
+ * no longer initiated from Home. The one thing Home does with the daily goal
+ * is open it via [onOpenWird] — [com.kutubuddin.sabeel.ui.wird.WirdScreen] is
+ * where "edit" actually lives now, with a single entry point of its own. If
+ * your navigation graph still wires an `onEditWird` callback into this
+ * route, that wiring can be deleted along with this parameter.
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
     onResumeCounting: () -> Unit,
     onOpenWird: () -> Unit,
-    onEditWird: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     HomeContent(
         state = state,
         onResumeCounting = onResumeCounting,
-        onOpenWird = onOpenWird,
-        onEditWird = {
-            viewModel.onWirdEditEntryUsed()
-            onEditWird()
-        },
-        onDismissWirdGoalHint = viewModel::onWirdEditEntryUsed
+        onOpenWird = onOpenWird
     )
 }
 
@@ -79,10 +81,10 @@ fun HomeScreen(
 fun HomeContent(
     state: HomeState,
     onResumeCounting: () -> Unit,
-    onOpenWird: () -> Unit,
-    onEditWird: () -> Unit,
-    onDismissWirdGoalHint: () -> Unit
+    onOpenWird: () -> Unit
 ) {
+    var isSessionsExpanded by rememberSaveable { mutableStateOf(true) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -131,25 +133,24 @@ fun HomeContent(
             }
         }
 
-        // ── Wird-goal discoverability nudge (OCP: exhaustive over the sealed
-        //    WirdGoalHintState; new variants slot in without touching callers) ──
-        when (state.wirdGoalHint) {
-            is WirdGoalHintState.Visible -> item { WirdGoalHintCard(onDismiss = onDismissWirdGoalHint) }
-            is WirdGoalHintState.Hidden -> Unit
-        }
-
         // ── Stats (demoted below the hero) ────────────────────────────────────
         item {
-            StreakGoalCard(state = state, onOpenWird = onOpenWird, onEditWird = onEditWird)
+            StreakGoalCard(state = state, onOpenWird = onOpenWird)
         }
 
         // ── Today's Sessions ──────────────────────────────────────────────────
         if (state.todaysSessions.isNotEmpty()) {
             item {
-                SectionHeader(LocalStrings.current.homeTodaysSessions)
+                CollapsibleSectionHeader(
+                    text = LocalStrings.current.homeTodaysSessions,
+                    isExpanded = isSessionsExpanded,
+                    onClick = { isSessionsExpanded = !isSessionsExpanded }
+                )
             }
-            items(state.todaysSessions) { session ->
-                SessionRow(session, state.language)
+            if (isSessionsExpanded) {
+                items(state.todaysSessions) { session ->
+                    SessionRow(session, state.language)
+                }
             }
         }
 
@@ -205,20 +206,25 @@ private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> 
 }
 
 /**
- * The single Home-tab entry point into the daily goal. The pencil icon is an
- * explicit, always-visible affordance for [onEditWird]; it owns its own
- * `clickable` so it consumes the tap before the card's outer `clickable`
- * (bound to [onOpenWird]) ever sees it — the two actions cannot both fire.
+ * The single Home-tab entry point into the daily goal — and now the *only*
+ * thing you can do with it from Home. One clickable surface, one state-driven
+ * label, no separate edit affordance:
+ *
+ *  - Empty: the whole card reads as a call to action ("Set your daily wird")
+ *    with a trailing chevron. There is no bare "Setup" text sitting next to
+ *    an unrelated "Edit" button anymore.
+ *  - Has a plan: the label and the [WirdSegmentedProgress] bar are driven by
+ *    the exact same `completed`/`total` numbers, so they can never disagree
+ *    the way the old text (`completed`/`total`) and bar
+ *    (`countedSum`/`targetSum`) sometimes did.
+ *
+ * Tapping anywhere on the card opens [com.kutubuddin.sabeel.ui.wird.WirdScreen]
+ * via [onOpenWird] — that's where the breakdown and the single "edit" action
+ * live now.
  */
 @Composable
-private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit, onEditWird: () -> Unit) {
+private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
     val strings = LocalStrings.current
-    val fraction = if (state.wird.targetSum > 0)
-        (state.wird.countedSum.toFloat() / state.wird.targetSum).coerceIn(0f, 1f)
-    else 0f
-    val animatedProgress by animateFloatAsState(
-        targetValue = fraction, animationSpec = tween(800), label = "wird_progress"
-    )
 
     Column(
         modifier = Modifier
@@ -249,108 +255,47 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit, onEditWird:
             HorizontalDivider(color = SabeelColors.Divider)
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (state.wird.isEmpty) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Icon(Icons.Outlined.TrackChanges, contentDescription = null,
-                    tint = SabeelColors.TextSecondary, modifier = Modifier.size(16.dp))
-                Text(strings.wirdTitle, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
+                    tint = SabeelColors.AccentTeal, modifier = Modifier.size(20.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(strings.wirdSetupTitle, style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary)
+                    Text(strings.wirdSetupSubtitle, style = MaterialTheme.typography.bodySmall, color = SabeelColors.TextSecondary)
+                }
+                Icon(Icons.Outlined.ChevronRight, contentDescription = null,
+                    tint = SabeelColors.TextSecondary, modifier = Modifier.size(18.dp))
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = if (state.wird.isEmpty) strings.wirdSetup
-                    else strings.wirdDoneOf.format(
-                        state.wird.completed.toLocalizedNumerals(state.language),
-                        state.wird.total.toLocalizedNumerals(state.language)
-                    ),
-                    style = MaterialTheme.typography.labelLarge, color = SabeelColors.TextPrimary
-                )
-                EditGoalChip(onClick = onEditWird)
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Outlined.TrackChanges, contentDescription = null,
+                        tint = SabeelColors.TextSecondary, modifier = Modifier.size(16.dp))
+                    Text(strings.wirdTitle, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
+                }
+                Icon(Icons.Outlined.ChevronRight, contentDescription = null,
+                    tint = SabeelColors.TextSecondary, modifier = Modifier.size(18.dp))
             }
-        }
-        if (!state.wird.isEmpty) {
-            LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                color = SabeelColors.AccentTeal, trackColor = SabeelColors.ArcTrack,
-                strokeCap = StrokeCap.Round, gapSize = 0.dp, drawStopIndicator = {}
+
+            val allDone = state.wird.completed == state.wird.total
+            Text(
+                text = strings.wirdDoneOf.format(
+                    state.wird.completed.toLocalizedNumerals(state.language),
+                    state.wird.total.toLocalizedNumerals(state.language)
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (allDone) SabeelColors.SageGreen else SabeelColors.TextPrimary
             )
+            WirdSegmentedProgress(completed = state.wird.completed, total = state.wird.total)
         }
-    }
-}
-
-/**
- * SRP: a single, labeled, ≥44dp touch-target affordance for the one
- * "add/update daily goal" action — replaces a bare icon so the control reads
- * as actionable rather than decorative. Pure function of its callback (event
- * hoisting); no state, no DI.
- */
-@Composable
-private fun EditGoalChip(onClick: () -> Unit) {
-    val strings = LocalStrings.current
-    Row(
-        modifier = Modifier
-            .defaultMinSize(minWidth = 44.dp, minHeight = 44.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(SabeelColors.AccentTealSurface)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Edit,
-            contentDescription = null,
-            tint = SabeelColors.AccentTeal,
-            modifier = Modifier.size(16.dp)
-        )
-        Text(
-            text = strings.wirdEditCta,
-            style = MaterialTheme.typography.labelMedium,
-            color = SabeelColors.AccentTeal
-        )
-    }
-}
-
-/**
- * SRP: renders [WirdGoalHintState.Visible] only — a pure function of the
- * dismiss callback, emitting intent via event hoisting.
- */
-@Composable
-private fun WirdGoalHintCard(onDismiss: () -> Unit) {
-    val strings = LocalStrings.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(SabeelColors.GoldSurface)
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Edit,
-            contentDescription = null,
-            tint = SabeelColors.GoldPrimary,
-            modifier = Modifier.size(18.dp)
-        )
-        Column(Modifier.weight(1f)) {
-            Text(strings.wirdGoalHintTitle, style = MaterialTheme.typography.labelLarge, color = SabeelColors.TextPrimary)
-            Text(strings.wirdGoalHintBody, style = MaterialTheme.typography.bodySmall, color = SabeelColors.TextSecondary)
-        }
-        Icon(
-            imageVector = Icons.Filled.Close,
-            contentDescription = strings.a11yDismiss,
-            tint = SabeelColors.TextSecondary,
-            modifier = Modifier
-                .defaultMinSize(minWidth = 44.dp, minHeight = 44.dp)
-                .clickable(onClick = onDismiss)
-                .padding(12.dp)
-                .size(20.dp)
-        )
     }
 }
 
@@ -413,6 +358,25 @@ private fun SectionHeader(text: String) {
         style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
         color = SabeelColors.TextSecondary
     )
+}
+
+@Composable
+private fun CollapsibleSectionHeader(text: String, isExpanded: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        SectionHeader(text)
+        Icon(
+            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            contentDescription = if (isExpanded) "Collapse" else "Expand",
+            tint = SabeelColors.TextSecondary
+        )
+    }
 }
 
 @Composable

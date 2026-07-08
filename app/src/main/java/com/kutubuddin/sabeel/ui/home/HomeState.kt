@@ -14,8 +14,7 @@ data class HomeState(
     val resumeSession: ResumeSession? = null,
     val greeting: GreetingType = GreetingType.DEFAULT,
     val showStreaks: Boolean = true,
-    val language: String = "en",
-    val wirdGoalHint: WirdGoalHintState = WirdGoalHintState.Hidden
+    val language: String = "en"
 )
 
 /** Non-null only when the user has an in-progress (incomplete) session. */

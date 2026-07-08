@@ -12,8 +12,6 @@ import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.StreakObserver
 import com.kutubuddin.sabeel.domain.repository.TasbihCounterObserver
-import com.kutubuddin.sabeel.domain.usecase.MarkWirdGoalHintSeen
-import com.kutubuddin.sabeel.domain.usecase.ObserveWirdGoalHintVisibility
 import com.kutubuddin.sabeel.domain.usecase.ObserveWirdProgress
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,14 +37,13 @@ class HomeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val counterObserver: TasbihCounterObserver,
     private val streakObserver: StreakObserver,
-    private val observeWirdProgress: ObserveWirdProgress,
-    private val observeWirdGoalHintVisibility: ObserveWirdGoalHintVisibility,
-    private val markWirdGoalHintSeen: MarkWirdGoalHintSeen
+    private val observeWirdProgress: ObserveWirdProgress
 ) : ViewModel() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val today = LocalDate.now().toString()
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private val sessionGroup = combine(
         sessionRepository.getSessionsForDate(today).map { list -> list.map { it.toSummary() } },
         sessionRepository.getTotalCountForDate(today),
@@ -69,9 +66,8 @@ class HomeViewModel @Inject constructor(
 
     val state: StateFlow<HomeState> = combine(
         sessionGroup,
-        counterGroup,
-        observeWirdGoalHintVisibility()
-    ) { s, c, wirdGoalHint ->
+        counterGroup
+    ) { s, c ->
         @Suppress("UNCHECKED_CAST")
         val sessions      = s[0] as List<SessionSummary>
         val totalToday    = s[1] as Int
@@ -107,8 +103,7 @@ class HomeViewModel @Inject constructor(
             resumeSession     = resume,
             greeting          = greeting,
             showStreaks       = showStreaks,
-            language          = language,
-            wirdGoalHint      = wirdGoalHint
+            language          = language
         )
     }.stateIn(
         scope = viewModelScope,
@@ -126,9 +121,6 @@ class HomeViewModel @Inject constructor(
         internal fun displayedStreak(streakCount: Int, activeCount: Int): Int =
             if (streakCount == 0 && activeCount > 0) 1 else streakCount
     }
-
-    /** Fired by every wird-edit entry point; idempotent, safe to call repeatedly. */
-    fun onWirdEditEntryUsed() = viewModelScope.launch { markWirdGoalHintSeen() }
 
     private fun resolveGreeting(): GreetingType = greetingTypeForHour(LocalTime.now().hour)
 
