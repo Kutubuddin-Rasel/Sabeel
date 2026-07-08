@@ -27,7 +27,8 @@ data class TasbihState(
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
     val isPocketModeActive: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val sessionOrigin: SessionOrigin = SessionOrigin.LIBRARY
 )
 
 /**
@@ -38,7 +39,7 @@ sealed interface TasbihIntent {
     object Increment : TasbihIntent
     object Decrement : TasbihIntent
     object Reset : TasbihIntent
-    data class SetDhikr(val key: String, val target: Int? = null) : TasbihIntent
+    data class SetDhikr(val key: String, val target: Int? = null, val origin: SessionOrigin = SessionOrigin.LIBRARY) : TasbihIntent
     data class SetSmartFlowEnabled(val enabled: Boolean) : TasbihIntent
     data class SetSmartFlowVariant(val variant: SmartFlowVariant) : TasbihIntent
     data class SetPocketModeActive(val active: Boolean) : TasbihIntent
@@ -68,4 +69,12 @@ enum class HapticType {
     TICK,      // Short, light tap (regular increment)
     CLICK,     // Distinct, sharp pulse (milestone reached — 33, 66)
     THUD       // Low-frequency resonance (session completed or manual reset)
+}
+
+/**
+ * Tracks where the counting session was initiated from to provide context-aware UX.
+ */
+enum class SessionOrigin {
+    DAILY_GOAL,
+    LIBRARY
 }
