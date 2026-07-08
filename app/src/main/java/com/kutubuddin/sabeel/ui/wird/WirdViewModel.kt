@@ -30,8 +30,7 @@ data class WirdUiState(
 @HiltViewModel
 class WirdViewModel @Inject constructor(
     observeWirdProgress: ObserveWirdProgress,
-    settingsRepository: SettingsRepository,
-    private val markWirdGoalHintSeen: MarkWirdGoalHintSeen
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val today = LocalDate.now().toString()
@@ -47,5 +46,5 @@ class WirdViewModel @Inject constructor(
         )
 
     /** Fired by this screen's persistent Edit-Wird entry point. */
-    fun onWirdEditEntryUsed() = viewModelScope.launch { markWirdGoalHintSeen() }
+    fun onWirdEditEntryUsed() {}
 }
