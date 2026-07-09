@@ -43,6 +43,9 @@ data class UiStrings(
     val homeStartCounting: String,
     val homeDayOne: String,   // template: "%1$s day"
     val homeDayOther: String, // template: "%1$s days"
+    val homeStreakStart: String,            // shown instead of "0 days" when currentStreak == 0
+    val homeContinueToday: String,          // hero card headline once ≥1 session exists today
+    val homeFirstTimeEncouragement: String, // replaces the All-Time "0 / 0" stat row pre-first-session
     // ── Daily Wird ──
     val wirdTitle: String,
     val wirdSetupTitle: String,     // empty-state card title on Home ("Set your daily wird")
@@ -59,6 +62,10 @@ data class UiStrings(
     val wirdEditCta: String,        // labeled edit action, now shown only on WirdScreen's top bar
     val wirdGoalHintTitle: String,   // WirdEditScreen empty-state title
     val wirdGoalHintBody: String,    // WirdEditScreen empty-state body
+    val wirdRingCaptionProgress: String, // caption under the ring on WirdScreen ("tasks completed")
+    val wirdRingCaptionTarget: String,   // caption under the ring on WirdEditScreen ("total reps configured")
+    val wirdOverflowRounds: String,      // a11y/label for the "×N" overflow badge, template: "completed %1$s rounds"
+    val wirdExpandRowA11y: String,       // a11y: expand/collapse a row to reveal its controls
     // ── Counting screen ──
     val countSmartFlow: String,
     val countConsistencyA11y: String, // template: "Consistency: %1$s days"
@@ -97,13 +104,18 @@ data class UiStrings(
     val settingsAutoReset: String,
     val settingsAutoResetDesc: String,
     val settingsShowStreaks: String,
-    val settingsShowStreaksDesc: String,
+    val settingsShowStreaksDescOn: String,
+    val settingsShowStreaksDescOff: String,
     val settingsAutoProgressWird: String,
     val settingsAutoProgressWirdDesc: String,
     val settingsSmartFlow: String,
     val settingsSmartFlowDesc: String,
     val settingsFont: String,
     val settingsVersion: String,
+    // ── Notifications ──
+    val settingsDailyReminders: String,
+    val settingsDailyRemindersDesc: String,
+    val settingsReminderTime: String,
     // ── Dhikr Library ──
     val dhikrSearchPlaceholder: String,
     val dhikrRef: String,          // template: "Ref: %1$s"

@@ -25,13 +25,25 @@ object UiText {
     val navSettings = LocalizedText(en = "Settings", ur = "ترتیبات", bn = "সেটিংস")
 
     // ── Home: greetings ───────────────────────────────
-    val greetingFajr = LocalizedText(en = "Fajr time — a blessed start", ur = "فجر کا وقت — بابرکت آغاز", bn = "ফজরের সময় — বরকতময় সূচনা")
+    // NOTE: these used to name a specific prayer (e.g. "Maghrib time") based
+    // only on the device clock hour. That's a false-precision problem, not a
+    // cosmetic one: real prayer times move with date and location (Dhaka's
+    // Maghrib alone swings from ~17:05 in December to ~18:50 in July), so the
+    // old copy could assert "Maghrib time" while it was actually Isha, or
+    // "Asr time" just after Maghrib had started — wrong exactly where a
+    // religious app most needs to be trustworthy. Wording below describes the
+    // hour bucket itself (morning/midday/evening/night) instead of claiming a
+    // specific salah is currently due. True per-location, per-date prayer
+    // times would need device location + a calculation engine — a separate
+    // feature, not a copy fix. Best-effort ur/bn drafts, not a
+    // native-speaker review — worth a check before shipping.
+    val greetingFajr = LocalizedText(en = "A blessed early morning", ur = "صبح کی بابرکت گھڑی", bn = "ভোরের বরকতময় প্রহর")
     val greetingMorning = LocalizedText(en = "Good morning", ur = "صبح بخیر", bn = "শুভ সকাল")
-    val greetingDhuhr = LocalizedText(en = "Dhuhr time", ur = "ظہر کا وقت", bn = "যোহরের সময়")
+    val greetingDhuhr = LocalizedText(en = "Midday", ur = "دوپہر", bn = "দুপুর")
     val greetingAfternoon = LocalizedText(en = "Good afternoon", ur = "سہ پہر بخیر", bn = "শুভ অপরাহ্ন")
-    val greetingAsr = LocalizedText(en = "Asr time", ur = "عصر کا وقت", bn = "আসরের সময়")
-    val greetingMaghrib = LocalizedText(en = "Maghrib time", ur = "مغرب کا وقت", bn = "মাগরিবের সময়")
-    val greetingIsha = LocalizedText(en = "Isha time", ur = "عشاء کا وقت", bn = "এশার সময়")
+    val greetingAsr = LocalizedText(en = "Late afternoon", ur = "پچھلا پہر", bn = "বিকেল")
+    val greetingMaghrib = LocalizedText(en = "Evening", ur = "شام", bn = "সন্ধ্যা")
+    val greetingIsha = LocalizedText(en = "Night", ur = "رات", bn = "রাত")
     val greetingDefault = LocalizedText(en = "Assalamu alaikum", ur = "السلام علیکم", bn = "আসসালামু আলাইকুম")
 
     // ── Home: cards, headers, stats ───────────────────
@@ -47,6 +59,24 @@ object UiText {
     val homeStartCounting = LocalizedText(en = "Start counting", ur = "شمار شروع کریں", bn = "গণনা শুরু করুন")
     val homeDayOne = LocalizedText(en = "%1\$s day", ur = "%1\$s دن", bn = "%1\$s দিন")
     val homeDayOther = LocalizedText(en = "%1\$s days", ur = "%1\$s دن", bn = "%1\$s দিন")
+    // Reframes a broken/fresh streak: "0 days" reads as a scoreboard you're
+    // already behind on. "Start today" is true in both the brand-new-user
+    // case and the lapsed-streak case, and doesn't editorialize either one
+    // as a failure. Best-effort ur/bn drafts, not a native-speaker review.
+    val homeStreakStart = LocalizedText(en = "Start today", ur = "آج سے شروع کریں", bn = "আজ থেকে শুরু করুন")
+    // Shown on the Home hero card once at least one session exists today
+    // (state.todaysSessions.isNotEmpty()), so a user who already did their
+    // first dhikr doesn't see the exact same "Begin today's dhikr" prompt
+    // that greeted them at zero progress. Best-effort ur/bn drafts.
+    val homeContinueToday = LocalizedText(en = "Continue today's dhikr", ur = "آج کا ذکر جاری رکھیں", bn = "আজকের যিকির চালিয়ে যান")
+    // Replaces the "0 Total Counted / 0 Sessions" stat row for a user with
+    // zero all-time sessions — two prominent zeroes on first launch reads as
+    // "behind," not "about to start." Best-effort ur/bn drafts.
+    val homeFirstTimeEncouragement = LocalizedText(
+        en = "Every tasbih is written — even the first one.",
+        ur = "ہر تسبیح لکھی جاتی ہے — پہلی تسبیح بھی۔",
+        bn = "প্রতিটি তাসবিহ লেখা হয় — এমনকি প্রথমটিও।"
+    )
 
     // ── Daily Wird ──────────────────────────────────
     val wirdTitle = LocalizedText(en = "Today's Wird", ur = "آج کا وِرد", bn = "আজকের ওয়ির্দ")
@@ -85,6 +115,13 @@ object UiText {
         ur = "ذکر کے اہداف شامل یا تبدیل کرنے کے لیے آج کے وِرد کے ساتھ ترمیم پر ٹیپ کریں۔",
         bn = "যিকিরের লক্ষ্য যোগ বা পরিবর্তন করতে আজকের ওয়ির্দের পাশে সম্পাদনা-এ ট্যাপ করুন।"
     )
+
+    // Best-effort ur/bn drafts, not a native-speaker review, same caveat as
+    // wirdSetupTitle above.
+    val wirdRingCaptionProgress = LocalizedText(en = "tasks completed", ur = "مکمل کام", bn = "সম্পন্ন কাজ")
+    val wirdRingCaptionTarget = LocalizedText(en = "total reps today", ur = "آج کا مجموعی ہدف", bn = "আজকের মোট লক্ষ্য")
+    val wirdOverflowRounds = LocalizedText(en = "completed %1\$s rounds", ur = "%1\$s چکر مکمل", bn = "%1\$s বার সম্পন্ন")
+    val wirdExpandRowA11y = LocalizedText(en = "Show options", ur = "اختیارات دکھائیں", bn = "অপশন দেখান")
 
 
     // ── Counting screen ───────────────────────────────
@@ -130,13 +167,23 @@ object UiText {
     val settingsAutoReset = LocalizedText(en = "Auto-reset on Completion", ur = "تکمیل پر خودکار ری سیٹ", bn = "লক্ষ্য শেষে অটো-রিসেট")
     val settingsAutoResetDesc = LocalizedText(en = "Counter resets when target is hit", ur = "ہدف پر پہنچنے پر شمار خودکار ری سیٹ ہو جاتا ہے", bn = "লক্ষ্যে পৌঁছালে গণনা রিসেট হয়")
     val settingsShowStreaks = LocalizedText(en = "Show Streaks", ur = "تسلسل دکھائیں", bn = "ধারাবাহিকতা দেখান")
-    val settingsShowStreaksDesc = LocalizedText(en = "Hide consistency counts for pure ibadah", ur = "خالص عبادت کے لیے تسلسل چھپائیں", bn = "খাঁটি ইবাদতের জন্য ধারাবাহিকতা লুকান")
+    // Split from a single always-on subtitle: the old copy ("Hide consistency
+    // counts for pure ibadah") contradicted the "Show" label whenever the
+    // toggle was actually on — which is the default. Now the subtitle says
+    // what's currently true.
+    val settingsShowStreaksDescOn = LocalizedText(en = "Track your daily consistency", ur = "اپنا روزانہ تسلسل ٹریک کریں", bn = "আপনার দৈনিক ধারাবাহিকতা ট্র্যাক করুন")
+    val settingsShowStreaksDescOff = LocalizedText(en = "Hidden — count for its own sake", ur = "چھپا دیا گیا — خالص عبادت کے لیے شمار کریں", bn = "লুকানো — শুধু ইবাদতের জন্য গণনা করুন")
     val settingsAutoProgressWird = LocalizedText(en = "Wird Auto-Progression", ur = "وِرد خودکار ترقی", bn = "ওয়ির্দ স্বয়ংক্রিয় অগ্রগতি")
     val settingsAutoProgressWirdDesc = LocalizedText(en = "Automatically transition to the next Dhikr in your daily Wird", ur = "اپنے روزمرہ کے وِرد میں خود بخود اگلے ذکر پر جائیں", bn = "স্বয়ংক্রিয়ভাবে আপনার দৈনন্দিন ওয়ির্দের পরবর্তী যিকিরে যান")
     val settingsSmartFlow = LocalizedText(en = "Smart Flow Sequence", ur = "اسمارٹ فلو سلسلہ", bn = "স্মার্ট ফ্লো সিকোয়েন্স")
     val settingsSmartFlowDesc = LocalizedText(en = "Automatically transition through multi-step Dhikrs (e.g., Tasbih after Salah)", ur = "خود بخود متعدد مراحل والے اذکار میں آگے بڑھیں", bn = "স্বয়ংক্রিয়ভাবে বহু-ধাপ যিকিরে (যেমন, নামাজের পর তাসবিহ) অগ্রসর হন")
     val settingsFont = LocalizedText(en = "Font", ur = "فونٹ", bn = "ফন্ট")
     val settingsVersion = LocalizedText(en = "Version", ur = "ورژن", bn = "সংস্করণ")
+    
+    // ── Notifications ───────────────────────────────
+    val settingsDailyReminders = LocalizedText(en = "Daily Reminders", ur = "روزانہ یاد دہانی", bn = "দৈনিক রিমাইন্ডার")
+    val settingsDailyRemindersDesc = LocalizedText(en = "Smart nudges to protect your streak & daily goal", ur = "آپ کے تسلسل کو برقرار رکھنے کے لیے یاد دہانی", bn = "আপনার লক্ষ্য পূরণের জন্য স্মার্ট রিমাইন্ডার")
+    val settingsReminderTime = LocalizedText(en = "Reminder Time", ur = "یاد دہانی کا وقت", bn = "রিমাইন্ডারের সময়")
 
     // ── Dhikr Library ─────────────────────────────────
     val dhikrSearchPlaceholder = LocalizedText(en = "Search dhikr…", ur = "ذکر تلاش کریں…", bn = "যিকির খুঁজুন…")
@@ -182,6 +229,9 @@ object UiText {
         homeStartCounting = homeStartCounting.get(lang),
         homeDayOne = homeDayOne.get(lang),
         homeDayOther = homeDayOther.get(lang),
+        homeStreakStart = homeStreakStart.get(lang),
+        homeContinueToday = homeContinueToday.get(lang),
+        homeFirstTimeEncouragement = homeFirstTimeEncouragement.get(lang),
         wirdTitle = wirdTitle.get(lang),
         wirdSetupTitle = wirdSetupTitle.get(lang),
         wirdSetupSubtitle = wirdSetupSubtitle.get(lang),
@@ -197,6 +247,10 @@ object UiText {
         wirdEditCta = wirdEditCta.get(lang),
         wirdGoalHintTitle = wirdGoalHintTitle.get(lang),
         wirdGoalHintBody = wirdGoalHintBody.get(lang),
+        wirdRingCaptionProgress = wirdRingCaptionProgress.get(lang),
+        wirdRingCaptionTarget = wirdRingCaptionTarget.get(lang),
+        wirdOverflowRounds = wirdOverflowRounds.get(lang),
+        wirdExpandRowA11y = wirdExpandRowA11y.get(lang),
         countSmartFlow = countSmartFlow.get(lang),
         countConsistencyA11y = countConsistencyA11y.get(lang),
         countStreakShort = countStreakShort.get(lang),
@@ -233,13 +287,17 @@ object UiText {
         settingsAutoReset = settingsAutoReset.get(lang),
         settingsAutoResetDesc = settingsAutoResetDesc.get(lang),
         settingsShowStreaks = settingsShowStreaks.get(lang),
-        settingsShowStreaksDesc = settingsShowStreaksDesc.get(lang),
+        settingsShowStreaksDescOn = settingsShowStreaksDescOn.get(lang),
+        settingsShowStreaksDescOff = settingsShowStreaksDescOff.get(lang),
         settingsAutoProgressWird = settingsAutoProgressWird.get(lang),
         settingsAutoProgressWirdDesc = settingsAutoProgressWirdDesc.get(lang),
         settingsSmartFlow = settingsSmartFlow.get(lang),
         settingsSmartFlowDesc = settingsSmartFlowDesc.get(lang),
         settingsFont = settingsFont.get(lang),
         settingsVersion = settingsVersion.get(lang),
+        settingsDailyReminders = settingsDailyReminders.get(lang),
+        settingsDailyRemindersDesc = settingsDailyRemindersDesc.get(lang),
+        settingsReminderTime = settingsReminderTime.get(lang),
         dhikrSearchPlaceholder = dhikrSearchPlaceholder.get(lang),
         dhikrRef = dhikrRef.get(lang),
         dhikrCountNow = dhikrCountNow.get(lang),
