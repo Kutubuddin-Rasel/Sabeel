@@ -56,7 +56,17 @@ sealed class SabeelTab(
          * Sub-screens pushed on top of a tab (e.g. "wird", "wird/edit") return
          * false — [SabeelNavHost] uses this to hide the bottom bar on those
          * screens.
+         *
+         * Compares only the path portion of [route]: Count's composable is
+         * registered as "count?dhikrKey={dhikrKey}&target={target}", so a
+         * literal equality check against `startRoute` ("count") always failed
+         * and hid the bottom bar on the Count tab specifically, even though
+         * it's a top-level tab like the other three.
          */
-        fun isTopLevelRoute(route: String?): Boolean = route != null && all.any { it.startRoute == route || it.graphRoute == route }
+        fun isTopLevelRoute(route: String?): Boolean {
+            if (route == null) return false
+            val path = route.substringBefore("?")
+            return all.any { it.startRoute == path || it.graphRoute == route }
+        }
     }
 }

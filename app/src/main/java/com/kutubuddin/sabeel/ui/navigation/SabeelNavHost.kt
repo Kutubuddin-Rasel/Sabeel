@@ -16,6 +16,10 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
+import androidx.compose.runtime.LaunchedEffect
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.dhikr.DhikrLibraryScreen
 import com.kutubuddin.sabeel.ui.home.HomeScreen
@@ -110,8 +114,17 @@ fun SabeelNavHost(
                 }
             }
 
-            navigation(startDestination = SabeelTab.Count.startRoute, route = SabeelTab.Count.graphRoute) {
-                composable(SabeelTab.Count.startRoute) {
+            navigation(startDestination = SabeelTab.Count.startRoute + "?dhikrKey={dhikrKey}&target={target}", route = SabeelTab.Count.graphRoute) {
+                composable(
+                    route = SabeelTab.Count.startRoute + "?dhikrKey={dhikrKey}&target={target}",
+                    deepLinks = listOf(
+                        navDeepLink { uriPattern = "sabeel://count?dhikrKey={dhikrKey}&target={target}" }
+                    ),
+                    arguments = listOf(
+                        navArgument("dhikrKey") { type = NavType.StringType; nullable = true; defaultValue = null },
+                        navArgument("target") { type = NavType.IntType; defaultValue = -1 }
+                    )
+                ) { backStackEntry ->
                     val tasbihState by tasbihViewModel.state.collectAsStateWithLifecycle()
                     val currentDhikrKey = tasbihState.currentDhikr.key
                     val isDailyGoalFinished = wirdUiState.progress.allComplete
@@ -119,6 +132,31 @@ fun SabeelNavHost(
 
                     val nextWirdItem = if (settingsState.autoProgressWird)
                         wirdUiState.progress.nextIncompleteItem else null
+
+                    // Self-Healing Deep Link Routing
+                    val dhikrKeyArg = backStackEntry.arguments?.getString("dhikrKey")
+                    val targetArg = backStackEntry.arguments?.getInt("target") ?: -1
+                    LaunchedEffect(dhikrKeyArg, targetArg, wirdUiState.progress.items) {
+                        if (dhikrKeyArg != null && targetArg > 0) {
+                            val itemInGoal = wirdUiState.progress.items.find { it.dhikrKey == dhikrKeyArg }
+                            if (itemInGoal != null && !itemInGoal.isComplete) {
+                                tasbihViewModel.processIntent(
+                                    TasbihIntent.SetDhikr(dhikrKeyArg, targetArg, SessionOrigin.DAILY_GOAL)
+                                )
+                            } else {
+                                // Fallback to next incomplete item if the original is finished or removed
+                                val nextWird = wirdUiState.progress.nextIncompleteItem
+                                if (nextWird != null) {
+                                    tasbihViewModel.processIntent(
+                                        TasbihIntent.SetDhikr(nextWird.dhikrKey, nextWird.target, SessionOrigin.DAILY_GOAL)
+                                    )
+                                }
+                            }
+                            // Clear arguments so it doesn't re-trigger on orientation change
+                            backStackEntry.arguments?.remove("dhikrKey")
+                            backStackEntry.arguments?.remove("target")
+                        }
+                    }
 
                     TasbihScreen(
                         viewModel = tasbihViewModel,
