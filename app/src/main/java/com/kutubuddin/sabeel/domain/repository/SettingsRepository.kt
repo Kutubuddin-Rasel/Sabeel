@@ -12,6 +12,10 @@ interface SettingsRepository {
     val showStreaks: Flow<Boolean>   // consistency counts visible, or hidden for pure ibadah
     val autoProgressWird: Flow<Boolean>
     val isSmartFlowEnabled: Flow<Boolean>
+    val dailyReminderEnabled: Flow<Boolean>
+    val dailyReminderTime: Flow<String>
+    
+    val appLaunchCount: Flow<Int>
 
     suspend fun setTheme(theme: String)
     suspend fun setLanguage(lang: String)
@@ -22,4 +26,7 @@ interface SettingsRepository {
     suspend fun setShowStreaks(on: Boolean)
     suspend fun setAutoProgressWird(on: Boolean)
     suspend fun setSmartFlowEnabled(on: Boolean)
+    suspend fun setDailyReminderEnabled(on: Boolean)
+    suspend fun setDailyReminderTime(time: String)
+    suspend fun incrementAppLaunchCount()
 }
