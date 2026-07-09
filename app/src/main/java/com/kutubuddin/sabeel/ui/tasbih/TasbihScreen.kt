@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
+import com.kutubuddin.sabeel.ui.i18n.localizeHadithRef
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.tasbih.components.CompletionContext
 import com.kutubuddin.sabeel.ui.tasbih.components.CompletionRest
@@ -173,13 +174,13 @@ fun TasbihContent(
                         Icon(
                             imageVector = Icons.Filled.Bolt,
                             contentDescription = null,
-                            tint = SabeelColors.SmartFlowGold,
+                            tint = SabeelColors.GoldPrimary,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = strings.countSmartFlow,
                             style = MaterialTheme.typography.titleSmall,
-                            color = SabeelColors.SmartFlowGold
+                            color = SabeelColors.GoldPrimary
                         )
                     }
                 }
@@ -241,21 +242,40 @@ fun TasbihContent(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // IX-12: surface the same hadithRef citation the Dhikr Library
+            // already shows for this entry, on the screen where it matters
+            // most — see SpiritualRewardCard's reference param.
             SpiritualRewardCard(
                 reward = state.currentDhikr.spiritualReward.get(language),
+                reference = state.currentDhikr.hadithRef
+                    .takeIf { it.isNotBlank() }
+                    ?.let { strings.dhikrRef.format(localizeHadithRef(it, language)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Box(
+            // IX-04 fix: the undo control used to sit in the bottom-left
+            // corner while the tap hint stayed centered above it — far from
+            // the primary circle above and easy to miss. Stacking both
+            // centered, directly below the circle, puts undo on the same
+            // reach path as the thing it corrects, without changing its
+            // already-compliant 48dp touch target or its text contrast.
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Text(
+                    text = strings.countTapHint,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SabeelColors.TextHint,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(10.dp))
                 Box(
                     modifier = Modifier
-                        .align(Alignment.CenterStart)
                         .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(SabeelColors.CounterWhite.copy(alpha = 0.10f))
@@ -276,14 +296,6 @@ fun TasbihContent(
                         color = SabeelColors.TextSecondary
                     )
                 }
-
-                Text(
-                    text = strings.countTapHint,
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SabeelColors.TextHint,
-                    textAlign = TextAlign.Center
-                )
             }
         }
 

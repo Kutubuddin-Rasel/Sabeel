@@ -85,7 +85,7 @@ fun CompletionRest(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(horizontal = 40.dp)
         ) {
-            val iconTint = if (context == CompletionContext.VICTORY) SabeelColors.SmartFlowGold else SabeelColors.AccentTeal
+            val iconTint = if (context == CompletionContext.VICTORY) SabeelColors.GoldPrimary else SabeelColors.AccentTeal
             val arabicText = if (context == CompletionContext.VICTORY) strings.countAlhamdulillah else "تَمَّ"
             
             Icon(
@@ -135,7 +135,7 @@ fun CompletionRest(
                     text = "${strings.countContinue}: $nextWirdItemName",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = SabeelColors.SmartFlowGold,
+                    color = SabeelColors.GoldPrimary,
                     textAlign = TextAlign.Center
                 )
             }
@@ -157,7 +157,7 @@ fun CompletionRest(
                     }
                 }
                 
-                val primaryColor = if (context == CompletionContext.VICTORY) SabeelColors.SmartFlowGold else SabeelColors.AccentTeal
+                val primaryColor = if (context == CompletionContext.VICTORY) SabeelColors.GoldPrimary else SabeelColors.AccentTeal
                 val primaryTextColor = if (context == CompletionContext.VICTORY) SabeelColors.Background else SabeelColors.Background
                 
                 Button(
