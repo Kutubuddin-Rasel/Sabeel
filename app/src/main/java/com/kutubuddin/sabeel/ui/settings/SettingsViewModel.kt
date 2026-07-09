@@ -2,6 +2,7 @@ package com.kutubuddin.sabeel.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kutubuddin.sabeel.domain.notifications.NotificationScheduler
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,27 +14,32 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: SettingsRepository
+    private val repository: SettingsRepository,
+    private val notificationScheduler: NotificationScheduler
 ) : ViewModel() {
 
     val state: StateFlow<SettingsState> = combine(
-        combine(repository.theme, repository.language, repository.hapticsLevel) {
-            theme, lang, haptics -> Triple(theme, lang, haptics)
+        combine(repository.theme, repository.language, repository.hapticsLevel, repository.dailyReminderTime) {
+            theme, lang, haptics, time -> listOf(theme, lang, haptics, time)
         },
-        combine(repository.translitEnabled, repository.autoReset, repository.soundEnabled, repository.showStreaks, repository.autoProgressWird, repository.isSmartFlowEnabled) {
-            args: Array<Boolean> -> args.toList()
-        }
-    ) { (theme, lang, haptics), extras ->
+        combine(
+            repository.translitEnabled, repository.autoReset, repository.soundEnabled, 
+            repository.showStreaks, repository.autoProgressWird, repository.isSmartFlowEnabled,
+            repository.dailyReminderEnabled
+        ) { args: Array<Boolean> -> args.toList() }
+    ) { strings, booleans ->
         SettingsState(
-            theme           = theme as String,
-            language        = lang as String,
-            hapticsLevel    = haptics as String,
-            translitEnabled = extras[0] as Boolean,
-            autoReset       = extras[1] as Boolean,
-            soundEnabled    = extras[2] as Boolean,
-            showStreaks     = extras[3] as Boolean,
-            autoProgressWird = extras[4] as Boolean,
-            isSmartFlowEnabled = extras[5] as Boolean
+            theme           = strings[0],
+            language        = strings[1],
+            hapticsLevel    = strings[2],
+            dailyReminderTime = strings[3],
+            translitEnabled = booleans[0],
+            autoReset       = booleans[1],
+            soundEnabled    = booleans[2],
+            showStreaks     = booleans[3],
+            autoProgressWird = booleans[4],
+            isSmartFlowEnabled = booleans[5],
+            dailyReminderEnabled = booleans[6]
         )
     }.stateIn(
         scope = viewModelScope,
@@ -52,6 +58,20 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.SetShowStreaks -> repository.setShowStreaks(intent.on)
             is SettingsIntent.SetAutoProgressWird -> repository.setAutoProgressWird(intent.on)
             is SettingsIntent.SetSmartFlowEnabled -> repository.setSmartFlowEnabled(intent.on)
+            is SettingsIntent.SetDailyReminderEnabled -> {
+                repository.setDailyReminderEnabled(intent.on)
+                if (intent.on) {
+                    notificationScheduler.scheduleDailyReminder(state.value.dailyReminderTime)
+                } else {
+                    notificationScheduler.cancelDailyReminder()
+                }
+            }
+            is SettingsIntent.SetDailyReminderTime -> {
+                repository.setDailyReminderTime(intent.time)
+                if (state.value.dailyReminderEnabled) {
+                    notificationScheduler.scheduleDailyReminder(intent.time)
+                }
+            }
         }
     }
 }

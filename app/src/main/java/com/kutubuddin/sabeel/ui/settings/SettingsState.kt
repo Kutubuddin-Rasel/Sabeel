@@ -6,10 +6,12 @@ data class SettingsState(
     val hapticsLevel: String = "medium",
     val translitEnabled: Boolean = true,
     val autoReset: Boolean = false,
-    val soundEnabled: Boolean = false,
+    val soundEnabled: Boolean = true,
     val showStreaks: Boolean = true,
     val autoProgressWird: Boolean = true,
-    val isSmartFlowEnabled: Boolean = true
+    val isSmartFlowEnabled: Boolean = true,
+    val dailyReminderEnabled: Boolean = true,
+    val dailyReminderTime: String = "20:30"
 )
 
 sealed class SettingsIntent {
@@ -22,4 +24,6 @@ sealed class SettingsIntent {
     data class SetShowStreaks(val on: Boolean) : SettingsIntent()
     data class SetAutoProgressWird(val on: Boolean) : SettingsIntent()
     data class SetSmartFlowEnabled(val on: Boolean) : SettingsIntent()
+    data class SetDailyReminderEnabled(val on: Boolean) : SettingsIntent()
+    data class SetDailyReminderTime(val time: String) : SettingsIntent()
 }
