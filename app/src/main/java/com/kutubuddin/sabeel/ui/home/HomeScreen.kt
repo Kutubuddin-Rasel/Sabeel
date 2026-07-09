@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kutubuddin.sabeel.ui.components.ProgressFractionText
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.UiStrings
 import com.kutubuddin.sabeel.ui.i18n.localizeDigits
@@ -129,7 +130,14 @@ fun HomeContent(
             }
         } else {
             item {
-                HeroStartCard(onStart = onResumeCounting)
+                HeroStartCard(
+                    onStart = onResumeCounting,
+                    // IX-09: this card used to read "Begin today's dhikr" even
+                    // right after finishing the first session of the day (no
+                    // *in-progress* session to resume, but clearly not a
+                    // zero-progress day either). Acknowledge it instead.
+                    hasProgressToday = state.todaysSessions.isNotEmpty()
+                )
             }
         }
 
@@ -155,13 +163,38 @@ fun HomeContent(
         }
 
         // ── All Time stats ────────────────────────────────────────────────────
-        item {
-            SectionHeader(LocalStrings.current.homeAllTime)
-        }
-        item {
-            AllTimeCard(state = state)
+        // IX-08: a first-ever launch used to show "0 Total Counted / 0
+        // Sessions" side by side — accurate, but it's the very first thing a
+        // new user's stats say about them, and two zeroes read as "behind"
+        // rather than "about to begin." Swap in a short encouragement card
+        // until there's at least one real session to report on.
+        if (state.totalSessionCount > 0) {
+            item {
+                SectionHeader(LocalStrings.current.homeAllTime)
+            }
+            item {
+                AllTimeCard(state = state)
+            }
+        } else {
+            item {
+                FirstTimeEncouragementCard()
+            }
         }
 
+        // CP-02 fix: a short session's content used to leave a large, mute
+        // gap of pure Background between the last card and the nav bar,
+        // which reads as an unfinished/loading screen rather than deliberate
+        // whitespace. A small closing wordmark — the same gold-on-teal
+        // treatment HeroStartCard already uses — gives the screen a
+        // deliberate ending instead.
+        item {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("سَبِيل", fontSize = 20.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.35f))
+            }
+        }
         item { Spacer(Modifier.height(8.dp)) }
     }
 }
@@ -197,10 +230,14 @@ private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> 
                 color = SabeelColors.TextPrimary
             )
         }
-        Text(
-            text = "${session.lastCount.toLocalizedNumerals(language)} / ${session.target.toLocalizedNumerals(language)}",
+        ProgressFractionText(
+            count = session.lastCount,
+            target = session.target,
+            language = language,
+            isComplete = session.lastCount >= session.target,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            color = SabeelColors.AccentTeal
+            normalColor = SabeelColors.AccentTeal,
+            completeColor = SabeelColors.AccentTeal
         )
     }
 }
@@ -247,8 +284,15 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
                 Spacer(Modifier.weight(1f))
                 val streakDigits = state.currentStreak.toLocalizedNumerals(state.language)
                 Text(
-                    text = if (state.currentStreak == 1) strings.homeDayOne.format(streakDigits)
-                    else strings.homeDayOther.format(streakDigits),
+                    text = when {
+                        // IX-07: "0 days" on a scoreboard reads as a deficit,
+                        // whether this is a brand-new install or a streak
+                        // that just broke. "Start today" is true either way
+                        // and doesn't frame either case as a failure.
+                        state.currentStreak == 0 -> strings.homeStreakStart
+                        state.currentStreak == 1 -> strings.homeDayOne.format(streakDigits)
+                        else -> strings.homeDayOther.format(streakDigits)
+                    },
                     style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary
                 )
             }
@@ -351,6 +395,38 @@ private fun AllTimeStat(label: String, value: String) {
     }
 }
 
+/**
+ * IX-08: stands in for [AllTimeCard] before the user's first-ever session, so
+ * the zero-state screen says something encouraging instead of reporting two
+ * zeroes. Also softens the CP-02 empty-state gap a little further, since it
+ * occupies real vertical space with actual content rather than nothing.
+ */
+@Composable
+private fun FirstTimeEncouragementCard() {
+    val strings = LocalStrings.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(SabeelColors.Surface)
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Spa,
+            contentDescription = null,
+            tint = SabeelColors.SageGreen,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = strings.homeFirstTimeEncouragement,
+            style = MaterialTheme.typography.bodyMedium,
+            color = SabeelColors.TextSecondary
+        )
+    }
+}
+
 @Composable
 private fun SectionHeader(text: String) {
     Text(
@@ -380,7 +456,7 @@ private fun CollapsibleSectionHeader(text: String, isExpanded: Boolean, onClick:
 }
 
 @Composable
-private fun HeroStartCard(onStart: () -> Unit) {
+private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false) {
     val strings = LocalStrings.current
     Column(
         modifier = Modifier
@@ -395,7 +471,7 @@ private fun HeroStartCard(onStart: () -> Unit) {
     ) {
         Text("سَبِيل", fontSize = 30.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.55f))
         Text(
-            text = strings.homeBeginToday,
+            text = if (hasProgressToday) strings.homeContinueToday else strings.homeBeginToday,
             style = MaterialTheme.typography.titleMedium,
             color = SabeelColors.TextPrimary
         )
