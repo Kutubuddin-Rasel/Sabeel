@@ -24,7 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -173,14 +172,22 @@ private fun DhikrCard(
 ) {
     val strings = LocalStrings.current
     val layoutDirection = LocalLayoutDirection.current
+    // IX-06 fix: this border alone used to be the only signal that a card was
+    // "open", using the same AccentTeal language as Home's hero CTA card (a
+    // teal-tinted fill + teal border) — a user who's learned "teal outline =
+    // the important thing to do next" from Home could misread an expanded
+    // list item as similarly featured. The fill now shifts to a neutral
+    // elevation tone instead of a teal tint, so "currently open" reads as its
+    // own state rather than a dimmer copy of "primary/recommended".
     val borderColor = if (isExpanded) SabeelColors.AccentTeal.copy(alpha = 0.6f)
     else SabeelColors.BorderIdle
+    val backgroundColor = if (isExpanded) SabeelColors.SurfaceElevated else SabeelColors.Surface
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SabeelColors.Surface)
+            .background(backgroundColor)
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(onClick = onToggle)
     ) {
@@ -234,8 +241,12 @@ private fun DhikrCard(
             ) {
                 HorizontalDivider(color = SabeelColors.Divider)
 
+                // TY-03: italics measurably slow reading versus upright text;
+                // stacking that with secondary-gray + 13sp on what's
+                // functionally instructional text (not a quotation) spent
+                // italic's "this is different" signal in the wrong place.
                 item.transliteration?.let {
-                    Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary, fontStyle = FontStyle.Italic)
+                    Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary)
                 }
 
                 val meaning = when (language) {
