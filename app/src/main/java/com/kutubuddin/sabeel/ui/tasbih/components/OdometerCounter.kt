@@ -16,13 +16,20 @@ import com.kutubuddin.sabeel.ui.i18n.localizeDigits
 @Composable
 fun OdometerCounter(
     count: Int,
+    target: Int,
     modifier: Modifier = Modifier,
     style: TextStyle = TextStyle.Default,
     language: String = "en"
 ) {
+    // IX-05 fix: was a hardcoded 2-digit pad regardless of target, so a
+    // small target like 3 rendered as "00" at rest — read as a display
+    // glitch rather than "zero of three". Width now tracks the target's own
+    // digit count (1 digit for a target of 3, 3 digits for a target of 100),
+    // so the padding never implies a scale the target doesn't have.
+    val padWidth = target.toString().length.coerceAtLeast(1)
     // ASCII digits drive the roll animation (stable ordering); the localized
     // glyph is substituted only at paint time inside the content lambda.
-    val countString = count.toString().padStart(2, '0')
+    val countString = count.toString().padStart(padWidth, '0')
     // Numbers read left-to-right in every language (Arabic-Indic digits too), so
     // pin the digit row to LTR — otherwise under the app-wide RTL direction a
     // two-digit count like ۱۲ would render mirrored as ۲۱.

@@ -37,6 +37,14 @@ import com.kutubuddin.sabeel.ui.theme.SabeelColors
 @Composable
 fun SpiritualRewardCard(
     reward: String,
+    // IX-12: DhikrItem/ActiveDhikr already carry a hadithRef, and the Dhikr
+    // Library's expanded card cites it. This card — the one screen a user
+    // actually spends dhikr time on, every session — rendered the reward
+    // with no source at all, which is backwards for a religious app's
+    // credibility: citation should be most present where engagement is
+    // highest, not least. Optional so callers with no ref (or a blank one)
+    // render exactly as before.
+    reference: String? = null,
     modifier: Modifier = Modifier
 ) {
     val strings = LocalStrings.current
@@ -96,6 +104,15 @@ fun SpiritualRewardCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = SabeelColors.TextSecondary
                 )
+                if (!reference.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = reference,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SabeelColors.TextSecondary,
+                        letterSpacing = 0.5.sp
+                    )
+                }
             }
         }
     }
