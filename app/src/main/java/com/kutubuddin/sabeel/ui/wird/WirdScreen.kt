@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.model.WirdProgress
 import com.kutubuddin.sabeel.domain.model.WirdProgressItem
+import com.kutubuddin.sabeel.ui.components.ProgressFractionText
 import com.kutubuddin.sabeel.ui.components.SabeelTopBar
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
@@ -141,17 +143,36 @@ fun WirdContent(
             // completion drives slice opacity, and the completed/total
             // count sits in the center, so there's one progress statement
             // on this screen instead of two that could disagree.
+            //
+            // IA-01 fix: this same ring shows a different number on
+            // WirdEditScreen (the target total, not a completion count) with
+            // no visible distinction between the two — a caption under the
+            // number now says which one this is, and a per-item label is
+            // passed through so WirdRingLegend can name every slice (CT-02).
             WirdVisualRing(
-                slices = progress.items.map { WirdRingSlice(target = it.target, isComplete = it.isComplete) },
+                slices = progress.items.map {
+                    WirdRingSlice(target = it.target, label = it.displayName.get(language), isComplete = it.isComplete)
+                },
                 modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
             ) {
-                Text(
-                    text = "${progress.completed.toLocalizedNumerals(language)}/${progress.total.toLocalizedNumerals(language)}",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SabeelColors.TextPrimary
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${progress.completed.toLocalizedNumerals(language)}/${progress.total.toLocalizedNumerals(language)}",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SabeelColors.TextPrimary
+                    )
+                    Text(
+                        text = strings.wirdRingCaptionProgress,
+                        fontSize = 12.sp,
+                        color = SabeelColors.TextSecondary
+                    )
+                }
             }
+            WirdRingLegend(
+                slices = progress.items.map { WirdRingSlice(target = it.target, label = it.displayName.get(language), isComplete = it.isComplete) },
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp)
+            )
             HorizontalDivider(color = SabeelColors.Divider)
 
             LazyColumn(
@@ -194,10 +215,14 @@ private fun WirdItemRow(item: WirdProgressItem, language: String, onClick: () ->
                 style = arabicStyle.copy(fontSize = 16.sp, lineHeight = 24.sp), color = SabeelColors.ArabicText,
                 modifier = Modifier.fillMaxWidth())
         }
-        Text(
-            "${item.countToday.toLocalizedNumerals(language)} / ${item.target.toLocalizedNumerals(language)}",
-            fontSize = 13.sp, fontWeight = FontWeight.Bold,
-            color = if (done) SabeelColors.SageGreen else SabeelColors.AccentTeal
+        ProgressFractionText(
+            count = item.countToday,
+            target = item.target,
+            language = language,
+            isComplete = done,
+            style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold),
+            normalColor = SabeelColors.AccentTeal,
+            completeColor = SabeelColors.SageGreen
         )
     }
 }
