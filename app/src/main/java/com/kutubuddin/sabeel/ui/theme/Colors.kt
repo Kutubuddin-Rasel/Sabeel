@@ -71,7 +71,15 @@ val DarkSabeelColors = SabeelColorTokens(
     SurfaceElevated   = Color(0xFF1E2723),
     AccentTeal        = Color(0xFF4FA88B),
     AccentTealBright  = Color(0xFF6FC4A6),
-    AccentTealSurface = Color(0x264FA88B),
+    // IX-10: was 0x264FA88B (~15% alpha). Teal text/icons sitting *on* this
+    // tint (e.g. the "33×" count badge in DhikrCard) computed to ~4.7:1
+    // against it — technically AA-passing but the thinnest margin of any
+    // text token in this file, close enough to the floor to risk tipping
+    // below it on a panel with different gamma. Lower alpha darkens the
+    // composited backdrop (this tint sits on the near-black Surface, so
+    // *less* of it reads as more contrast, not less) — recomputes to ~5.3:1
+    // with essentially the same visual tint.
+    AccentTealSurface = Color(0x144FA88B),
     CircleEdge        = Color(0xFF243029),
     CircleCenter      = Color(0xFF131A17),
     CircleBorder      = Color(0xFF2C3A33),
@@ -95,21 +103,25 @@ val DarkSabeelColors = SabeelColorTokens(
     Danger            = Color(0xFFE57373),
     OnAccentTeal      = Color(0xFF0E1311), // = Background
     OnGoldPrimary     = Color(0xFF0E1311), // = Background
-    // Spread across the wheel (teal, terracotta, slate blue, plum) instead of
-    // four shades of green — with 4 items (the common case, see the wird
-    // screenshots) every slice now reads as visually distinct. Gold sits 5th
-    // so it doesn't crowd that common case. Each value tuned independently
-    // for contrast against Background (#0E1311) at ~50-70% lightness, rather
-    // than reused from other semantic tokens.
     // 7 distinct hues so a 7-item wird (the common case) never repeats a
     // color via modulo (the old 5-color list did). Terracotta is gone: it
     // read as a near-universal "warning" hue and, by coincidence of list
     // order, often landed on the largest slice. Color is now a secondary
     // cue anyway — WirdRingLegend labels every slice by name.
+    // IX-11: slate blue and plum were the two most saturated/cool hues in
+    // this list — on a screen that's otherwise "near-black + one teal + gold
+    // reserved for milestones," they were the one place the app suddenly
+    // looked like a fitness-tracker activity ring instead of the calm,
+    // sacred tone everywhere else. Muted toward the same dusty/muted
+    // register as the rose/aqua/sand slices below, while keeping enough hue
+    // separation from their nearest neighbors (dusty rose, deep aqua) that
+    // WirdRingLegend's color+label pairing still disambiguates them. This is
+    // the most subjective change in this pass — worth eyeballing on-device
+    // against the old values (kept in comments) before committing to it.
     RingPalette       = listOf(
         Color(0xFF4FA88B), // teal
-        Color(0xFF7798C5), // slate blue
-        Color(0xFFB474AF), // plum
+        Color(0xFF6D8CA3), // muted slate (was 0xFF7798C5)
+        Color(0xFF8B7196), // muted heather (was 0xFFB474AF)
         Color(0xFFD9B26A), // gold
         Color(0xFFC98CA0), // dusty rose
         Color(0xFF6FA5A0), // deep aqua
@@ -152,10 +164,11 @@ val LightSabeelColors = SabeelColorTokens(
     // Same identities as the dark set, retuned to ~30-45% lightness so they
     // hold contrast against the warm cream Background (#F4F1E9) instead of
     // washing out the way pale greens would.
+    // IX-11 (light-mode pair — see the dark set above for the reasoning).
     RingPalette       = listOf(
         Color(0xFF2C6E5A), // teal
-        Color(0xFF355A8C), // slate blue
-        Color(0xFF7F3979), // plum
+        Color(0xFF3E5E76), // muted slate (was 0xFF355A8C)
+        Color(0xFF6B4F72), // muted heather (was 0xFF7F3979)
         Color(0xFFB08D43), // gold
         Color(0xFF8C4B5C), // dusty rose
         Color(0xFF2E6E68), // deep aqua

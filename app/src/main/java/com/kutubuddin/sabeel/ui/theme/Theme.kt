@@ -8,7 +8,6 @@ import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import android.app.Activity
@@ -23,9 +22,9 @@ import androidx.core.view.WindowCompat
  */
 private val SakinahDarkScheme = darkColorScheme(
     primary = DarkSabeelColors.AccentTeal,
-    onPrimary = DarkSabeelColors.Background,
+    onPrimary = DarkSabeelColors.OnAccentTeal,
     secondary = DarkSabeelColors.GoldPrimary,
-    onSecondary = DarkSabeelColors.Background,
+    onSecondary = DarkSabeelColors.OnGoldPrimary,
     tertiary = DarkSabeelColors.AccentTealBright,
     background = DarkSabeelColors.Background,
     onBackground = DarkSabeelColors.TextPrimary,
@@ -42,9 +41,9 @@ private val SakinahDarkScheme = darkColorScheme(
  */
 private val SakinahLightScheme = lightColorScheme(
     primary = LightSabeelColors.AccentTeal,
-    onPrimary = Color(0xFFEAF3EE),
+    onPrimary = LightSabeelColors.OnAccentTeal,
     secondary = LightSabeelColors.GoldPrimary,
-    onSecondary = Color(0xFFFBF6EA),
+    onSecondary = LightSabeelColors.OnGoldPrimary,
     tertiary = LightSabeelColors.RewardBorder,
     background = LightSabeelColors.Background,
     onBackground = LightSabeelColors.TextPrimary,
