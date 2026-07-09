@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -126,16 +125,33 @@ fun WirdEditContent(
         // Allocation only — every slice is `isComplete = true` so the ring
         // reads as pure composition here, not daily progress. Compare with
         // WirdScreen, where the same composable is fed real completion state.
+        //
+        // IA-01 fix: this ring shows the target total here, but a completion
+        // count (completed/total) on WirdScreen — a caption now says which,
+        // and every slice is labeled below via WirdRingLegend (CT-02).
         WirdVisualRing(
-            slices = state.rows.map { WirdRingSlice(target = it.target) },
+            slices = state.rows.map { WirdRingSlice(target = it.target, label = it.displayName) },
             modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
         ) {
             val totalTarget = state.rows.sumOf { it.target }
-            Text(
-                text = totalTarget.toLocalizedNumerals(state.language),
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                color = SabeelColors.TextPrimary
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = totalTarget.toLocalizedNumerals(state.language),
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SabeelColors.TextPrimary
+                )
+                Text(
+                    text = strings.wirdRingCaptionTarget,
+                    fontSize = 12.sp,
+                    color = SabeelColors.TextSecondary
+                )
+            }
+        }
+        if (state.rows.isNotEmpty()) {
+            WirdRingLegend(
+                slices = state.rows.map { WirdRingSlice(target = it.target, label = it.displayName) },
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
             )
         }
 
@@ -179,12 +195,27 @@ fun WirdEditContent(
                                 color = SabeelColors.TextPrimary,
                                 modifier = Modifier.weight(1f)
                             )
-                            Text(
-                                text = "${row.target.toLocalizedNumerals(state.language)}×",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = SabeelColors.AccentTeal
-                            )
+                            // CP-01 fix: rows already had reorder/delete
+                            // controls behind a tap-to-expand, but nothing
+                            // on-screen hinted that tapping the row would
+                            // reveal them. This chevron is that hint.
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "${row.target.toLocalizedNumerals(state.language)}×",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SabeelColors.AccentTeal
+                                )
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
+                                    contentDescription = strings.wirdExpandRowA11y,
+                                    tint = SabeelColors.TextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
 
                         AnimatedVisibility(
@@ -232,7 +263,7 @@ fun WirdEditContent(
                                         Icon(Icons.Outlined.KeyboardArrowUp, contentDescription = strings.wirdReorder, tint = SabeelColors.TextSecondary, modifier = Modifier.clip(CircleShape).clickable { onMove(row.dhikrKey, true) }.padding(8.dp).size(24.dp))
                                         Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = strings.wirdReorder, tint = SabeelColors.TextSecondary, modifier = Modifier.clip(CircleShape).clickable { onMove(row.dhikrKey, false) }.padding(8.dp).size(24.dp))
                                     }
-                                    Icon(Icons.Outlined.Delete, contentDescription = strings.wirdRemove, tint = Color(0xFFE57373), modifier = Modifier.clip(CircleShape).clickable { onRemove(row.dhikrKey) }.padding(8.dp).size(24.dp))
+                                    Icon(Icons.Outlined.Delete, contentDescription = strings.wirdRemove, tint = SabeelColors.Danger, modifier = Modifier.clip(CircleShape).clickable { onRemove(row.dhikrKey) }.padding(8.dp).size(24.dp))
                                 }
                             }
                         }
@@ -254,7 +285,15 @@ fun WirdEditContent(
     }
 
     if (showPicker) {
-        ModalBottomSheet(onDismissRequest = onDismissPicker, containerColor = SabeelColors.Surface) {
+        ModalBottomSheet(
+            onDismissRequest = onDismissPicker,
+            containerColor = SabeelColors.Surface,
+            // IX-01 fix: the default M3 scrim reads as almost imperceptible
+            // over an already near-black Background, so the sheet doesn't
+            // clearly read as modal. A stronger, explicit scrim fixes the
+            // perceptibility regardless of how dark the base theme is.
+            scrimColor = SabeelColors.Background.copy(alpha = 0.75f)
+        ) {
             LazyColumn(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                 items(state.pickable, key = { it.key }) { d ->
                     Row(
