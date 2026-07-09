@@ -200,9 +200,11 @@ fun TasbihCircle(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Counter — 3-digit zero-padded odometer
+                // Counter — odometer padded to match the target's own
+                // digit count (see OdometerCounter's IX-05 fix).
                 OdometerCounter(
                     count = count,
+                    target = target,
                     language = language,
                     style = MaterialTheme.typography.displayLarge.copy(color = SabeelColors.CounterWhite)
                 )
