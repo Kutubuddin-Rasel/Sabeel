@@ -1,7 +1,12 @@
 package com.kutubuddin.sabeel.ui.dhikr
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +19,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -196,15 +203,29 @@ private fun DhikrCard(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
-            Text(
-                text = item.arabicText,
-                maxLines = if (isExpanded) Int.MAX_VALUE else 1,
-                overflow = TextOverflow.Ellipsis,
-                color = SabeelColors.ArabicText,
-                textAlign = TextAlign.End,
-                style = if (isExpanded) arabicStyle else arabicStyle.copy(fontSize = 20.sp, lineHeight = 32.sp),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Explicit chevron so the card visibly announces "tap to expand"
+                // instead of relying on the whole surface being silently clickable.
+                Icon(
+                    imageVector = if (isExpanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
+                    contentDescription = strings.wirdExpandRowA11y,
+                    tint = SabeelColors.TextSecondary,
+                    modifier = Modifier.padding(top = 2.dp).size(18.dp)
+                )
+                Text(
+                    text = item.arabicText,
+                    maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = SabeelColors.ArabicText,
+                    textAlign = TextAlign.End,
+                    style = if (isExpanded) arabicStyle else arabicStyle.copy(fontSize = 20.sp, lineHeight = 32.sp),
+                    modifier = Modifier.weight(1f)
+                )
+            }
             Spacer(Modifier.height(10.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -217,78 +238,100 @@ private fun DhikrCard(
                     color = SabeelColors.TextPrimary,
                     fontWeight = FontWeight.Medium
                 )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SabeelColors.AccentTealSurface)
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                ) {
-                    Text("${item.defaultTarget.toLocalizedNumerals(language)}×", fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
-                }
+                // Plain secondary text instead of a filled AccentTealSurface pill —
+                // a colored pill reads as "tap me", but this is the static default
+                // target, not an action. Filled/colored pills are reserved for real
+                // controls (Count Now below).
+                Text(
+                    text = "${strings.dhikrTargetLabel} ${item.defaultTarget.toLocalizedNumerals(language)}×",
+                    fontSize = 12.sp,
+                    color = SabeelColors.TextSecondary
+                )
             }
         }
 
         AnimatedVisibility(
             visible = isExpanded,
-            enter = expandVertically(),
-            exit = shrinkVertically()
+            enter = expandVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
+            exit = shrinkVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 HorizontalDivider(color = SabeelColors.Divider)
 
-                // TY-03: italics measurably slow reading versus upright text;
-                // stacking that with secondary-gray + 13sp on what's
-                // functionally instructional text (not a quotation) spent
-                // italic's "this is different" signal in the wrong place.
-                item.transliteration?.let {
-                    Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary)
-                }
+                // Transliteration + meaning are one reading cluster (pronunciation
+                // aid, then the payload) — tight 4dp spacing groups them visually
+                // instead of both reading as equally-weighted, unrelated lines.
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // TY-03: italics measurably slow reading versus upright text;
+                    // stacking that with secondary-gray + 13sp on what's
+                    // functionally instructional text (not a quotation) spent
+                    // italic's "this is different" signal in the wrong place.
+                    item.transliteration?.let {
+                        Text(it, fontSize = 13.sp, color = SabeelColors.TextSecondary)
+                    }
 
-                val meaning = when (language) {
-                    "ur" -> item.meaning.ur.ifBlank { item.meaning.en }
-                    "bn" -> item.meaning.bn.ifBlank { item.meaning.en }
-                    else -> item.meaning.en
+                    val meaning = when (language) {
+                        "ur" -> item.meaning.ur.ifBlank { item.meaning.en }
+                        "bn" -> item.meaning.bn.ifBlank { item.meaning.en }
+                        else -> item.meaning.en
+                    }
+                    Text(meaning, fontSize = 14.sp, color = SabeelColors.TextPrimary)
                 }
-                Text(meaning, fontSize = 13.sp, color = SabeelColors.TextPrimary)
 
                 val reward = item.spiritualReward.get(language)
-                if (reward.isNotBlank()) {
-                    Row(
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                val hasReward = reward.isNotBlank()
+                val hasRef = item.hadithRef.isNotBlank()
+                if (hasReward || hasRef) {
+                    // Reward + reference are their own "context" cluster, set apart
+                    // from the translation above with a distinct surface instead of
+                    // sitting in the same flat stack — five same-weight lines in a
+                    // row was hard to parse at a glance.
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SabeelColors.SurfaceElevated)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.AutoAwesome,
-                            contentDescription = null,
-                            tint = SabeelColors.SageGreen,
-                            modifier = Modifier
-                                .padding(top = 2.dp)
-                                .size(14.dp)
-                        )
-                        Text(
-                            text = reward,
-                            fontSize = 12.sp,
-                            color = SabeelColors.SageGreen,
-                            lineHeight = 18.sp
-                        )
+                        if (hasReward) {
+                            Row(
+                                verticalAlignment = Alignment.Top,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = SabeelColors.SageGreen,
+                                    modifier = Modifier
+                                        .padding(top = 2.dp)
+                                        .size(14.dp)
+                                )
+                                Text(
+                                    text = reward,
+                                    fontSize = 12.sp,
+                                    color = SabeelColors.SageGreen,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+
+                        if (hasRef) {
+                            Text(
+                                text = strings.dhikrRef.format(localizeHadithRef(item.hadithRef, language)),
+                                fontSize = 11.sp,
+                                color = SabeelColors.TextSecondary,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
                     }
                 }
 
-                if (item.hadithRef.isNotBlank()) {
-                    Text(
-                        text = strings.dhikrRef.format(localizeHadithRef(item.hadithRef, language)),
-                        fontSize = 12.sp,
-                        color = SabeelColors.TextSecondary,
-                        letterSpacing = 0.5.sp
-                    )
-                }
-
-                Spacer(Modifier.height(4.dp))
                 Button(
                     onClick = onCountNow,
                     modifier = Modifier.fillMaxWidth(),
