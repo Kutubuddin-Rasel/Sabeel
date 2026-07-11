@@ -12,6 +12,7 @@ kotlin = "2.4.0"
 composeBom = "2026.06.01"
 hilt = "2.60.1"
 ksp = "2.3.6"
+reorderable = "0.9.6"
 room = "2.8.4"
 datastore = "1.2.1"
 robolectric = "4.16.1"
@@ -23,8 +24,9 @@ benchmarkMacroJunit4 = "1.4.1"
 uiautomator = "2.4.0"
 profileinstaller = "1.4.1"
 navigation-compose = "2.9.8"
-work = "2.10.0"
-hiltWork = "1.2.0"
+work = "2.11.2"
+hiltWork = "1.4.0"
+shCalvinReorderable = "3.1.0"
 
 [libraries]
 androidx-core = { module = "androidx.test:core", version.ref = "core" }
@@ -60,11 +62,12 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation-compose" }
-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.2.0" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.4.0" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
 hilt-compiler-androidx = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltWork" }
+sh-calvin-reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "shCalvinReorderable" }
 
 
 [plugins]
