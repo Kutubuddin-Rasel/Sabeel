@@ -206,6 +206,7 @@ object UiText {
     val catSalawat = LocalizedText(en = "Salawat", ur = "درود", bn = "দরূদ")
     val catIstighfar = LocalizedText(en = "Istighfar", ur = "استغفار", bn = "ইস্তিগফার")
     val catTahlil = LocalizedText(en = "Tahlil", ur = "تہلیل", bn = "তাহলিল")
+    val catAsmaUlHusna = LocalizedText(en = "Asma ul Husna", ur = "اسماء الحسنىٰ", bn = "আসমাউল হুসনা")
     val catCustom = LocalizedText(en = "My Dhikr", ur = "میرا ذکر", bn = "আমার যিকির")
 
     fun resolve(lang: String) = UiStrings(
@@ -320,6 +321,7 @@ object UiText {
         catSalawat = catSalawat.get(lang),
         catIstighfar = catIstighfar.get(lang),
         catTahlil = catTahlil.get(lang),
+        catAsmaUlHusna = catAsmaUlHusna.get(lang),
         catCustom = catCustom.get(lang),
     )
 }

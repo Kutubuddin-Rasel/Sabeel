@@ -134,6 +134,7 @@ data class UiStrings(
     val catSalawat: String,
     val catIstighfar: String,
     val catTahlil: String,
+    val catAsmaUlHusna: String,
     val catCustom: String,
 ) {
     /**
@@ -149,6 +150,7 @@ data class UiStrings(
         DhikrCategory.SALAWAT -> catSalawat
         DhikrCategory.ISTIGHFAR -> catIstighfar
         DhikrCategory.TAHLIL -> catTahlil
+        DhikrCategory.ASMA_UL_HUSNA -> catAsmaUlHusna
         DhikrCategory.CUSTOM -> catCustom
     }
 }
