@@ -28,6 +28,9 @@ interface WirdDao {
     @Upsert
     suspend fun upsert(item: WirdItemEntity)
 
+    @Query("INSERT OR REPLACE INTO wird_items (dhikrKey, target, position) VALUES (:key, :target, (SELECT COALESCE(MAX(position), -1) + 1 FROM wird_items))")
+    suspend fun insertAtEnd(key: String, target: Int)
+
     @Query("DELETE FROM wird_items WHERE dhikrKey = :key")
     suspend fun delete(key: String)
 
