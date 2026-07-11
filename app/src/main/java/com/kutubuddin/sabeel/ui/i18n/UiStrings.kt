@@ -45,6 +45,9 @@ data class UiStrings(
     val homeDayOther: String, // template: "%1$s days"
     val homeStreakStart: String,            // shown instead of "0 days" when currentStreak == 0
     val homeContinueToday: String,          // hero card headline once ≥1 session exists today
+    val homeSmartPlayNext: String,          // template: "Next: %1$s"
+    val homeGoalCompleteTitle: String,
+    val homeGoalCompleteAction: String,
     val homeFirstTimeEncouragement: String, // replaces the All-Time "0 / 0" stat row pre-first-session
     // ── Daily Wird ──
     val wirdTitle: String,
@@ -118,6 +121,7 @@ data class UiStrings(
     val settingsReminderTime: String,
     // ── Dhikr Library ──
     val dhikrSearchPlaceholder: String,
+    val dhikrTargetLabel: String,   // prefix before the default-target count, e.g. "Target 33×"
     val dhikrRef: String,          // template: "Ref: %1$s"
     val dhikrCountNow: String,
     val dhikrNoResults: String,    // template: "No dhikr found for \"%1$s\""
