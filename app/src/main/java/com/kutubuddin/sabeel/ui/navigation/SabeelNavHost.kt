@@ -89,7 +89,17 @@ fun SabeelNavHost(
             navigation(startDestination = SabeelTab.Home.startRoute, route = SabeelTab.Home.graphRoute) {
                 composable(SabeelTab.Home.startRoute) {
                     HomeScreen(
-                        onResumeCounting = { navController.switchToCountTab() },
+                        onResumeCounting = { key, target ->
+                            if (key != null && target != null) {
+                                navController.navigate(SabeelTab.Count.startRoute + "?dhikrKey=$key&target=$target") {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            } else {
+                                navController.switchToCountTab()
+                            }
+                        },
                         onOpenWird = { navController.navigate(WirdRoutes.WIRD) }
                     )
                 }
