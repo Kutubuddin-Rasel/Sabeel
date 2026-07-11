@@ -25,8 +25,7 @@ class WirdRepositoryImpl @Inject constructor(
         }
 
     override suspend fun addToWird(dhikrKey: String, target: Int) = withContext(io) {
-        val position = wirdDao.maxPosition() + 1
-        wirdDao.upsert(WirdItemEntity(dhikrKey, target.coerceAtLeast(1), position))
+        wirdDao.insertAtEnd(dhikrKey, target.coerceAtLeast(1))
     }
 
     override suspend fun updateTarget(dhikrKey: String, target: Int) = withContext(io) {
@@ -47,19 +46,6 @@ class WirdRepositoryImpl @Inject constructor(
     }
 
     override suspend fun seedDefaultIfEmpty() = withContext(io) {
-        if (wirdDao.count() == 0) {
-            DEFAULT_WIRD.forEachIndexed { index, (key, target) ->
-                wirdDao.upsert(WirdItemEntity(key, target, index))
-            }
-        }
-    }
-
-    companion object {
-        /** Canonical post-Salah tasbih — 33 / 33 / 34. Keys exist in DhikrCatalog. */
-        private val DEFAULT_WIRD = listOf(
-            DhikrType.SUBHANALLAH.name to 33,
-            DhikrType.ALHAMDULILLAH.name to 33,
-            DhikrType.ALLAHU_AKBAR.name to 34
-        )
+        // No-op. The user should build their own goal from scratch.
     }
 }
