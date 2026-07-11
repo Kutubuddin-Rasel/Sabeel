@@ -45,7 +45,7 @@ class ObserveWirdProgress @Inject constructor(
                 arabicText = d.arabicText,
                 transliteration = d.transliteration,
                 target = item.target,
-                countToday = saved + live,
+                countToday = minOf(saved + live, item.target),
                 position = item.position
             )
         }
