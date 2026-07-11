@@ -8,10 +8,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -63,18 +67,32 @@ class MainActivity : ComponentActivity() {
         observeServiceSideEffects()
 
         // Seed the default daily wird on first launch (idempotent — no-op if non-empty).
-        lifecycleScope.launch { wirdRepository.seedDefaultIfEmpty() }
+        lifecycleScope.launch { 
+            wirdRepository.seedDefaultIfEmpty()
+            settingsRepository.incrementAppLaunchCount()
+        }
 
         setContent {
             // Drive the theme from the SAVED setting, not isSystemInDarkTheme(),
             // so the Settings Dark/Light toggle is a real, instant choice.
-            val theme by settingsRepository.theme.collectAsState(initial = "dark")
+            val theme by settingsRepository.theme.collectAsStateWithLifecycle(initialValue = "dark")
 
             // App language drives ALL chrome (via LocalStrings), numerals, and
             // text direction — off the SAVED setting, not the system locale. A
             // language change is a pure recomposition; no Activity recreation.
-            val language by settingsRepository.language.collectAsState(initial = "en")
+            val language by settingsRepository.language.collectAsStateWithLifecycle(initialValue = "en")
             val strings = remember(language) { UiText.resolve(language) }
+            val launchCount by settingsRepository.appLaunchCount.collectAsStateWithLifecycle(initialValue = 0)
+
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { /* permission granted or denied */ }
+
+            LaunchedEffect(launchCount) {
+                if (launchCount == 2 && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
 
             CompositionLocalProvider(
                 LocalStrings provides strings,
