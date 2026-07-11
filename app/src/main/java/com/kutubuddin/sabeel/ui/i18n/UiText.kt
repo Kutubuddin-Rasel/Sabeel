@@ -69,6 +69,11 @@ object UiText {
     // first dhikr doesn't see the exact same "Begin today's dhikr" prompt
     // that greeted them at zero progress. Best-effort ur/bn drafts.
     val homeContinueToday = LocalizedText(en = "Continue today's dhikr", ur = "آج کا ذکر جاری رکھیں", bn = "আজকের যিকির চালিয়ে যান")
+    
+    val homeSmartPlayNext = LocalizedText(en = "Next: %1\$s", ur = "اگلا: %1\$s", bn = "পরবর্তী: %1\$s")
+    val homeGoalCompleteTitle = LocalizedText(en = "Alhamdulillah, Daily Goal Complete \uD83C\uDF89", ur = "الحمدللہ، روزانہ ہدف مکمل \uD83C\uDF89", bn = "আলহামদুলিল্লাহ, দৈনিক লক্ষ্য সম্পন্ন \uD83C\uDF89")
+    val homeGoalCompleteAction = LocalizedText(en = "Count Extra Dhikr", ur = "مزید ذکر شمار کریں", bn = "অতিরিক্ত যিকির গণনা করুন")
+
     // Replaces the "0 Total Counted / 0 Sessions" stat row for a user with
     // zero all-time sessions — two prominent zeroes on first launch reads as
     // "behind," not "about to start." Best-effort ur/bn drafts.
@@ -187,6 +192,7 @@ object UiText {
 
     // ── Dhikr Library ─────────────────────────────────
     val dhikrSearchPlaceholder = LocalizedText(en = "Search dhikr…", ur = "ذکر تلاش کریں…", bn = "যিকির খুঁজুন…")
+    val dhikrTargetLabel = LocalizedText(en = "Target", ur = "ہدف", bn = "লক্ষ্য")
     val dhikrRef = LocalizedText(en = "Ref: %1\$s", ur = "حوالہ: %1\$s", bn = "সূত্র: %1\$s")
     val dhikrCountNow = LocalizedText(en = "Count Now", ur = "ابھی شمار کریں", bn = "এখন গণনা করুন")
     val dhikrNoResults = LocalizedText(en = "No dhikr found for \"%1\$s\"", ur = "\"%1\$s\" کے لیے کوئی ذکر نہیں ملا", bn = "\"%1\$s\" এর জন্য কোনো যিকির পাওয়া যায়নি")
@@ -231,6 +237,9 @@ object UiText {
         homeDayOther = homeDayOther.get(lang),
         homeStreakStart = homeStreakStart.get(lang),
         homeContinueToday = homeContinueToday.get(lang),
+        homeSmartPlayNext = homeSmartPlayNext.get(lang),
+        homeGoalCompleteTitle = homeGoalCompleteTitle.get(lang),
+        homeGoalCompleteAction = homeGoalCompleteAction.get(lang),
         homeFirstTimeEncouragement = homeFirstTimeEncouragement.get(lang),
         wirdTitle = wirdTitle.get(lang),
         wirdSetupTitle = wirdSetupTitle.get(lang),
@@ -299,6 +308,7 @@ object UiText {
         settingsDailyRemindersDesc = settingsDailyRemindersDesc.get(lang),
         settingsReminderTime = settingsReminderTime.get(lang),
         dhikrSearchPlaceholder = dhikrSearchPlaceholder.get(lang),
+        dhikrTargetLabel = dhikrTargetLabel.get(lang),
         dhikrRef = dhikrRef.get(lang),
         dhikrCountNow = dhikrCountNow.get(lang),
         dhikrNoResults = dhikrNoResults.get(lang),
