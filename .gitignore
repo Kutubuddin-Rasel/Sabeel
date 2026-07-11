@@ -50,3 +50,4 @@ gradlew.bat
 ORIGINAL_REQUEST.md
 PROJECT.md
 app/proguard-rules.pro
+build_output.txt
