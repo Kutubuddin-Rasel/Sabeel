@@ -8,5 +8,6 @@ enum class DhikrCategory(val displayName: String) {
     SALAWAT("Salawat"),
     ISTIGHFAR("Istighfar"),
     TAHLIL("Tahlil"),
+    ASMA_UL_HUSNA("99 Names of Allah"),
     CUSTOM("My Dhikr")
 }
