@@ -30,10 +30,22 @@ import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.lazy.rememberLazyListState
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.filled.DragIndicator
+import androidx.compose.foundation.border
 
 /**
  * Route-level wrapper (DIP): sole owner of ViewModel injection, state
@@ -72,7 +84,7 @@ fun WirdEditScreen(
         },
         onUpdateTarget = viewModel::updateTarget,
         onRemove = viewModel::remove,
-        onMove = viewModel::move
+        onReorder = viewModel::reorder
     )
 }
 
@@ -92,7 +104,7 @@ fun WirdEditContent(
     onAddDhikr: (key: String, target: Int) -> Unit,
     onUpdateTarget: (key: String, target: Int) -> Unit,
     onRemove: (key: String) -> Unit,
-    onMove: (key: String, up: Boolean) -> Unit
+    onReorder: (keys: List<String>) -> Unit
 ) {
     val strings = LocalStrings.current
 
@@ -168,102 +180,186 @@ fun WirdEditContent(
                 Text(strings.wirdGoalHintBody, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         } else {
+            var localRows by remember(state.rows) { mutableStateOf(state.rows) }
+            val lazyListState = rememberLazyListState()
+            val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+                localRows = localRows.toMutableList().apply {
+                    add(to.index, removeAt(from.index))
+                }
+            }
+
             LazyColumn(
-                Modifier.weight(1f),
+                state = lazyListState,
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(state.rows, key = { it.dhikrKey }) { row ->
+                items(localRows, key = { it.dhikrKey }) { row ->
                     val isExpanded = expandedKey == row.dhikrKey
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(SabeelColors.Surface)
-                            .clickable { expandedKey = if (isExpanded) null else row.dhikrKey }
-                            .padding(16.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                    
+                    ReorderableItem(reorderState, key = row.dhikrKey) { isDragging ->
+                        val elevation by animateFloatAsState(if (isDragging) 8f else 0f)
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { dismissValue ->
+                                if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                                    onRemove(row.dhikrKey)
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+                        )
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            enableDismissFromEndToStart = true,
+                            backgroundContent = {
+                                val color = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) SabeelColors.Danger else SabeelColors.Surface
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(color, RoundedCornerShape(16.dp))
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Icon(Icons.Outlined.Delete, contentDescription = "Delete", tint = Color.White)
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = row.displayName,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = SabeelColors.TextPrimary,
-                                modifier = Modifier.weight(1f)
-                            )
-                            // CP-01 fix: rows already had reorder/delete
-                            // controls behind a tap-to-expand, but nothing
-                            // on-screen hinted that tapping the row would
-                            // reveal them. This chevron is that hint.
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(SabeelColors.Surface)
+                                    .border(1.dp, SabeelColors.BorderIdle, RoundedCornerShape(16.dp))
+                                    .clickable { expandedKey = if (isExpanded) null else row.dhikrKey }
+                                    .padding(16.dp)
                             ) {
-                                Text(
-                                    text = "${row.target.toLocalizedNumerals(state.language)}×",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = SabeelColors.AccentTeal
-                                )
-                                Icon(
-                                    imageVector = if (isExpanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
-                                    contentDescription = strings.wirdExpandRowA11y,
-                                    tint = SabeelColors.TextSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-
-                        AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = expandVertically(animationSpec = tween(300)),
-                            exit = shrinkVertically(animationSpec = tween(300))
-                        ) {
-                            Column(Modifier.padding(top = 16.dp)) {
-                                HorizontalDivider(color = SabeelColors.Divider)
-                                Spacer(Modifier.height(16.dp))
-
-                                // Target Adjuster row
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text(strings.wirdTargetA11y, style = MaterialTheme.typography.labelMedium, color = SabeelColors.TextSecondary)
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        PresetChip(33, state.language) { onUpdateTarget(row.dhikrKey, 33) }
-                                        PresetChip(100, state.language) { onUpdateTarget(row.dhikrKey, 100) }
-
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(SabeelColors.SurfaceElevated)
-                                        ) {
-                                            Icon(Icons.Filled.Remove, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.clickable { onUpdateTarget(row.dhikrKey, row.target - 1) }.padding(8.dp).size(20.dp))
-                                            Icon(Icons.Filled.Add, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.clickable { onUpdateTarget(row.dhikrKey, row.target + 1) }.padding(8.dp).size(20.dp))
-                                        }
+                                        // Explicit chevron so the row visibly announces
+                                        // "tap to expand" instead of relying on the whole
+                                        // surface being silently clickable.
+                                        Icon(
+                                            imageVector = if (isExpanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
+                                            contentDescription = strings.wirdExpandRowA11y,
+                                            tint = SabeelColors.TextSecondary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = row.displayName,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = SabeelColors.TextPrimary
+                                        )
+                                    }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                    ) {
+                                        // Plain secondary text, not a bold AccentTeal
+                                        // number — filled/bold accent styling is now
+                                        // reserved for real controls (the segmented
+                                        // target picker below), so this reads as info,
+                                        // not as a button.
+                                        Text(
+                                            text = "${strings.wirdTargetA11y} ${row.target.toLocalizedNumerals(state.language)}×",
+                                            fontSize = 13.sp,
+                                            color = SabeelColors.TextSecondary
+                                        )
+                                        // Drag handle: a distinct dot-grip icon instead of
+                                        // a two-bar glyph that reads as a menu button, so it
+                                        // doesn't compete with the chevron for meaning.
+                                        Icon(
+                                            imageVector = Icons.Filled.DragIndicator,
+                                            contentDescription = strings.wirdReorder,
+                                            tint = SabeelColors.TextHint,
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .draggableHandle(
+                                                    onDragStopped = { 
+                                                        onReorder(localRows.map { it.dhikrKey })
+                                                    }
+                                                )
+                                        )
                                     }
                                 }
 
-                                Spacer(Modifier.height(16.dp))
-
-                                // Action row
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                AnimatedVisibility(
+                                    visible = isExpanded,
+                                    enter = expandVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
+                                    exit = shrinkVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
                                 ) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Icon(Icons.Outlined.KeyboardArrowUp, contentDescription = strings.wirdReorder, tint = SabeelColors.TextSecondary, modifier = Modifier.clip(CircleShape).clickable { onMove(row.dhikrKey, true) }.padding(8.dp).size(24.dp))
-                                        Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = strings.wirdReorder, tint = SabeelColors.TextSecondary, modifier = Modifier.clip(CircleShape).clickable { onMove(row.dhikrKey, false) }.padding(8.dp).size(24.dp))
+                                    Column(Modifier.padding(top = 16.dp)) {
+                                        HorizontalDivider(color = SabeelColors.Divider)
+                                        Spacer(Modifier.height(16.dp))
+
+                                        // Target Adjuster row — presets now show which
+                                        // value is active (filled AccentTeal) instead of
+                                        // looking identical whether selected or not, and
+                                        // the stepper shows the live number inline so
+                                        // adjusting a value doesn't require looking back
+                                        // up at the header row to see what changed.
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(strings.wirdTargetA11y, style = MaterialTheme.typography.labelMedium, color = SabeelColors.TextSecondary)
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                PresetChip(33, row.target == 33, state.language) { onUpdateTarget(row.dhikrKey, 33) }
+                                                PresetChip(100, row.target == 100, state.language) { onUpdateTarget(row.dhikrKey, 100) }
+
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(SabeelColors.SurfaceElevated)
+                                                ) {
+                                                    Icon(Icons.Filled.Remove, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.clickable { onUpdateTarget(row.dhikrKey, row.target - 1) }.padding(8.dp).size(20.dp))
+                                                    Text(
+                                                        text = row.target.toLocalizedNumerals(state.language),
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = SabeelColors.TextPrimary,
+                                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                                    )
+                                                    Icon(Icons.Filled.Add, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.clickable { onUpdateTarget(row.dhikrKey, row.target + 1) }.padding(8.dp).size(20.dp))
+                                                }
+                                            }
+                                        }
+
+                                        Spacer(Modifier.height(16.dp))
+
+                                        // Explicit, always-visible remove action — swipe-
+                                        // to-dismiss on the collapsed row still works, but
+                                        // it's an easy-to-never-discover gesture, especially
+                                        // for TalkBack users. This gives every user a
+                                        // visible path to the same outcome.
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.End
+                                        ) {
+                                            Text(
+                                                text = strings.wirdRemove,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = SabeelColors.Danger,
+                                                modifier = Modifier.clickable { onRemove(row.dhikrKey) }
+                                            )
+                                        }
                                     }
-                                    Icon(Icons.Outlined.Delete, contentDescription = strings.wirdRemove, tint = SabeelColors.Danger, modifier = Modifier.clip(CircleShape).clickable { onRemove(row.dhikrKey) }.padding(8.dp).size(24.dp))
                                 }
                             }
                         }
@@ -313,15 +409,20 @@ fun WirdEditContent(
 }
 
 @Composable
-private fun PresetChip(target: Int, language: String, onClick: () -> Unit) {
+private fun PresetChip(target: Int, isActive: Boolean, language: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(SabeelColors.SurfaceElevated)
+            .background(if (isActive) SabeelColors.AccentTeal else SabeelColors.SurfaceElevated)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text("${target.toLocalizedNumerals(language)}×", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = SabeelColors.TextPrimary)
+        Text(
+            "${target.toLocalizedNumerals(language)}×",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (isActive) SabeelColors.OnAccentTeal else SabeelColors.TextPrimary
+        )
     }
 }

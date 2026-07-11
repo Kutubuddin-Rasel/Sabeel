@@ -43,4 +43,8 @@ class WirdEditViewModel @Inject constructor(
         val order = state.value.rows.map { it.dhikrKey }
         swapAdjacent(order, key, up)?.let { wirdRepository.reorder(it) }
     }
+
+    fun reorder(keys: List<String>) = viewModelScope.launch {
+        wirdRepository.reorder(keys)
+    }
 }
