@@ -13,6 +13,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Spa
@@ -60,7 +67,7 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
-    onResumeCounting: () -> Unit,
+    onResumeCounting: (String?, Int?) -> Unit,
     onOpenWird: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -81,7 +88,7 @@ fun HomeScreen(
 @Composable
 fun HomeContent(
     state: HomeState,
-    onResumeCounting: () -> Unit,
+    onResumeCounting: (String?, Int?) -> Unit,
     onOpenWird: () -> Unit
 ) {
     var isSessionsExpanded by rememberSaveable { mutableStateOf(true) }
@@ -125,13 +132,28 @@ fun HomeContent(
                 ResumeCard(
                     session = state.resumeSession!!,
                     language = state.language,
-                    onClick = onResumeCounting
+                    onClick = { onResumeCounting(state.resumeSession.dhikrKey, state.resumeSession.target) }
                 )
+            }
+        } else if (!state.wird.isEmpty) {
+            if (state.wird.completed == state.wird.total) {
+                item {
+                    GoalCompleteCard(
+                        onStart = { onResumeCounting(null, null) }
+                    )
+                }
+            } else {
+                item {
+                    SmartPlayCard(
+                        nextItemName = state.wird.nextItemName!!.get(state.language),
+                        onStart = { onResumeCounting(state.wird.nextItemKey, state.wird.nextItemTarget) }
+                    )
+                }
             }
         } else {
             item {
                 HeroStartCard(
-                    onStart = onResumeCounting,
+                    onStart = { onResumeCounting(null, null) },
                     // IX-09: this card used to read "Begin today's dhikr" even
                     // right after finishing the first session of the day (no
                     // *in-progress* session to resume, but clearly not a
@@ -155,9 +177,17 @@ fun HomeContent(
                     onClick = { isSessionsExpanded = !isSessionsExpanded }
                 )
             }
-            if (isSessionsExpanded) {
-                items(state.todaysSessions) { session ->
-                    SessionRow(session, state.language)
+            item {
+                AnimatedVisibility(
+                    visible = isSessionsExpanded,
+                    enter = expandVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
+                    exit = shrinkVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        state.todaysSessions.forEach { session ->
+                            SessionRow(session, state.language)
+                        }
+                    }
                 }
             }
         }
@@ -469,7 +499,6 @@ private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("سَبِيل", fontSize = 30.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.55f))
         Text(
             text = if (hasProgressToday) strings.homeContinueToday else strings.homeBeginToday,
             style = MaterialTheme.typography.titleMedium,
@@ -489,6 +518,82 @@ private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false
                 text = strings.homeStartCounting,
                 style = MaterialTheme.typography.labelLarge,
                 color = SabeelColors.AccentTeal
+            )
+        }
+    }
+}
+
+@Composable
+private fun SmartPlayCard(nextItemName: String, onStart: () -> Unit) {
+    val strings = LocalStrings.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(SabeelColors.AccentTealSurface)
+            .border(1.dp, SabeelColors.AccentTeal.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
+            .clickable(onClick = onStart)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = strings.homeSmartPlayNext.format(nextItemName),
+            style = MaterialTheme.typography.titleMedium,
+            color = SabeelColors.TextPrimary
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = null,
+                tint = SabeelColors.AccentTeal,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = strings.homeStartCounting,
+                style = MaterialTheme.typography.labelLarge,
+                color = SabeelColors.AccentTeal
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoalCompleteCard(onStart: () -> Unit) {
+    val strings = LocalStrings.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(SabeelColors.SageGreen.copy(alpha = 0.1f))
+            .border(1.dp, SabeelColors.SageGreen.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
+            .clickable(onClick = onStart)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = strings.homeGoalCompleteTitle,
+            style = MaterialTheme.typography.titleMedium,
+            color = SabeelColors.SageGreen
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = null,
+                tint = SabeelColors.SageGreen,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = strings.homeGoalCompleteAction,
+                style = MaterialTheme.typography.labelLarge,
+                color = SabeelColors.SageGreen
             )
         }
     }

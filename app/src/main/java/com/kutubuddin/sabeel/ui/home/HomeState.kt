@@ -46,13 +46,22 @@ data class WirdSummary(
     val total: Int = 0,
     val countedSum: Int = 0,
     val targetSum: Int = 0,
-    val isEmpty: Boolean = true
+    val isEmpty: Boolean = true,
+    val nextItemName: LocalizedText? = null,
+    val nextItemKey: String? = null,
+    val nextItemTarget: Int? = null
 )
 
-fun WirdProgress.toSummary(): WirdSummary = WirdSummary(
-    completed = completed,
-    total = total,
-    countedSum = countedSum,
-    targetSum = targetSum,
-    isEmpty = items.isEmpty()
-)
+fun WirdProgress.toSummary(): WirdSummary {
+    val next = nextIncompleteItem
+    return WirdSummary(
+        completed = completed,
+        total = total,
+        countedSum = countedSum,
+        targetSum = targetSum,
+        isEmpty = items.isEmpty(),
+        nextItemName = next?.displayName,
+        nextItemKey = next?.dhikrKey,
+        nextItemTarget = next?.target
+    )
+}
