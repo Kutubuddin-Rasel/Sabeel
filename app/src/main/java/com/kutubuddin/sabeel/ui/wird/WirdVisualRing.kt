@@ -2,181 +2,123 @@ package com.kutubuddin.sabeel.ui.wird
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
 /**
- * A single slice of the ring: how large a share of the daily plan this dhikr
- * accounts for ([target] as a share of the total), whether it's finished
- * today ([isComplete]), and its display [label] — used by [WirdRingLegend]
- * so a slice can be identified by name, not color alone (CT-02: the palette
- * repeats past a handful of items, and color-only encoding never works for
- * colorblind users regardless of how many hues are in the palette).
+ * FIX 7 — a tasbih string, not an activity ring.
  *
- * Deliberately its own type rather than `WirdEditRow` or
- * [com.kutubuddin.sabeel.domain.model.WirdProgressItem] (DIP) — this file
- * should never need to know about either screen's model. [WirdScreen] and
- * `WirdEditScreen` each map their own rows into this shape.
- */
-data class WirdRingSlice(
-    val target: Int,
-    val label: String = "",
-    val isComplete: Boolean = true
-)
-
-/**
- * The "Visual Ring" (Concept 3).
- * A dynamic, data-driven visualization of the daily plan's composition.
- * Slices are sized by [WirdRingSlice.target] as a share of the total; an
- * incomplete slice is drawn at reduced opacity, so on the read-only screen
- * the same ring communicates both what the plan is made of *and* how much of
- * it is done, without a second progress element competing for attention. On
- * the Edit screen every slice is passed `isComplete = true` — allocation,
- * not daily progress, is the point there.
+ * The old visual was a multi-hue segmented donut (an Apple/Fitbit "close your
+ * rings" metaphor) that reframed worship as a fitness KPI. This replaces it
+ * with two calm, single-hue elements:
  *
- * [centerContent] lets each screen show whatever number matters to it (total
- * target on Edit, completed/total on the read-only screen) without this file
- * needing to know which — IA-01: pair it with a short caption at the call
- * site so the two screens' different numbers don't look like the same stat
- * disagreeing with itself.
+ * 1. **One [SabeelColors.AccentTeal] arc** over [SabeelColors.ArcTrack], swept
+ *    by the completed fraction of [itemStates] — overall progress at a glance.
+ * 2. **A row of bead dots**, one per item — teal-filled = done, hollow ring =
+ *    pending. Because the encoding is presence/absence (not hue), it needs no
+ *    colour legend and works for colourblind users by construction (retires the
+ *    old CT-02 palette/legend problem entirely).
+ *
+ * [centerContent] lets each screen place whatever number matters to it
+ * (completed/total on the read-only screen, target total on Edit) inside the
+ * arc. On Edit every item is passed as complete, so the arc reads full and the
+ * beads all fill — allocation, not daily progress, is the point there.
  */
 @Composable
 fun WirdVisualRing(
-    slices: List<WirdRingSlice>,
+    itemStates: List<Boolean>,
     modifier: Modifier = Modifier,
     centerContent: @Composable () -> Unit
 ) {
-    val totalTarget = slices.sumOf { it.target }
-    val ringColors = SabeelColors.RingPalette
+    val fraction =
+        if (itemStates.isEmpty()) 0f
+        else itemStates.count { it }.toFloat() / itemStates.size
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        contentAlignment = Alignment.Center
+    val trackColor = SabeelColors.ArcTrack
+    val arcColor = SabeelColors.AccentTeal
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (slices.isEmpty() || totalTarget == 0) {
-            val emptyColor = SabeelColors.BorderIdle
-            Canvas(modifier = Modifier.size(140.dp)) {
+        Box(
+            modifier = Modifier.size(160.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val stroke = 10.dp.toPx()
                 drawArc(
-                    color = emptyColor,
-                    startAngle = 0f,
+                    color = trackColor,
+                    startAngle = -90f,
                     sweepAngle = 360f,
                     useCenter = false,
-                    style = Stroke(width = 16.dp.toPx(), cap = StrokeCap.Round)
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
                 )
-            }
-        } else {
-            Canvas(modifier = Modifier.size(140.dp)) {
-                var currentStartAngle = -90f // Start from the top (12 o'clock)
-
-                slices.forEachIndexed { index, slice ->
-                    val sweep = (slice.target.toFloat() / totalTarget) * 360f
-                    // Small gap between slices for visual separation; none
-                    // needed when there's only one (it forms a full circle).
-                    val gap = if (slices.size > 1) 4f else 0f
-
-                    // coerceAtLeast(1f) ensures even a tiny target draws a
-                    // visible sliver.
-                    val actualSweep = (sweep - gap).coerceAtLeast(1f)
-
-                    val baseColor = ringColors[index % ringColors.size]
-                    val color = if (slice.isComplete) baseColor else baseColor.copy(alpha = 0.3f)
-
+                if (fraction > 0f) {
                     drawArc(
-                        color = color,
-                        startAngle = currentStartAngle + (gap / 2f),
-                        sweepAngle = actualSweep,
+                        color = arcColor,
+                        startAngle = -90f,
+                        sweepAngle = 360f * fraction,
                         useCenter = false,
-                        style = Stroke(width = 16.dp.toPx(), cap = StrokeCap.Round)
+                        style = Stroke(width = stroke, cap = StrokeCap.Round)
                     )
-
-                    currentStartAngle += sweep
                 }
             }
+            centerContent()
         }
 
-        centerContent()
+        if (itemStates.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            BeadRow(states = itemStates)
+        } else {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
     }
 }
 
 /**
- * Two-column legend of dot + name pairs, one per [WirdVisualRing] slice, in
- * the same index order the ring assigns colors — so a slice's dot here is
- * always the same color as its arc there.
- *
- * CT-02 fix: [SabeelColors.RingPalette] is finite and cycles via modulo past
- * its length, so a 6th/7th item necessarily repeats an earlier item's color.
- * Even at palette length, colorblind users can't reliably map hue → item.
- * Naming every slice here makes color a secondary cue instead of the only
- * way to identify one.
+ * The tasbih beads: one small dot per wird item. [FlowRow] wraps to a second
+ * line so a long wird (many items) never overflows the width.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WirdRingLegend(
-    slices: List<WirdRingSlice>,
-    modifier: Modifier = Modifier
-) {
-    if (slices.isEmpty()) return
-    val ringColors = SabeelColors.RingPalette
-
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        slices.withIndex().toList().chunked(2).forEach { pair ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                pair.forEach { (index, slice) ->
-                    LegendEntry(
-                        color = ringColors[index % ringColors.size],
-                        label = slice.label,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                if (pair.size == 1) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-        }
+private fun BeadRow(states: List<Boolean>, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        states.forEach { BeadDot(filled = it) }
     }
 }
 
 @Composable
-private fun LegendEntry(color: androidx.compose.ui.graphics.Color, label: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(color)
-        )
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = SabeelColors.TextSecondary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+private fun BeadDot(filled: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(12.dp)
+            .clip(CircleShape)
+            .then(
+                if (filled) Modifier.background(SabeelColors.AccentTeal)
+                else Modifier.border(1.5.dp, SabeelColors.BorderIdle, CircleShape)
+            )
+    )
 }
