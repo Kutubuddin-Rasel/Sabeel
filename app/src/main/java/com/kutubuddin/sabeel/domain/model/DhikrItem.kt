@@ -13,7 +13,7 @@ data class DhikrItem(
     val key: String,
     val arabicText: String,
     val displayName: LocalizedText,
-    val transliteration: String?,
+    val transliteration: LocalizedText?,
     val meaning: DhikrMeaning,
     val defaultTarget: Int,
     val spiritualReward: LocalizedText,
@@ -30,7 +30,9 @@ data class DhikrItem(
                displayName.ur.contains(q, ignoreCase = true) ||
                displayName.bn.contains(q, ignoreCase = true) ||
                arabicText.contains(q) ||
-               transliteration?.contains(q, ignoreCase = true) == true ||
+               transliteration?.en?.contains(q, ignoreCase = true) == true ||
+               transliteration?.ur?.contains(q, ignoreCase = true) == true ||
+               transliteration?.bn?.contains(q, ignoreCase = true) == true ||
                category.displayName.contains(q, ignoreCase = true)
     }
 }
