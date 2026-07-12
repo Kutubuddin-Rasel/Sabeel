@@ -108,8 +108,7 @@ fun WirdContent(
                         Text(
                             text = strings.wirdEditCta,
                             color = SabeelColors.AccentTeal,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
                 }
@@ -122,9 +121,9 @@ fun WirdContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(strings.wirdEmpty, fontSize = 15.sp, color = SabeelColors.TextSecondary)
+                Text(strings.wirdEmpty, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
                 Spacer(Modifier.height(6.dp))
-                Text(strings.wirdEmptyHint, fontSize = 12.sp, color = SabeelColors.TextHint)
+                Text(strings.wirdEmptyHint, style = MaterialTheme.typography.bodySmall, color = SabeelColors.TextHint)
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = onEdit,
@@ -138,41 +137,43 @@ fun WirdContent(
                 }
             }
         } else {
-            // The ring now carries the "how much is done" job that the old
-            // header Text + LinearProgressIndicator did — real per-item
-            // completion drives slice opacity, and the completed/total
-            // count sits in the center, so there's one progress statement
-            // on this screen instead of two that could disagree.
-            //
-            // IA-01 fix: this same ring shows a different number on
-            // WirdEditScreen (the target total, not a completion count) with
-            // no visible distinction between the two — a caption under the
-            // number now says which one this is, and a per-item label is
-            // passed through so WirdRingLegend can name every slice (CT-02).
+            // FIX 8: intention framing, not a to-do count. At zero we lead with
+            // the invitation ("Your wird awaits") and hold back the numeric
+            // fraction — a day of worship isn't a debt of "0/2 tasks". The
+            // fraction returns once something's been remembered.
+            val wirdHeroLabel = when {
+                progress.completed == 0 -> strings.wirdBeginToday
+                progress.completed == progress.total -> strings.wirdComplete
+                else -> strings.wirdInProgress.format(
+                    progress.completed.toLocalizedNumerals(language),
+                    progress.total.toLocalizedNumerals(language)
+                )
+            }
+
+            // FIX 7: a single teal arc (overall completion) with a bead-dot
+            // strip below (one per item, filled = done). The arc carries the
+            // "how much is done" job that the old header Text +
+            // LinearProgressIndicator did, so there's one progress statement on
+            // this screen instead of two that could disagree.
             WirdVisualRing(
-                slices = progress.items.map {
-                    WirdRingSlice(target = it.target, label = it.displayName.get(language), isComplete = it.isComplete)
-                },
-                modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                itemStates = progress.items.map { it.isComplete },
+                modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (progress.completed > 0) {
+                        Text(
+                            text = "${progress.completed.toLocalizedNumerals(language)}/${progress.total.toLocalizedNumerals(language)}",
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = SabeelColors.TextPrimary
+                        )
+                    }
                     Text(
-                        text = "${progress.completed.toLocalizedNumerals(language)}/${progress.total.toLocalizedNumerals(language)}",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SabeelColors.TextPrimary
-                    )
-                    Text(
-                        text = strings.wirdRingCaptionProgress,
-                        fontSize = 12.sp,
+                        text = wirdHeroLabel,
+                        style = MaterialTheme.typography.bodySmall,
                         color = SabeelColors.TextSecondary
                     )
                 }
             }
-            WirdRingLegend(
-                slices = progress.items.map { WirdRingSlice(target = it.target, label = it.displayName.get(language), isComplete = it.isComplete) },
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp)
-            )
             HorizontalDivider(color = SabeelColors.Divider)
 
             LazyColumn(
@@ -181,7 +182,16 @@ fun WirdContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(progress.items, key = { it.dhikrKey }) { item ->
-                    WirdItemRow(item, language) { onCountItem(item.dhikrKey, item.target) }
+                    WirdItemRow(
+                        item = item,
+                        language = language,
+                        // animateItem(): Compose 1.7+ placement + fade animation.
+                        // Items slide+fade in on first load and animate out on removal.
+                        // The stagger emerges naturally from layout pass ordering —
+                        // no manual delay loops needed.
+                        modifier = Modifier.animateItem(),
+                        onClick = { onCountItem(item.dhikrKey, item.target) }
+                    )
                 }
                 item { Spacer(Modifier.height(8.dp)) }
             }
@@ -190,10 +200,11 @@ fun WirdContent(
 }
 
 @Composable
-private fun WirdItemRow(item: WirdProgressItem, language: String, onClick: () -> Unit) {
+private fun WirdItemRow(item: WirdProgressItem, language: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val done = item.isComplete
     Row(
         Modifier
+            .then(modifier)
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(SabeelColors.Surface)
@@ -209,10 +220,11 @@ private fun WirdItemRow(item: WirdProgressItem, language: String, onClick: () ->
             modifier = Modifier.size(20.dp)
         )
         Column(Modifier.weight(1f)) {
-            Text(item.displayName.get(language), fontSize = 14.sp, fontWeight = FontWeight.Medium,
+            Text(item.displayName.get(language), style = MaterialTheme.typography.labelLarge,
                 color = if (done) SabeelColors.SageGreen else SabeelColors.TextPrimary)
             Text(item.arabicText, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                style = arabicStyle.copy(fontSize = 16.sp, lineHeight = 24.sp), color = SabeelColors.ArabicText,
+                // 16 × 1.9 = 30.4sp — diacritic safety rule (was 24sp = 1.5×, a violation)
+                style = arabicStyle.copy(fontSize = 16.sp, lineHeight = 30.sp), color = SabeelColors.ArabicText,
                 modifier = Modifier.fillMaxWidth())
         }
         ProgressFractionText(
@@ -220,7 +232,7 @@ private fun WirdItemRow(item: WirdProgressItem, language: String, onClick: () ->
             target = item.target,
             language = language,
             isComplete = done,
-            style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             normalColor = SabeelColors.AccentTeal,
             completeColor = SabeelColors.SageGreen
         )

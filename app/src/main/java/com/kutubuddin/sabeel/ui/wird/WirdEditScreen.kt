@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -46,6 +47,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.foundation.border
+import com.kutubuddin.sabeel.ui.components.CategoryHeader
 
 /**
  * Route-level wrapper (DIP): sole owner of ViewModel injection, state
@@ -123,9 +125,10 @@ fun WirdEditContent(
             actions = {
                 Text(
                     text = strings.wirdDone,
-                    color = SabeelColors.AccentTeal,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = SabeelColors.AccentTeal,
+                        fontWeight = FontWeight.Bold
+                    ),
                     modifier = Modifier
                         .padding(end = 16.dp)
                         .clickable(onClick = onBack)
@@ -134,37 +137,27 @@ fun WirdEditContent(
         )
         HorizontalDivider(color = SabeelColors.Divider)
 
-        // Allocation only — every slice is `isComplete = true` so the ring
-        // reads as pure composition here, not daily progress. Compare with
+        // FIX 7: allocation preview — every bead is filled (all `true`) so the
+        // arc reads full and the dots all fill. This screen shows the plan's
+        // composition (target total in the centre), not daily progress; compare
         // WirdScreen, where the same composable is fed real completion state.
-        //
-        // IA-01 fix: this ring shows the target total here, but a completion
-        // count (completed/total) on WirdScreen — a caption now says which,
-        // and every slice is labeled below via WirdRingLegend (CT-02).
         WirdVisualRing(
-            slices = state.rows.map { WirdRingSlice(target = it.target, label = it.displayName) },
+            itemStates = state.rows.map { true },
             modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
         ) {
             val totalTarget = state.rows.sumOf { it.target }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = totalTarget.toLocalizedNumerals(state.language),
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.displayMedium,
                     color = SabeelColors.TextPrimary
                 )
                 Text(
                     text = strings.wirdRingCaptionTarget,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = SabeelColors.TextSecondary
                 )
             }
-        }
-        if (state.rows.isNotEmpty()) {
-            WirdRingLegend(
-                slices = state.rows.map { WirdRingSlice(target = it.target, label = it.displayName) },
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
-            )
         }
 
         if (state.rows.isEmpty()) {
@@ -173,7 +166,7 @@ fun WirdEditContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Icon(Icons.Outlined.Spa, contentDescription = null, tint = SabeelColors.GoldPrimary, modifier = Modifier.size(48.dp))
+                Icon(Icons.Outlined.Spa, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(16.dp))
                 Text(strings.wirdGoalHintTitle, style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary)
                 Spacer(Modifier.height(8.dp))
@@ -258,8 +251,7 @@ fun WirdEditContent(
                                         )
                                         Text(
                                             text = row.displayName,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Medium,
+                                            style = MaterialTheme.typography.bodyLarge,
                                             color = SabeelColors.TextPrimary
                                         )
                                     }
@@ -274,7 +266,7 @@ fun WirdEditContent(
                                         // not as a button.
                                         Text(
                                             text = "${strings.wirdTargetA11y} ${row.target.toLocalizedNumerals(state.language)}×",
-                                            fontSize = 13.sp,
+                                            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp),
                                             color = SabeelColors.TextSecondary
                                         )
                                         // Drag handle: a distinct dot-grip icon instead of
@@ -330,8 +322,7 @@ fun WirdEditContent(
                                                     Icon(Icons.Filled.Remove, contentDescription = null, tint = SabeelColors.AccentTeal, modifier = Modifier.clickable { onUpdateTarget(row.dhikrKey, row.target - 1) }.padding(8.dp).size(20.dp))
                                                     Text(
                                                         text = row.target.toLocalizedNumerals(state.language),
-                                                        fontSize = 13.sp,
-                                                        fontWeight = FontWeight.Bold,
+                                                        style = MaterialTheme.typography.labelMedium,
                                                         color = SabeelColors.TextPrimary,
                                                         modifier = Modifier.padding(horizontal = 4.dp)
                                                     )
@@ -353,8 +344,7 @@ fun WirdEditContent(
                                         ) {
                                             Text(
                                                 text = strings.wirdRemove,
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Medium,
+                                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp),
                                                 color = SabeelColors.Danger,
                                                 modifier = Modifier.clickable { onRemove(row.dhikrKey) }
                                             )
@@ -391,16 +381,28 @@ fun WirdEditContent(
             scrimColor = SabeelColors.Background.copy(alpha = 0.75f)
         ) {
             LazyColumn(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-                items(state.pickable, key = { it.key }) { d ->
-                    Row(
-                        Modifier.fillMaxWidth()
-                            .clickable { onAddDhikr(d.key, d.defaultTarget) }
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(d.displayName.get(state.language), fontSize = 14.sp, color = SabeelColors.TextPrimary)
-                        Text("${d.defaultTarget.toLocalizedNumerals(state.language)}×",
-                            fontSize = 13.sp, color = SabeelColors.AccentTeal, fontWeight = FontWeight.Bold)
+                // 3C: Group by category so the picker reads as a structured menu,
+                // not an undifferentiated list. groupBy preserves catalog order within
+                // each category; no ViewModel change required.
+                val grouped = state.pickable.groupBy { it.category }
+                grouped.forEach { (category, items) ->
+                    stickyHeader(key = "header_${category.name}") {
+                        CategoryHeader(
+                            name = strings.categoryLabel(category),
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
+                    items(items, key = { it.key }) { d ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .clickable { onAddDhikr(d.key, d.defaultTarget) }
+                                .padding(horizontal = 20.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(d.displayName.get(state.language), style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextPrimary)
+                            Text("${d.defaultTarget.toLocalizedNumerals(state.language)}×",
+                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp), color = SabeelColors.AccentTeal)
+                        }
                     }
                 }
             }
@@ -420,8 +422,7 @@ private fun PresetChip(target: Int, isActive: Boolean, language: String, onClick
     ) {
         Text(
             "${target.toLocalizedNumerals(language)}×",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp),
             color = if (isActive) SabeelColors.OnAccentTeal else SabeelColors.TextPrimary
         )
     }
