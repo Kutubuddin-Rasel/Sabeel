@@ -1,6 +1,13 @@
 package com.kutubuddin.sabeel.ui.tasbih.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,17 +25,19 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
@@ -99,8 +108,9 @@ fun CompletionRest(
                 text = arabicText,
                 color = iconTint,
                 style = arabicStyle.copy(
-                    fontSize = if (context == CompletionContext.VICTORY) 48.sp else 40.sp, 
-                    lineHeight = if (context == CompletionContext.VICTORY) 72.sp else 64.sp
+                    // 1.9× diacritic-safety rule: 48×1.9=91sp, 40×1.9=76sp
+                    fontSize = if (context == CompletionContext.VICTORY) 48.sp else 40.sp,
+                    lineHeight = if (context == CompletionContext.VICTORY) 91.sp else 76.sp
                 ),
                 textAlign = TextAlign.Center
             )
@@ -113,8 +123,7 @@ fun CompletionRest(
             
             Text(
                 text = statusText,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
                 color = SabeelColors.TextPrimary,
                 textAlign = TextAlign.Center
             )
@@ -122,7 +131,7 @@ fun CompletionRest(
             if (context != CompletionContext.VICTORY) {
                 Text(
                     text = dhikrName,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = SabeelColors.TextSecondary,
                     textAlign = TextAlign.Center
                 )
@@ -133,8 +142,7 @@ fun CompletionRest(
             if (context == CompletionContext.FLOW && nextWirdItemName != null) {
                 Text(
                     text = "${strings.countContinue}: $nextWirdItemName",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                     color = SabeelColors.GoldPrimary,
                     textAlign = TextAlign.Center
                 )
@@ -145,24 +153,53 @@ fun CompletionRest(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (onSecondaryAction != null) {
+                    // Press-scale: each button gets its own interactionSource so
+                    // pressing one doesn't scale the other. 0.95f is slightly more
+                    // pronounced than AccentCard (0.96f) — smaller target, needs
+                    // stronger confirmation at an emotionally significant moment.
+                    val secondarySource = remember { MutableInteractionSource() }
+                    val secondaryPressed by secondarySource.collectIsPressedAsState()
+                    val secondaryScale by animateFloatAsState(
+                        targetValue = if (secondaryPressed) 0.95f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness    = Spring.StiffnessMedium
+                        ),
+                        label = "secondary_btn_scale"
+                    )
                     OutlinedButton(
                         onClick = onSecondaryAction,
-                        modifier = Modifier.weight(1f),
+                        interactionSource = secondarySource,
+                        modifier = Modifier
+                            .weight(1f)
+                            .graphicsLayer { scaleX = secondaryScale; scaleY = secondaryScale },
                         border = BorderStroke(1.dp, SabeelColors.BorderIdle),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = SabeelColors.TextSecondary),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         val secondaryText = if (context == CompletionContext.AD_HOC) strings.countFinish else strings.countFinish
-                        Text(secondaryText, fontSize = 14.sp)
+                        Text(secondaryText, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                
+
                 val primaryColor = if (context == CompletionContext.VICTORY) SabeelColors.GoldPrimary else SabeelColors.AccentTeal
                 val primaryTextColor = if (context == CompletionContext.VICTORY) SabeelColors.Background else SabeelColors.Background
-                
+
+                val primarySource = remember { MutableInteractionSource() }
+                val primaryPressed by primarySource.collectIsPressedAsState()
+                val primaryScale by animateFloatAsState(
+                    targetValue = if (primaryPressed) 0.95f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness    = Spring.StiffnessMedium
+                    ),
+                    label = "primary_btn_scale"
+                )
                 Button(
                     onClick = onPrimaryAction,
-                    modifier = if (onSecondaryAction != null) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+                    interactionSource = primarySource,
+                    modifier = (if (onSecondaryAction != null) Modifier.weight(1f) else Modifier.fillMaxWidth())
+                        .graphicsLayer { scaleX = primaryScale; scaleY = primaryScale },
                     colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -171,7 +208,7 @@ fun CompletionRest(
                         CompletionContext.AD_HOC -> strings.countAgain
                         CompletionContext.FLOW -> if (nextWirdItemName != null) "${strings.countContinue} →" else strings.countContinue
                     }
-                    Text(primaryText, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = primaryTextColor)
+                    Text(primaryText, style = MaterialTheme.typography.titleSmall, color = primaryTextColor)
                 }
             }
         }
