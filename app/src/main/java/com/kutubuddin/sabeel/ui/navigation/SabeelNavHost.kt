@@ -2,6 +2,13 @@ package com.kutubuddin.sabeel.ui.navigation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -40,6 +47,48 @@ private object WirdRoutes {
     const val WIRD_EDIT = "wird/edit"
 }
 
+// ── Sabeel Motion System ──────────────────────────────────────────────────
+//
+// Based on Material Design 3 "Emphasized" motion specs:
+// • Enter (screen arrives):  400–500ms, LinearOutSlowIn (decelerates into place)
+// • Exit  (screen leaves):   200ms,      FastOutLinearIn (accelerates away fast)
+// • Tab cross-fade:          300ms,      linear fade (no spatial movement)
+// • Sheet slide:             420ms enter / 260ms exit — sheet travels only
+//                             55% of screen height so it doesn't feel like
+//                             a full-page wipe. Decelerate easing makes it
+//                             feel like it "lands" rather than slams in.
+//
+// Why easing matters MORE than duration:
+// LinearOutSlowIn starts fast and decelerates into the final position,
+// which matches how physical objects behave (momentum → rest). Without
+// it, tween() uses linear timing — constant speed from start to finish,
+// which always reads as "snappy" or "mechanical" regardless of duration.
+
+// M3 "Emphasized Decelerate" — for elements entering the screen.
+// Cubic: fast start, decelerates dramatically into rest. The "soft landing".
+private val EaseOutCubic = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
+
+// M3 "Emphasized Accelerate" — for elements leaving the screen.
+// Cubic: starts slow, accelerates away. Clears the frame decisively.
+private val EaseInCubic = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
+
+// Tab → Tab: cross-fade only (no spatial movement, no easing needed on alpha)
+private const val TAB_ENTER_MS  = 300
+private const val TAB_EXIT_MS   = 200
+
+// Sheet sub-routes (Wird, WirdEdit, AsmaUlHusna): slide-up from partial
+// Longer enter gives the sheet time to decelerate gracefully into place
+private const val SHEET_ENTER_MS = 420
+private const val SHEET_EXIT_MS  = 260
+
+// Bottom bar — matches sheet timing so bar and sheet move in sync
+private const val BAR_ENTER_MS = 380
+private const val BAR_EXIT_MS  = 220
+
+// Backwards compat alias — keeps any future code readable
+private const val TRANSITION_ENTER_MS = SHEET_ENTER_MS
+private const val TRANSITION_EXIT_MS  = SHEET_EXIT_MS
+
 /**
  * Root navigation graph — DIP: the top-level route graph is where ViewModels
  * are instantiated (`hiltViewModel()`) and handed down as data/callbacks; no
@@ -52,6 +101,14 @@ private object WirdRoutes {
  * Home no longer wires an `onEditWird` callback: [WirdRoutes.WIRD_EDIT] is
  * reachable only from [WirdScreen]'s own `onEdit`, which is the single edit
  * entry point for the daily plan now that Home's `EditGoalChip` is gone.
+ *
+ * ## Transition design
+ * - **Tab → Tab:** cross-fade (300ms in / 220ms out). No slide — tabs are
+ *   spatial peers at the same stack depth; a directional slide would imply
+ *   a hierarchy that doesn't exist.
+ * - **Tab → sub-route (Wird, WirdEdit, AsmaUlHusna):** slide up (sheet
+ *   semantics) + fade in. Back navigation slides down, mirroring the push.
+ * - **Bottom bar:** animated slide+fade so it doesn't hard-cut on sub-routes.
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -76,7 +133,18 @@ fun SabeelNavHost(
         modifier = modifier,
         containerColor = SabeelColors.Background,
         bottomBar = {
-            if (showBottomBar) {
+            // Animated show/hide so the bar doesn't hard-cut when navigating
+            // into a sub-route (Wird, WirdEdit, AsmaUlHusna). Slide down on
+            // exit matches the sheet-sliding-up semantic of those sub-screens.
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = slideInVertically(
+                    animationSpec = tween(BAR_ENTER_MS, easing = EaseOutCubic)
+                ) { it } + fadeIn(tween(BAR_ENTER_MS, easing = EaseOutCubic)),
+                exit  = slideOutVertically(
+                    animationSpec = tween(BAR_EXIT_MS, easing = EaseInCubic)
+                ) { it } + fadeOut(tween(BAR_EXIT_MS, easing = EaseInCubic))
+            ) {
                 SabeelBottomBar(navController = navController)
             }
         }
@@ -84,7 +152,15 @@ fun SabeelNavHost(
         NavHost(
             navController = navController,
             startDestination = SabeelTab.Count.graphRoute,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            // ── Tab → Tab: pure cross-fade, no slide.
+            // Tabs are spatial peers (same hierarchy level); a directional
+            // slide would imply a push/pop hierarchy that doesn't exist.
+            // 300ms is the M3 "Standard" tab transition duration.
+            enterTransition    = { fadeIn(tween(TAB_ENTER_MS)) },
+            exitTransition     = { fadeOut(tween(TAB_EXIT_MS)) },
+            popEnterTransition = { fadeIn(tween(TAB_ENTER_MS)) },
+            popExitTransition  = { fadeOut(tween(TAB_EXIT_MS)) }
         ) {
             navigation(startDestination = SabeelTab.Home.startRoute, route = SabeelTab.Home.graphRoute) {
                 composable(SabeelTab.Home.startRoute) {
@@ -104,11 +180,37 @@ fun SabeelNavHost(
                     )
                 }
 
-                composable(WirdRoutes.WIRD) {
+                // Sub-route: slide up from bottom like a modal sheet.
+                // • Enter: 55% of screen height (not full — full-screen wipe at
+                //   300ms reads as "slamming in"). EaseOutCubic decelerates into
+                //   position — the element "lands" rather than stopping abruptly.
+                // • Exit:  fade only (no slide out) — background content stays
+                //   still so the user's eye stays anchored.
+                // • Pop:   reverse of enter (slide down, EaseInCubic).
+                composable(
+                    route = WirdRoutes.WIRD,
+                    enterTransition = {
+                        slideInVertically(
+                            animationSpec = tween(SHEET_ENTER_MS, easing = EaseOutCubic)
+                        ) { (it * 0.55f).toInt() } +
+                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                    },
+                    exitTransition = {
+                        fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
+                    },
+                    popEnterTransition = {
+                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                    },
+                    popExitTransition = {
+                        slideOutVertically(
+                            animationSpec = tween(SHEET_EXIT_MS, easing = EaseInCubic)
+                        ) { (it * 0.55f).toInt() } +
+                        fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
+                    }
+                ) {
                     WirdScreen(
                         onCountItem = { key, target ->
                             tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key, target, SessionOrigin.DAILY_GOAL))
-                            // Destroy completed flow so it isn't saved in the tab backstack
                             navController.popBackStack(SabeelTab.Home.startRoute, inclusive = false)
                             navController.switchToCountTab()
                         },
@@ -117,7 +219,27 @@ fun SabeelNavHost(
                     )
                 }
 
-                composable(WirdRoutes.WIRD_EDIT) {
+                composable(
+                    route = WirdRoutes.WIRD_EDIT,
+                    enterTransition = {
+                        slideInVertically(
+                            animationSpec = tween(SHEET_ENTER_MS, easing = EaseOutCubic)
+                        ) { (it * 0.55f).toInt() } +
+                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                    },
+                    exitTransition = {
+                        fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
+                    },
+                    popEnterTransition = {
+                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                    },
+                    popExitTransition = {
+                        slideOutVertically(
+                            animationSpec = tween(SHEET_EXIT_MS, easing = EaseInCubic)
+                        ) { (it * 0.55f).toInt() } +
+                        fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
+                    }
+                ) {
                     WirdEditScreen(
                         onBack = { navController.popBackStack() }
                     )
@@ -154,7 +276,6 @@ fun SabeelNavHost(
                                     TasbihIntent.SetDhikr(dhikrKeyArg, targetArg, SessionOrigin.DAILY_GOAL)
                                 )
                             } else {
-                                // Fallback to next incomplete item if the original is finished or removed
                                 val nextWird = wirdUiState.progress.nextIncompleteItem
                                 if (nextWird != null) {
                                     tasbihViewModel.processIntent(
@@ -162,7 +283,6 @@ fun SabeelNavHost(
                                     )
                                 }
                             }
-                            // Clear arguments so it doesn't re-trigger on orientation change
                             backStackEntry.arguments?.remove("dhikrKey")
                             backStackEntry.arguments?.remove("target")
                         }
@@ -173,6 +293,7 @@ fun SabeelNavHost(
                         hapticEngine = hapticEngine,
                         language = language,
                         showStreaks = settingsState.showStreaks,
+                        leftHanded = settingsState.leftHanded,
                         isDailyGoalFinished = isDailyGoalFinished,
                         isDhikrInDailyGoal = isDhikrInDailyGoal,
                         nextWirdItemName = nextWirdItem?.displayName?.get(language),
@@ -205,7 +326,39 @@ fun SabeelNavHost(
                 composable(SabeelTab.Dhikr.startRoute) {
                     DhikrLibraryScreen(
                         tasbihViewModel = tasbihViewModel,
-                        onCountNow = { navController.switchToCountTab() }
+                        onCountNow = { navController.switchToCountTab() },
+                        onOpenGallery = { navController.navigate("asma_ul_husna_gallery") }
+                    )
+                }
+                // AsmaUlHusna is a sub-route of Dhikr — same sheet semantics as Wird.
+                composable(
+                    route = "asma_ul_husna_gallery",
+                    enterTransition = {
+                        slideInVertically(
+                            animationSpec = tween(SHEET_ENTER_MS, easing = EaseOutCubic)
+                        ) { (it * 0.55f).toInt() } +
+                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                    },
+                    exitTransition = {
+                        fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
+                    },
+                    popEnterTransition = {
+                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                    },
+                    popExitTransition = {
+                        slideOutVertically(
+                            animationSpec = tween(SHEET_EXIT_MS, easing = EaseInCubic)
+                        ) { (it * 0.55f).toInt() } +
+                        fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
+                    }
+                ) {
+                    com.kutubuddin.sabeel.ui.dhikr.AsmaUlHusnaGalleryScreen(
+                        language = language,
+                        onBack = { navController.popBackStack() },
+                        onCountNow = { key ->
+                            tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key))
+                            navController.switchToCountTab()
+                        }
                     )
                 }
             }
