@@ -1,5 +1,6 @@
 package com.kutubuddin.sabeel.ui.tasbih
 
+import com.kutubuddin.sabeel.domain.haptic.HapticStrength
 import com.kutubuddin.sabeel.domain.model.ActiveDhikr
 import com.kutubuddin.sabeel.domain.model.DhikrCatalog
 import com.kutubuddin.sabeel.domain.model.DhikrSequence
@@ -19,6 +20,7 @@ data class TasbihState(
     val count: Int = 0,
     val target: Int = 33,
     val currentDhikr: ActiveDhikr = DhikrCatalog.resolve(DhikrType.SUBHANALLAH.name),
+    val displayedDhikr: ActiveDhikr = currentDhikr,
     val sequence: DhikrSequence? = null,
     val stepIndex: Int = 0,
     val isSessionComplete: Boolean = false,
@@ -52,7 +54,7 @@ sealed interface TasbihIntent {
  * These are consumed exactly once by the UI layer and never replayed.
  */
 sealed interface TasbihSideEffect {
-    data class PlayHaptic(val type: HapticType) : TasbihSideEffect
+    data class PlayHaptic(val type: HapticType, val strength: HapticStrength) : TasbihSideEffect
     object ShowCelebration : TasbihSideEffect
     data class ShowToast(val message: String) : TasbihSideEffect
     /** Instructs MainActivity to start the PocketModeService foreground service. */
@@ -68,7 +70,8 @@ sealed interface TasbihSideEffect {
 enum class HapticType {
     TICK,      // Short, light tap (regular increment)
     CLICK,     // Distinct, sharp pulse (milestone reached — 33, 66)
-    THUD       // Low-frequency resonance (session completed or manual reset)
+    THUD,      // Low-frequency resonance (session completed)
+    RESET      // Firm double-thud — manual reset, distinct from completion
 }
 
 /**
