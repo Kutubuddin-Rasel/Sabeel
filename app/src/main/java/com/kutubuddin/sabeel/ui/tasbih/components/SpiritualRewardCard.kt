@@ -8,20 +8,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
@@ -48,8 +42,11 @@ fun SpiritualRewardCard(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalStrings.current
+    // Key on the full identity (reward + reference) so the animation fires on
+    // every dhikr switch, even when two dhikrs share the same reward text but
+    // have different references — or vice versa.
     AnimatedContent(
-        targetState = reward,
+        targetState = Pair(reward, reference),
         transitionSpec = {
             (fadeIn(spring(stiffness = Spring.StiffnessMedium)) +
              slideInVertically(
@@ -64,55 +61,38 @@ fun SpiritualRewardCard(
         },
         label = "SpiritualRewardTransition",
         modifier = modifier
-    ) { rewardText ->
-        val borderColor = SabeelColors.RewardBorder
-
-        Box(
+    ) { (rewardText, ref) ->
+        // FIX 5: no fill, no leading accent stripe — the reward is quiet
+        // supporting text below the counter, not a card competing with it.
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(SabeelColors.Surface)
-                .drawBehind {
-                    // Leading-edge 3dp accent in sage green — follows text
-                    // direction so it sits on the right under RTL, mirroring the
-                    // start-padding below (DrawScope exposes layoutDirection).
-                    val strokeWidth = 3.dp.toPx()
-                    val x = if (layoutDirection == LayoutDirection.Rtl)
-                        size.width - strokeWidth / 2f
-                    else
-                        strokeWidth / 2f
-                    drawLine(
-                        color = borderColor,
-                        start = Offset(x, 0f),
-                        end = Offset(x, size.height),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round
-                    )
-                }
-                .padding(start = 18.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-                .semantics {  }  // Readable by TalkBack as plain text container
+                .padding(horizontal = 16.dp)
+                .semantics {  },  // Readable by TalkBack as plain text container
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column {
+            Text(
+                text = strings.countReward,
+                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
+                color = SabeelColors.SageGreen,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = rewardText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = SabeelColors.TextSecondary,
+                textAlign = TextAlign.Center
+            )
+            if (!ref.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = strings.countReward,
-                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
-                    color = SabeelColors.SageGreen
+                    text = ref,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SabeelColors.TextSecondary,
+                    letterSpacing = 0.5.sp,
+                    textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = rewardText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SabeelColors.TextSecondary
-                )
-                if (!reference.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = reference,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SabeelColors.TextSecondary,
-                        letterSpacing = 0.5.sp
-                    )
-                }
             }
         }
     }
