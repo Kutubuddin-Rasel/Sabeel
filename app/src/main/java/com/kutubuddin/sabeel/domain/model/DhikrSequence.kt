@@ -9,7 +9,8 @@ package com.kutubuddin.sabeel.domain.model
 data class DhikrStep(
     val arabicText: String,
     val displayName: LocalizedText,
-    val transliteration: String,
+    val transliteration: LocalizedText,
+    val meaning: DhikrMeaning,
     val target: Int
 )
 

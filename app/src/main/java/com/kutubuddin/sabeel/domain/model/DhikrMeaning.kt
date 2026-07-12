@@ -8,4 +8,10 @@ data class DhikrMeaning(
     val en: String,
     val ur: String = "",   // Urdu
     val bn: String = ""    // Bengali
-)
+) {
+    fun get(language: String): String = when (language) {
+        "ur" -> ur.ifBlank { en }
+        "bn" -> bn.ifBlank { en }
+        else -> en
+    }
+}
