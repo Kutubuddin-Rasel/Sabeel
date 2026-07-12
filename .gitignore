@@ -52,3 +52,7 @@ PROJECT.md
 app/proguard-rules.pro
 build_output.txt
 replace_transliteration.py
+skills-lock.json
+design_handoff_sabeel_ux_fixes/IMPLEMENTATION.md
+.gitignore
+design_handoff_sabeel_ux_fixes/Sabeel UX Audit.dc.html

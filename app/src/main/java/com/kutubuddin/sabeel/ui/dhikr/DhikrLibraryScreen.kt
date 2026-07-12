@@ -45,6 +45,7 @@ import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.localizeHadithRef
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 import com.kutubuddin.sabeel.ui.theme.arabicStyle
 import com.kutubuddin.sabeel.ui.components.CategoryHeader as SharedCategoryHeader
 
@@ -115,6 +116,12 @@ fun DhikrLibraryContent(
                     }
                     items(items, key = { "item_${it.key}" }) { item ->
                         DhikrCard(
+                            // animateItem() is the fix for the "one card animates, its
+                            // neighbours teleport" gap: whenever this card's own height
+                            // changes (expand/collapse) or the list is filtered by search,
+                            // every sibling in the LazyColumn animates to its new position
+                            // instead of snapping there in the same frame.
+                            modifier = Modifier.animateItem(),
                             item = item,
                             language = state.language,
                             isExpanded = state.expandedKey == item.key,
@@ -174,7 +181,8 @@ private fun DhikrCard(
     language: String,
     isExpanded: Boolean,
     onToggle: () -> Unit,
-    onCountNow: () -> Unit
+    onCountNow: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val strings = LocalStrings.current
     val stripeWidthPx = with(androidx.compose.ui.platform.LocalDensity.current) { 3.dp.toPx() }
@@ -182,15 +190,15 @@ private fun DhikrCard(
     val borderColor by animateColorAsState(
         targetValue = if (isExpanded) SabeelColors.AccentTeal.copy(alpha = 0.6f)
                       else SabeelColors.BorderIdle,
-        animationSpec = tween(durationMillis = 300), label = "border"
+        animationSpec = tween(durationMillis = SabeelMotion.Duration.ColorTransition), label = "border"
     )
     val backgroundColor by animateColorAsState(
         targetValue = if (isExpanded) SabeelColors.SurfaceElevated else SabeelColors.Surface,
-        animationSpec = tween(durationMillis = 300), label = "bg"
+        animationSpec = tween(durationMillis = SabeelMotion.Duration.ColorTransition), label = "bg"
     )
     val stripeColor by animateColorAsState(
         targetValue = if (isExpanded) SabeelColors.AccentTeal else Color.Transparent,
-        animationSpec = tween(durationMillis = 300), label = "stripe"
+        animationSpec = tween(durationMillis = SabeelMotion.Duration.ColorTransition), label = "stripe"
     )
 
     // Chevron: rotates 0° (collapsed) → 180° (expanded).
@@ -198,14 +206,14 @@ private fun DhikrCard(
     // content reach their final position at the same time — they feel coupled.
     val chevronRotation by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        animationSpec = SabeelMotion.Spring.ChevronRotate,
         label = "chevron_rotation"
     )
-    // Tint transitions with the same 300ms tween as border/bg/stripe —
+    // Tint transitions with the same colour-transition duration as border/bg/stripe —
     // consistent animation language across all card state changes.
     val chevronTint by animateColorAsState(
         targetValue = if (isExpanded) SabeelColors.AccentTeal else SabeelColors.TextHint,
-        animationSpec = tween(300),
+        animationSpec = tween(SabeelMotion.Duration.ColorTransition),
         label = "chevron_tint"
     )
 
@@ -216,12 +224,12 @@ private fun DhikrCard(
     // values directly and apply them each frame.
     val arabicFontSize by animateFloatAsState(
         targetValue = if (isExpanded) 28f else 20f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        animationSpec = SabeelMotion.Spring.CardExpand(),
         label = "arabic_font_size"
     )
     val arabicLineHeight by animateFloatAsState(
         targetValue = if (isExpanded) 53.2f else 38f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        animationSpec = SabeelMotion.Spring.CardExpand(),
         label = "arabic_line_height"
     )
 
@@ -233,7 +241,7 @@ private fun DhikrCard(
     // the real current height — it follows AnimatedVisibility frames naturally.
     // matchParentSize() was wrong: it overrides width(3.dp) and filled the entire card.
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
@@ -307,12 +315,12 @@ private fun DhikrCard(
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = androidx.compose.animation.expandVertically(
-                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    animationSpec = SabeelMotion.Spring.CardExpand()
                 ) + androidx.compose.animation.fadeIn(
                     animationSpec = tween(200)
                 ),
                 exit = androidx.compose.animation.shrinkVertically(
-                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    animationSpec = SabeelMotion.Spring.CardExpand()
                 ) + androidx.compose.animation.fadeOut(
                     animationSpec = tween(150)
                 )

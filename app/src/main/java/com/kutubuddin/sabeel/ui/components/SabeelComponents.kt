@@ -6,20 +6,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 
 /**
  * Canonical section header used across the app.
@@ -94,10 +98,23 @@ fun CollapsibleSectionHeader(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         SabeelSectionHeader(text)
+        // Previously swapped between two different vector assets (ExpandLess /
+        // ExpandMore) on every click — an instant, unanimated cut. Now a single
+        // icon rotates 0°→180°, same spring + same visual language as the
+        // DhikrCard chevron (DhikrLibraryScreen.kt), so every disclosure
+        // indicator in the app moves the same way.
+        val rotation by animateFloatAsState(
+            targetValue = if (isExpanded) 180f else 0f,
+            animationSpec = SabeelMotion.Spring.ChevronRotate,
+            label = "section_chevron_rotation"
+        )
         Icon(
-            imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+            imageVector = Icons.Filled.ExpandMore,
             contentDescription = if (isExpanded) "Collapse" else "Expand",
-            tint = SabeelColors.TextSecondary
+            tint = SabeelColors.TextSecondary,
+            modifier = Modifier
+                .size(24.dp)
+                .graphicsLayer { rotationZ = rotation }
         )
     }
 }

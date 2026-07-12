@@ -13,13 +13,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Spa
@@ -53,6 +54,7 @@ import com.kutubuddin.sabeel.ui.i18n.localizeDigits
 import com.kutubuddin.sabeel.ui.i18n.toGroupedLocalizedNumerals
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 import com.kutubuddin.sabeel.ui.theme.arabicStyle
 import com.kutubuddin.sabeel.ui.wird.WirdSegmentedProgress
 import java.util.Locale
@@ -132,61 +134,83 @@ fun HomeContent(
         }
 
         // ── Primary action (hero, above the fold) ─────────────────────────────
-        if (state.resumeSession != null) {
-            item {
-                ResumeCard(
-                    session = state.resumeSession!!,
-                    language = state.language,
-                    onClick = { onResumeCounting(state.resumeSession.dhikrKey, state.resumeSession.target) }
-                )
-            }
-        } else if (!state.wird.isEmpty) {
-            if (state.wird.completed == state.wird.total) {
-                item {
-                    GoalCompleteCard(
+        // AnimatedContent crossfades between the four hero variants (Resume /
+        // GoalComplete / SmartPlay / HeroStart) keyed on `heroCardKind`. Before
+        // this fix, each branch was a *different composable in the same
+        // LazyColumn slot* — Compose has no way to animate between unrelated
+        // composable identities, so finishing a session and coming back to
+        // Home was a hard cut. Modifier.animateItem() on top additionally
+        // animates this item's own position if something above it changes size.
+        val heroCardKind = when {
+            state.resumeSession != null -> "resume"
+            !state.wird.isEmpty && state.wird.completed == state.wird.total -> "complete"
+            !state.wird.isEmpty -> "smart_play"
+            else -> "hero_start"
+        }
+        item(key = "hero_card") {
+            AnimatedContent(
+                targetState = heroCardKind,
+                transitionSpec = {
+                    fadeIn(tween(SabeelMotion.Duration.HeroCardCrossfadeIn)) togetherWith
+                        fadeOut(tween(SabeelMotion.Duration.HeroCardCrossfadeOut))
+                },
+                modifier = Modifier.animateItem(),
+                label = "home_hero_card"
+            ) { kind ->
+                when (kind) {
+                    "resume" -> ResumeCard(
+                        session = state.resumeSession!!,
+                        language = state.language,
+                        onClick = { onResumeCounting(state.resumeSession.dhikrKey, state.resumeSession.target) }
+                    )
+                    "complete" -> GoalCompleteCard(
                         onStart = { onResumeCounting(null, null) }
                     )
-                }
-            } else {
-                item {
-                    SmartPlayCard(
+                    "smart_play" -> SmartPlayCard(
                         nextItemName = state.wird.nextItemName!!.get(state.language),
                         onStart = { onResumeCounting(state.wird.nextItemKey, state.wird.nextItemTarget) }
                     )
+                    else -> HeroStartCard(
+                        onStart = { onResumeCounting(null, null) },
+                        // IX-09: this card used to read "Begin today's dhikr" even
+                        // right after finishing the first session of the day (no
+                        // *in-progress* session to resume, but clearly not a
+                        // zero-progress day either). Acknowledge it instead.
+                        hasProgressToday = state.todaysSessions.isNotEmpty()
+                    )
                 }
-            }
-        } else {
-            item {
-                HeroStartCard(
-                    onStart = { onResumeCounting(null, null) },
-                    // IX-09: this card used to read "Begin today's dhikr" even
-                    // right after finishing the first session of the day (no
-                    // *in-progress* session to resume, but clearly not a
-                    // zero-progress day either). Acknowledge it instead.
-                    hasProgressToday = state.todaysSessions.isNotEmpty()
-                )
             }
         }
 
         // ── Stats (demoted below the hero) ────────────────────────────────────
-        item {
-            StreakGoalCard(state = state, onOpenWird = onOpenWird)
+        item(key = "streak_goal_card") {
+            StreakGoalCard(
+                state = state,
+                onOpenWird = onOpenWird,
+                modifier = Modifier.animateItem()
+            )
         }
 
         // ── Today's Sessions ──────────────────────────────────────────────────
         if (state.todaysSessions.isNotEmpty()) {
-            item {
+            item(key = "sessions_header") {
                 CollapsibleSectionHeader(
                     text = LocalStrings.current.homeTodaysSessions,
                     isExpanded = isSessionsExpanded,
-                    onClick = { isSessionsExpanded = !isSessionsExpanded }
+                    onClick = { isSessionsExpanded = !isSessionsExpanded },
+                    modifier = Modifier.animateItem()
                 )
             }
-            item {
+            item(key = "sessions_content") {
+                // animateItem() here is what makes the items BELOW this one
+                // (All Time / wordmark) glide into their new position when the
+                // section collapses, instead of snapping the instant the
+                // AnimatedVisibility finishes shrinking.
                 AnimatedVisibility(
                     visible = isSessionsExpanded,
-                    enter = expandVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
-                    exit = shrinkVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
+                    enter = expandVertically(animationSpec = SabeelMotion.Spring.CardExpand()) + fadeIn(animationSpec = SabeelMotion.Spring.CardExpand()),
+                    exit = shrinkVertically(animationSpec = SabeelMotion.Spring.CardExpand()) + fadeOut(animationSpec = SabeelMotion.Spring.CardExpand()),
+                    modifier = Modifier.animateItem()
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                         state.todaysSessions.forEach { session ->
@@ -204,15 +228,15 @@ fun HomeContent(
         // rather than "about to begin." Swap in a short encouragement card
         // until there's at least one real session to report on.
         if (state.totalSessionCount > 0) {
-            item {
-                SectionHeader(LocalStrings.current.homeAllTime)
+            item(key = "all_time_header") {
+                SectionHeader(LocalStrings.current.homeAllTime, modifier = Modifier.animateItem())
             }
-            item {
-                AllTimeCard(state = state)
+            item(key = "all_time_card") {
+                AllTimeCard(state = state, modifier = Modifier.animateItem())
             }
         } else {
-            item {
-                FirstTimeEncouragementCard()
+            item(key = "first_time_encouragement") {
+                FirstTimeEncouragementCard(modifier = Modifier.animateItem())
             }
         }
 
@@ -302,13 +326,13 @@ private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> 
  * live now.
  */
 @Composable
-private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
+private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit, modifier: Modifier = Modifier) {
     val strings = LocalStrings.current
 
     // 3B: Split tap targets — streak row is informational only (no nav),
     // wird progress row navigates. Outer column is non-clickable.
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(SabeelColors.Surface)
@@ -432,9 +456,9 @@ private fun SessionRow(session: SessionSummary, language: String) {
 }
 
 @Composable
-private fun AllTimeCard(state: HomeState) {
+private fun AllTimeCard(state: HomeState, modifier: Modifier = Modifier) {
     val strings = LocalStrings.current
-    InfoCard {
+    InfoCard(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
@@ -460,9 +484,9 @@ private fun AllTimeStat(label: String, value: String) {
  * occupies real vertical space with actual content rather than nothing.
  */
 @Composable
-private fun FirstTimeEncouragementCard() {
+private fun FirstTimeEncouragementCard(modifier: Modifier = Modifier) {
     val strings = LocalStrings.current
-    InfoCard {
+    InfoCard(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -485,12 +509,12 @@ private fun FirstTimeEncouragementCard() {
 
 // Delegated to shared SabeelSectionHeader — kept as a local alias for zero call-site churn
 @Composable
-private fun SectionHeader(text: String) = SabeelSectionHeader(text = text, letterSpacing = 1.5.dp)
+private fun SectionHeader(text: String, modifier: Modifier = Modifier) = SabeelSectionHeader(text = text, modifier = modifier, letterSpacing = 1.5.dp)
 
 // Delegated to shared CollapsibleSectionHeader — kept as a local alias for zero call-site churn
 @Composable
-private fun CollapsibleSectionHeader(text: String, isExpanded: Boolean, onClick: () -> Unit) =
-    com.kutubuddin.sabeel.ui.components.CollapsibleSectionHeader(text, isExpanded, onClick)
+private fun CollapsibleSectionHeader(text: String, isExpanded: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) =
+    com.kutubuddin.sabeel.ui.components.CollapsibleSectionHeader(text, isExpanded, onClick, modifier)
 
 @Composable
 private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false) {
