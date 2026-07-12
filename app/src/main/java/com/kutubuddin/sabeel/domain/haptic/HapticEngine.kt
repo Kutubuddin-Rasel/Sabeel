@@ -1,7 +1,8 @@
 package com.kutubuddin.sabeel.domain.haptic
 
 interface HapticEngine {
-    fun playIncrementTick()
-    fun playMilestoneClick()
-    fun playCompletionThud()
+    fun playIncrementTick(strength: HapticStrength = HapticStrength.MEDIUM)
+    fun playMilestoneClick(strength: HapticStrength = HapticStrength.MEDIUM)
+    fun playCompletionThud(strength: HapticStrength = HapticStrength.MEDIUM)
+    fun playReset(strength: HapticStrength = HapticStrength.MEDIUM)
 }
