@@ -22,7 +22,7 @@ class WirdEditStateTest {
         smart: Boolean = false
     ) = DhikrItem(
         key = key, arabicText = "ar-$key", displayName = LocalizedText(en = name),
-        transliteration = "tr-$key", meaning = DhikrMeaning(en = "m"),
+        transliteration = LocalizedText(en = "tr-$key"), meaning = DhikrMeaning(en = "m"),
         defaultTarget = target, spiritualReward = LocalizedText(en = "r"),
         hadithRef = "", category = DhikrCategory.DAILY, isSmartFlow = smart
     )
@@ -58,7 +58,7 @@ class WirdEditStateTest {
         assertEquals(1, state.rows.size)
         val row = state.rows.single()
         assertEquals("A", row.dhikrKey)
-        assertEquals("Alhamd", row.displayName.en) // from catalog
+        assertEquals("Alhamd", row.displayName) // from catalog (resolveWirdEditState calls .get(lang))
         assertEquals(33, row.target)            // from plan, NOT 999
         assertEquals(0, row.position)
         assertEquals("ur", state.language)

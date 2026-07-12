@@ -3,6 +3,7 @@ package com.kutubuddin.sabeel.ui.tasbih
 import com.kutubuddin.sabeel.domain.model.ActiveDhikr
 import com.kutubuddin.sabeel.domain.model.DhikrCatalog
 import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
+import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,10 @@ import org.junit.Test
 class TasbihViewModelTest {
 
     private val repository: TasbihRepository = mockk(relaxed = true)
+    // FIX 1 wiring: TasbihViewModel now reads hapticsLevel to scale haptic
+    // strength. These tests assert on haptic *type*, not felt strength, so a
+    // relaxed mock (medium default) is enough.
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: TasbihViewModel
@@ -52,8 +57,9 @@ class TasbihViewModelTest {
         every { repository.smartFlowVariant } returns flowOf(SmartFlowVariant.CLASSIC)
         every { repository.isPocketModeActive } returns flowOf(false)
         every { repository.streak } returns flowOf(null)
+        every { settingsRepository.hapticsLevel } returns flowOf("medium")
 
-        viewModel = TasbihViewModel(repository)
+        viewModel = TasbihViewModel(repository, settingsRepository)
         testDispatcher.scheduler.advanceUntilIdle()
     }
 
@@ -77,7 +83,7 @@ class TasbihViewModelTest {
     fun testIncrementNormalTick() = runTest {
         // Given state count = 5 on a plain (non-sequence) dhikr
         every { repository.activeCount } returns flowOf(5)
-        viewModel = TasbihViewModel(repository)
+        viewModel = TasbihViewModel(repository, settingsRepository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val effects = mutableListOf<TasbihSideEffect>()
@@ -112,7 +118,7 @@ class TasbihViewModelTest {
     fun testSequenceActivatesForPostSalahEntry() = runTest {
         val fakeRepo = FakeTasbihRepository()
         fakeRepo._activeDhikr.value = DhikrCatalog.resolve("SMART_FLOW_CLASSIC")
-        val viewModel = TasbihViewModel(fakeRepo)
+        val viewModel = TasbihViewModel(fakeRepo, settingsRepository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.state.value
@@ -127,7 +133,7 @@ class TasbihViewModelTest {
         val fakeRepo = FakeTasbihRepository()
         fakeRepo._activeDhikr.value = DhikrCatalog.resolve("SMART_FLOW_CLASSIC")
         fakeRepo._activeCount.value = 32                    // one tap short of finishing step 0
-        val viewModel = TasbihViewModel(fakeRepo)
+        val viewModel = TasbihViewModel(fakeRepo, settingsRepository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val effects = mutableListOf<TasbihSideEffect>()
@@ -153,7 +159,7 @@ class TasbihViewModelTest {
     fun testFullClassicSequencePersistsOnceWithTotal() = runTest {
         val fakeRepo = FakeTasbihRepository()
         fakeRepo._activeDhikr.value = DhikrCatalog.resolve("SMART_FLOW_CLASSIC")
-        val viewModel = TasbihViewModel(fakeRepo)
+        val viewModel = TasbihViewModel(fakeRepo, settingsRepository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val effects = mutableListOf<TasbihSideEffect>()
@@ -194,7 +200,7 @@ class TasbihViewModelTest {
         val fakeRepo = FakeTasbihRepository()
         fakeRepo._activeDhikr.value = DhikrCatalog.resolve("SMART_FLOW_CLASSIC")
         fakeRepo.delayMs = 50                               // simulate DataStore/Room latency
-        val viewModel = TasbihViewModel(fakeRepo)
+        val viewModel = TasbihViewModel(fakeRepo, settingsRepository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Sit at step 0, count 32.
@@ -229,6 +235,9 @@ class TasbihViewModelTest {
 open class FakeTasbihRepository : TasbihRepository {
     val _activeCount = kotlinx.coroutines.flow.MutableStateFlow(0)
     override val activeCount: kotlinx.coroutines.flow.Flow<Int> = _activeCount
+
+    val _activeStepIndex = kotlinx.coroutines.flow.MutableStateFlow(0)
+    override val activeStepIndex: kotlinx.coroutines.flow.Flow<Int> = _activeStepIndex
 
     val _activeDhikr = kotlinx.coroutines.flow.MutableStateFlow(DhikrCatalog.resolve("SUBHANALLAH"))
     override val activeDhikr: kotlinx.coroutines.flow.Flow<ActiveDhikr> = _activeDhikr
@@ -269,6 +278,20 @@ open class FakeTasbihRepository : TasbihRepository {
     override suspend fun resetCount() {
         if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
         _activeCount.value = 0
+    }
+
+    override suspend fun setCount(value: Int) {
+        if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
+        _activeCount.value = value
+    }
+
+    override suspend fun setStepIndex(index: Int) {
+        if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
+        _activeStepIndex.value = index
+    }
+
+    override suspend fun flushToDisk() {
+        if (delayMs > 0) kotlinx.coroutines.delay(delayMs)
     }
 
     override suspend fun setSmartFlowVariant(variant: SmartFlowVariant) {
