@@ -1,5 +1,6 @@
 package com.kutubuddin.sabeel.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,18 +11,21 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kutubuddin.sabeel.ui.components.CollapsibleSectionHeader
+import com.kutubuddin.sabeel.ui.components.SabeelSectionHeader
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
-import android.app.TimePickerDialog
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -38,12 +42,14 @@ fun SettingsScreen(
  * Pure, stateless settings rendering (SRP): a function of [state] only,
  * emitting every change via [onIntent]. No ViewModel reference.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsContent(
     state: SettingsState,
     onIntent: (SettingsIntent) -> Unit
 ) {
     val strings = LocalStrings.current
+    var showAdvanced by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -63,7 +69,7 @@ fun SettingsContent(
             )
         }
 
-        item { Spacer(Modifier.height(4.dp)) }
+        item { Spacer(Modifier.height(16.dp)) }
         item { SettingsHeader(strings.settingsLanguageText) }
 
         item {
@@ -83,7 +89,7 @@ fun SettingsContent(
             )
         }
 
-        item { Spacer(Modifier.height(4.dp)) }
+        item { Spacer(Modifier.height(16.dp)) }
         item { SettingsHeader(strings.settingsCountingBehaviour) }
 
         item {
@@ -97,6 +103,14 @@ fun SettingsContent(
                 ),
                 selected = state.hapticsLevel,
                 onSelect = { onIntent(SettingsIntent.SetHaptics(it)) }
+            )
+        }
+        item {
+            SettingsToggleRow(
+                label = strings.settingsLeftHanded,
+                description = strings.settingsLeftHandedDesc,
+                checked = state.leftHanded,
+                onCheckedChange = { onIntent(SettingsIntent.SetLeftHanded(it)) }
             )
         }
         item {
@@ -124,23 +138,32 @@ fun SettingsContent(
             )
         }
         item {
-            SettingsToggleRow(
-                label = strings.settingsAutoProgressWird,
-                description = strings.settingsAutoProgressWirdDesc,
-                checked = state.autoProgressWird,
-                onCheckedChange = { onIntent(SettingsIntent.SetAutoProgressWird(it)) }
+            CollapsibleSectionHeader(
+                text = strings.settingsAdvanced,
+                isExpanded = showAdvanced,
+                onClick = { showAdvanced = !showAdvanced }
             )
         }
         item {
-            SettingsToggleRow(
-                label = strings.settingsSmartFlow,
-                description = strings.settingsSmartFlowDesc,
-                checked = state.isSmartFlowEnabled,
-                onCheckedChange = { onIntent(SettingsIntent.SetSmartFlowEnabled(it)) }
-            )
+            AnimatedVisibility(visible = showAdvanced) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SettingsToggleRow(
+                        label = strings.settingsAutoProgressWird,
+                        description = strings.settingsAutoProgressWirdDesc,
+                        checked = state.autoProgressWird,
+                        onCheckedChange = { onIntent(SettingsIntent.SetAutoProgressWird(it)) }
+                    )
+                    SettingsToggleRow(
+                        label = strings.settingsSmartFlow,
+                        description = strings.settingsSmartFlowDesc,
+                        checked = state.isSmartFlowEnabled,
+                        onCheckedChange = { onIntent(SettingsIntent.SetSmartFlowEnabled(it)) }
+                    )
+                }
+            }
         }
 
-        item { Spacer(Modifier.height(4.dp)) }
+        item { Spacer(Modifier.height(16.dp)) }
         item { SettingsHeader(strings.settingsDailyReminders) }
 
         item {
@@ -153,38 +176,90 @@ fun SettingsContent(
         }
         if (state.dailyReminderEnabled) {
             item {
-                val context = LocalContext.current
                 val parts = state.dailyReminderTime.split(":")
                 val hour = parts.getOrNull(0)?.toIntOrNull() ?: 20
                 val minute = parts.getOrNull(1)?.toIntOrNull() ?: 30
-                
-                // Format for display (e.g., 08:30 PM)
                 val displayTime = try {
                     LocalTime.of(hour, minute).format(DateTimeFormatter.ofPattern("h:mm a"))
-                } catch (e: Exception) {
-                    state.dailyReminderTime
-                }
+                } catch (e: Exception) { state.dailyReminderTime }
+
+                // IX-NEW: replace native TimePickerDialog (light-themed system dialog) with
+                // a fully themed M3 TimePicker inside a BasicAlertDialog so the dark
+                // Sakīnah aesthetic is never broken by a system UI intrusion.
+                var showTimePicker by rememberSaveable { mutableStateOf(false) }
+                val timePickerState = rememberTimePickerState(
+                    initialHour = hour, initialMinute = minute
+                )
 
                 SettingsActionRow(
                     label = strings.settingsReminderTime,
                     value = displayTime,
-                    onClick = {
-                        TimePickerDialog(
-                            context,
-                            { _, selectedHour, selectedMinute ->
-                                val timeString = String.format("%02d:%02d", selectedHour, selectedMinute)
-                                onIntent(SettingsIntent.SetDailyReminderTime(timeString))
-                            },
-                            hour,
-                            minute,
-                            false // 12-hour format depending on locale can be true/false, false shows AM/PM
-                        ).show()
-                    }
+                    onClick = { showTimePicker = true }
                 )
+
+                if (showTimePicker) {
+                    BasicAlertDialog(onDismissRequest = { showTimePicker = false }) {
+                        Column(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(SabeelColors.SurfaceElevated)
+                                .padding(horizontal = 24.dp, vertical = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = strings.settingsReminderTime,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = SabeelColors.TextPrimary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp)
+                            )
+                            TimePicker(
+                                state = timePickerState,
+                                colors = TimePickerDefaults.colors(
+                                    clockDialColor = SabeelColors.Surface,
+                                    selectorColor = SabeelColors.AccentTeal,
+                                    clockDialSelectedContentColor = SabeelColors.Background,
+                                    clockDialUnselectedContentColor = SabeelColors.TextPrimary,
+                                    periodSelectorBorderColor = SabeelColors.BorderIdle,
+                                    periodSelectorSelectedContainerColor = SabeelColors.AccentTeal,
+                                    periodSelectorUnselectedContainerColor = SabeelColors.Surface,
+                                    periodSelectorSelectedContentColor = SabeelColors.Background,
+                                    periodSelectorUnselectedContentColor = SabeelColors.TextSecondary,
+                                    timeSelectorSelectedContainerColor = SabeelColors.AccentTeal.copy(alpha = 0.2f),
+                                    timeSelectorUnselectedContainerColor = SabeelColors.Surface,
+                                    timeSelectorSelectedContentColor = SabeelColors.AccentTeal,
+                                    timeSelectorUnselectedContentColor = SabeelColors.TextPrimary,
+                                )
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(onClick = { showTimePicker = false }) {
+                                    Text(strings.a11yDismiss, color = SabeelColors.TextSecondary)
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                TextButton(onClick = {
+                                    val timeString = String.format(
+                                        "%02d:%02d",
+                                        timePickerState.hour,
+                                        timePickerState.minute
+                                    )
+                                    onIntent(SettingsIntent.SetDailyReminderTime(timeString))
+                                    showTimePicker = false
+                                }) {
+                                    Text(strings.wirdDone, color = SabeelColors.AccentTeal)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        item { Spacer(Modifier.height(4.dp)) }
+        item { Spacer(Modifier.height(16.dp)) }
         item { SettingsHeader(strings.settingsAbout) }
 
         item {
@@ -196,15 +271,15 @@ fun SettingsContent(
     }
 }
 
+// Delegated to shared SabeelSectionHeader — kept as a local alias for zero call-site churn.
+// Settings uses 1.8sp letter-spacing (tighter, more structured than Home's 1.5sp).
 @Composable
-private fun SettingsHeader(text: String) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.8.sp),
-        color = SabeelColors.TextSecondary,
+private fun SettingsHeader(text: String) =
+    SabeelSectionHeader(
+        text = text,
+        letterSpacing = 1.8.dp,
         modifier = Modifier.padding(bottom = 4.dp)
     )
-}
 
 @Composable
 private fun SettingsSegmentRow(
@@ -275,6 +350,12 @@ private fun SettingsToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    // LocalHapticFeedback is the Compose-idiomatic haptic API — no DI wiring
+    // needed, available in any Composable. ToggleOn/Off give distinct feedback
+    // for each direction of the switch, which is especially useful here since
+    // settings toggles have no sound cue to complement the thumb animation.
+    val haptic = LocalHapticFeedback.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -290,7 +371,16 @@ private fun SettingsToggleRow(
         }
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = { newValue ->
+                // Fire haptic BEFORE calling through so the feedback is
+                // synchronous with the finger-release event, not delayed
+                // by any state propagation latency above.
+                haptic.performHapticFeedback(
+                    if (newValue) HapticFeedbackType.ToggleOn
+                    else HapticFeedbackType.ToggleOff
+                )
+                onCheckedChange(newValue)
+            },
             // IX-02 fix: rather than flip the thumb between a light and dark
             // color per state (two variables changing at once, which cost
             // the eye a fixed anchor to track), the thumb keeps its existing,
