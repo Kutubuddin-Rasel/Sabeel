@@ -7,7 +7,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_34_AL_AZIM",
             arabicText = "الْعَظِيمُ",
             displayName = LocalizedText(en = "Al-Azim", ur = "العظیم", bn = "আল-আজীম"),
-            transliteration = "Al-'Aẓīm",
+            transliteration = LocalizedText(en = "Al-'Aẓīm", ur = "العظیم", bn = "আল-আজীম"),
             meaning = DhikrMeaning(
                 en = "The Magnificent; the One whose greatness cannot be grasped by the intellect",
                 ur = "عظمت والا؛ جس کی بڑائی کو عقل سے نہیں سمجھا جا سکتا",
@@ -26,7 +26,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_35_AL_GHAFUR",
             arabicText = "الْغَفُورُ",
             displayName = LocalizedText(en = "Al-Ghafur", ur = "الغفور", bn = "আল-গাফুর"),
-            transliteration = "Al-Ghafūr",
+            transliteration = LocalizedText(en = "Al-Ghafūr", ur = "الغفور", bn = "আল-গাফুর"),
             meaning = DhikrMeaning(
                 en = "The Much-Forgiving; the One who completely forgives major and minor sins",
                 ur = "بہت بخشنے والا؛ جو چھوٹے بڑے تمام گناہوں کو مکمل طور پر معاف کر دیتا ہے",
@@ -45,7 +45,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_36_ASH_SHAKUR",
             arabicText = "الشَّكُورُ",
             displayName = LocalizedText(en = "Ash-Shakur", ur = "الشکور", bn = "আশ-শাকুর"),
-            transliteration = "Ash-Shakūr",
+            transliteration = LocalizedText(en = "Ash-Shakūr", ur = "الشکور", bn = "আশ-শাকুর"),
             meaning = DhikrMeaning(
                 en = "The Grateful; the One who gives abundant reward for a small amount of good",
                 ur = "قدردان؛ جو تھوڑی سی نیکی پر بھی بہت زیادہ اجر دیتا ہے",
@@ -64,7 +64,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_37_AL_ALIYY",
             arabicText = "الْعَلِيُّ",
             displayName = LocalizedText(en = "Al-Aliyy", ur = "العلی", bn = "আল-আলিইয়্যু"),
-            transliteration = "Al-'Aliyy",
+            transliteration = LocalizedText(en = "Al-'Aliyy", ur = "العلی", bn = "আল-আলিইয়্যু"),
             meaning = DhikrMeaning(
                 en = "The Sublimely Exalted; the One whose rank and state are highest",
                 ur = "بہت بلند؛ جس کا مرتبہ اور شان سب سے اعلیٰ ہے",
@@ -83,7 +83,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_38_AL_KABIR",
             arabicText = "الْكَبِيرُ",
             displayName = LocalizedText(en = "Al-Kabir", ur = "الکبیر", bn = "আল-কাবীর"),
-            transliteration = "Al-Kabīr",
+            transliteration = LocalizedText(en = "Al-Kabīr", ur = "الکبیر", bn = "আল-কাবীর"),
             meaning = DhikrMeaning(
                 en = "The Incomparably Great; the One whose greatness is in essence and attributes",
                 ur = "سب سے بڑا؛ جس کی بڑائی اس کی ذات اور صفات میں ہے",
@@ -102,7 +102,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_39_AL_HAFIZ",
             arabicText = "الْحَفِيظُ",
             displayName = LocalizedText(en = "Al-Hafiz", ur = "الحفیظ", bn = "আল-হাফীজ"),
-            transliteration = "Al-Ḥafīẓ",
+            transliteration = LocalizedText(en = "Al-Ḥafīẓ", ur = "الحفیظ", bn = "আল-হাফীজ"),
             meaning = DhikrMeaning(
                 en = "The Preserver; the One who protects everything from loss or damage",
                 ur = "حفاظت کرنے والا؛ جو ہر چیز کو نقصان اور تباہی سے بچاتا ہے",
@@ -121,7 +121,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_40_AL_MUQIT",
             arabicText = "الْمُقِيتُ",
             displayName = LocalizedText(en = "Al-Muqit", ur = "المقیت", bn = "আল-মুক্বীত"),
-            transliteration = "Al-Muqīt",
+            transliteration = LocalizedText(en = "Al-Muqīt", ur = "المقیت", bn = "আল-মুক্বীত"),
             meaning = DhikrMeaning(
                 en = "The Nourisher; the One who sustains both the body with food and the soul with knowledge",
                 ur = "رزق اور قوت دینے والا؛ جو جسم کو خوراک اور روح کو علم سے پالتا ہے",
@@ -140,7 +140,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_41_AL_HASIB",
             arabicText = "الْحَسِيبُ",
             displayName = LocalizedText(en = "Al-Hasib", ur = "الحسیب", bn = "আল-হাসীব"),
-            transliteration = "Al-Ḥasīb",
+            transliteration = LocalizedText(en = "Al-Ḥasīb", ur = "الحسیب", bn = "আল-হাসীব"),
             meaning = DhikrMeaning(
                 en = "The Bringer of Judgment; the One who suffices His creation and holds them accountable",
                 ur = "حساب لینے والا؛ جو اپنی مخلوق کے لیے کافی ہے اور ان کا محاسبہ کرتا ہے",
@@ -159,7 +159,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_42_AL_JALIL",
             arabicText = "الْجَلِيلُ",
             displayName = LocalizedText(en = "Al-Jalil", ur = "الجلیل", bn = "আল-জালীল"),
-            transliteration = "Al-Jalīl",
+            transliteration = LocalizedText(en = "Al-Jalīl", ur = "الجلیل", bn = "আল-জালীল"),
             meaning = DhikrMeaning(
                 en = "The Majestic; the One possessing supreme greatness in attributes",
                 ur = "بزرگی والا؛ جو اپنی صفات میں سب سے بڑی عظمت کا مالک ہے",
@@ -178,7 +178,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_43_AL_KARIM",
             arabicText = "الْكَرِيمُ",
             displayName = LocalizedText(en = "Al-Karim", ur = "الکریم", bn = "আল-কারীম"),
-            transliteration = "Al-Karīm",
+            transliteration = LocalizedText(en = "Al-Karīm", ur = "الکریم", bn = "আল-কারীম"),
             meaning = DhikrMeaning(
                 en = "The Most Generous; the One who gives constantly and overlooks faults",
                 ur = "بڑا کرم کرنے والا؛ جو مسلسل عطا کرتا ہے اور غلطیوں کو نظر انداز کرتا ہے",
@@ -197,7 +197,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_44_AR_RAQIB",
             arabicText = "الرَّقِيبُ",
             displayName = LocalizedText(en = "Ar-Raqib", ur = "الرقیب", bn = "আর-রাকীব"),
-            transliteration = "Ar-Raqīb",
+            transliteration = LocalizedText(en = "Ar-Raqīb", ur = "الرقیب", bn = "আর-রাকীব"),
             meaning = DhikrMeaning(
                 en = "The Watchful; the One who observes every action, thought, and feeling",
                 ur = "نگہبان؛ جو ہر عمل، سوچ، اور احساس کی نگرانی کرتا ہے",
@@ -216,7 +216,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_45_AL_MUJIB",
             arabicText = "الْمُجِيبُ",
             displayName = LocalizedText(en = "Al-Mujib", ur = "المجیب", bn = "আল-মুজীব"),
-            transliteration = "Al-Mujīb",
+            transliteration = LocalizedText(en = "Al-Mujīb", ur = "المجیب", bn = "আল-মুজীব"),
             meaning = DhikrMeaning(
                 en = "The Responsive; the One who answers prayers and removes distress",
                 ur = "دعا قبول کرنے والا؛ جو دعائیں سنتا ہے اور پریشانیاں دور کرتا ہے",
@@ -235,7 +235,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_46_AL_WASI",
             arabicText = "الْوَاسِعُ",
             displayName = LocalizedText(en = "Al-Wasi", ur = "الواسع", bn = "আল-ওয়াসি"),
-            transliteration = "Al-Wāsi'",
+            transliteration = LocalizedText(en = "Al-Wāsi'", ur = "الواسع", bn = "আল-ওয়াসি"),
             meaning = DhikrMeaning(
                 en = "The All-Encompassing; the One whose capacity, mercy, and knowledge are limitless",
                 ur = "وسعت والا؛ جس کی گنجائش، رحمت، اور علم لامحدود ہے",
@@ -254,7 +254,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_47_AL_HAKIM",
             arabicText = "الْحَكِيمُ",
             displayName = LocalizedText(en = "Al-Hakim", ur = "الحکیم", bn = "আল-হাকীম"),
-            transliteration = "Al-Ḥakīm",
+            transliteration = LocalizedText(en = "Al-Ḥakīm", ur = "الحکیم", bn = "আল-হাকীম"),
             meaning = DhikrMeaning(
                 en = "The All-Wise; the One who acts with perfect wisdom, placing things exactly where they belong",
                 ur = "حکمت والا؛ جو کامل حکمت سے کام لیتا ہے اور ہر چیز کو اس کے صحیح مقام پر رکھتا ہے",
@@ -273,7 +273,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_48_AL_WADUD",
             arabicText = "الْوَدُودُ",
             displayName = LocalizedText(en = "Al-Wadud", ur = "الودود", bn = "আল-ওয়াদুদ"),
-            transliteration = "Al-Wadūd",
+            transliteration = LocalizedText(en = "Al-Wadūd", ur = "الودود", bn = "আল-ওয়াদুদ"),
             meaning = DhikrMeaning(
                 en = "The Most Loving; the One who loves His righteous servants and is loved by them",
                 ur = "بہت محبت کرنے والا؛ جو اپنے نیک بندوں سے محبت کرتا ہے اور وہ اس سے محبت کرتے ہیں",
@@ -292,7 +292,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_49_AL_MAJID",
             arabicText = "الْمَجِيدُ",
             displayName = LocalizedText(en = "Al-Majid", ur = "المجید", bn = "আল-মাজীদ"),
-            transliteration = "Al-Majīd",
+            transliteration = LocalizedText(en = "Al-Majīd", ur = "المجید", bn = "আল-মাজীদ"),
             meaning = DhikrMeaning(
                 en = "The Most Glorious; the One who is abundant in goodness and majesty",
                 ur = "بزرگی والا؛ جو بھلائی اور عظمت میں بے پناہ ہے",
@@ -311,7 +311,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_50_AL_BAITH",
             arabicText = "الْبَاعِثُ",
             displayName = LocalizedText(en = "Al-Ba'ith", ur = "الباعث", bn = "আল-বায়ীস"),
-            transliteration = "Al-Bā'ith",
+            transliteration = LocalizedText(en = "Al-Bā'ith", ur = "الباعث", bn = "আল-বায়ীস"),
             meaning = DhikrMeaning(
                 en = "The Resurrector; the One who awakens the dead and brings hidden things to light",
                 ur = "اٹھانے والا؛ جو مردوں کو زندہ کرے گا اور چھپی ہوئی چیزوں کو ظاہر کرے گا",
@@ -330,7 +330,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_51_ASH_SHAHID",
             arabicText = "الشَّهِيدُ",
             displayName = LocalizedText(en = "Ash-Shahid", ur = "الشھید", bn = "আশ-শহীদ"),
-            transliteration = "Ash-Shahīd",
+            transliteration = LocalizedText(en = "Ash-Shahīd", ur = "الشھید", bn = "আশ-শহীদ"),
             meaning = DhikrMeaning(
                 en = "The Witness; the One from whom nothing is absent or concealed",
                 ur = "گواہ؛ جس سے کوئی چیز غائب یا چھپی ہوئی نہیں ہے",
@@ -349,7 +349,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_52_AL_HAQQ",
             arabicText = "الْحَقُّ",
             displayName = LocalizedText(en = "Al-Haqq", ur = "الحق", bn = "আল-হাক্ক"),
-            transliteration = "Al-Ḥaqq",
+            transliteration = LocalizedText(en = "Al-Ḥaqq", ur = "الحق", bn = "আল-হাক্ক"),
             meaning = DhikrMeaning(
                 en = "The Absolute Truth; the One whose existence and word are undeniable reality",
                 ur = "سچ؛ جس کا وجود اور کلام ناقابل تردید حقیقت ہے",
@@ -368,7 +368,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_53_AL_WAKIL",
             arabicText = "الْوَكِيلُ",
             displayName = LocalizedText(en = "Al-Wakil", ur = "الوکیل", bn = "আল-ওয়াকীল"),
-            transliteration = "Al-Wakīl",
+            transliteration = LocalizedText(en = "Al-Wakīl", ur = "الوکیل", bn = "আল-ওয়াকীল"),
             meaning = DhikrMeaning(
                 en = "The Trustee; the One who handles the affairs of those who entrust themselves to Him",
                 ur = "کارساز؛ جو ان لوگوں کے معاملات سنبھالتا ہے جو اس پر توکل کرتے ہیں",
@@ -387,7 +387,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_54_AL_QAWIYY",
             arabicText = "الْقَوِيُّ",
             displayName = LocalizedText(en = "Al-Qawiyy", ur = "القوی", bn = "আল-কাউয়ি"),
-            transliteration = "Al-Qawiyy",
+            transliteration = LocalizedText(en = "Al-Qawiyy", ur = "القوی", bn = "আল-কাউয়ি"),
             meaning = DhikrMeaning(
                 en = "The Possessor of All Strength; the One whose power cannot be diminished",
                 ur = "زور آور؛ جس کی طاقت میں کبھی کمی نہیں آ سکتی",
@@ -406,7 +406,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_55_AL_MATIN",
             arabicText = "الْمَتِينُ",
             displayName = LocalizedText(en = "Al-Matin", ur = "المتین", bn = "আল-মাতীন"),
-            transliteration = "Al-Matīn",
+            transliteration = LocalizedText(en = "Al-Matīn", ur = "المتین", bn = "আল-মাতীন"),
             meaning = DhikrMeaning(
                 en = "The Firm One; the One whose nature is steadfast and power is solid",
                 ur = "مضبوط؛ جس کی فطرت اور طاقت غیر متزلزل ہے",
@@ -425,7 +425,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_56_AL_WALIYY",
             arabicText = "الْوَلِيُّ",
             displayName = LocalizedText(en = "Al-Waliyy", ur = "الولی", bn = "আল-ওয়ালী"),
-            transliteration = "Al-Waliyy",
+            transliteration = LocalizedText(en = "Al-Waliyy", ur = "الولی", bn = "আল-ওয়ালী"),
             meaning = DhikrMeaning(
                 en = "The Protecting Friend; the One who supports, aids, and defends His righteous servants",
                 ur = "مددگار دوست؛ جو اپنے نیک بندوں کی حمایت اور دفاع کرتا ہے",
@@ -444,7 +444,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_57_AL_HAMID",
             arabicText = "الْحَمِيدُ",
             displayName = LocalizedText(en = "Al-Hamid", ur = "الحمید", bn = "আল-হামীদ"),
-            transliteration = "Al-Ḥamīd",
+            transliteration = LocalizedText(en = "Al-Ḥamīd", ur = "الحمید", bn = "আল-হামীদ"),
             meaning = DhikrMeaning(
                 en = "The Praiseworthy; the One who deserves all praise regardless of circumstance",
                 ur = "قابلِ تعریف؛ جو ہر حال میں تمام تعریفوں کا مستحق ہے",
@@ -463,7 +463,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_58_AL_MUHSI",
             arabicText = "الْمُحْصِي",
             displayName = LocalizedText(en = "Al-Muhsi", ur = "المحصی", bn = "আল-মুহসী"),
-            transliteration = "Al-Muḥṣī",
+            transliteration = LocalizedText(en = "Al-Muḥṣī", ur = "المحصی", bn = "আল-মুহসী"),
             meaning = DhikrMeaning(
                 en = "The Accounter; the One who numbers and measures everything perfectly",
                 ur = "شمار کرنے والا؛ جو ہر چیز کو مکمل طور پر گنتا اور ناپتا ہے",
@@ -482,7 +482,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_59_AL_MUBDI",
             arabicText = "الْمُبْدِئُ",
             displayName = LocalizedText(en = "Al-Mubdi", ur = "المبدئ", bn = "আল-মুবদী"),
-            transliteration = "Al-Mubdi'",
+            transliteration = LocalizedText(en = "Al-Mubdi'", ur = "المبدئ", bn = "আল-মুবদী"),
             meaning = DhikrMeaning(
                 en = "The Originator; the One who initiates creation out of nothingness",
                 ur = "ابتدا کرنے والا؛ جو عدم سے تخلیق کا آغاز کرتا ہے",
@@ -501,7 +501,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_60_AL_MUID",
             arabicText = "الْمُعِيدُ",
             displayName = LocalizedText(en = "Al-Mu'id", ur = "المعید", bn = "আল-মুঈদ"),
-            transliteration = "Al-Mu'īd",
+            transliteration = LocalizedText(en = "Al-Mu'īd", ur = "المعید", bn = "আল-মুঈদ"),
             meaning = DhikrMeaning(
                 en = "The Restorer; the One who brings the dead back to life",
                 ur = "لوٹانے والا؛ جو مردوں کو دوبارہ زندہ کرے گا",
@@ -520,7 +520,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_61_AL_MUHYI",
             arabicText = "الْمُحْيِي",
             displayName = LocalizedText(en = "Al-Muhyi", ur = "المحیی", bn = "আল-মুহযী"),
-            transliteration = "Al-Muḥyī",
+            transliteration = LocalizedText(en = "Al-Muḥyī", ur = "المحیی", bn = "আল-মুহযী"),
             meaning = DhikrMeaning(
                 en = "The Giver of Life; the One who bestows life upon the lifeless",
                 ur = "زندگی دینے والا؛ جو بے جان چیزوں کو زندگی عطا کرتا ہے",
@@ -539,7 +539,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_62_AL_MUMIT",
             arabicText = "الْمُمِيتُ",
             displayName = LocalizedText(en = "Al-Mumit", ur = "الممیت", bn = "আল-মুমীত"),
-            transliteration = "Al-Mumīt",
+            transliteration = LocalizedText(en = "Al-Mumīt", ur = "الممیت", bn = "আল-মুমীত"),
             meaning = DhikrMeaning(
                 en = "The Bringer of Death; the One who ordains death for creation",
                 ur = "موت دینے والا؛ جو مخلوق کے لیے موت مقرر کرتا ہے",
@@ -558,7 +558,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_63_AL_HAYY",
             arabicText = "الْحَيُّ",
             displayName = LocalizedText(en = "Al-Hayy", ur = "الحی", bn = "আল-হাইয়্যু"),
-            transliteration = "Al-Ḥayy",
+            transliteration = LocalizedText(en = "Al-Ḥayy", ur = "الحی", bn = "আল-হাইয়্যু"),
             meaning = DhikrMeaning(
                 en = "The Ever-Living; the One whose life is perfect, having no beginning and no end",
                 ur = "ہمیشہ زندہ رہنے والا؛ جس کی زندگی کامل ہے، جس کی نہ ابتدا ہے نہ انتہا",
@@ -577,7 +577,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_64_AL_QAYYUM",
             arabicText = "الْقَيُّومُ",
             displayName = LocalizedText(en = "Al-Qayyum", ur = "القیوم", bn = "আল-কাইয়্যুম"),
-            transliteration = "Al-Qayyūm",
+            transliteration = LocalizedText(en = "Al-Qayyūm", ur = "القیوم", bn = "আল-কাইয়্যুম"),
             meaning = DhikrMeaning(
                 en = "The Sustainer; the One who sustains Himself and sustains all of creation",
                 ur = "قائم رکھنے والا؛ جو خود قائم ہے اور تمام مخلوق کو سنبھالے ہوئے ہے",
@@ -596,7 +596,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_65_AL_WAJID",
             arabicText = "الْوَاجِدُ",
             displayName = LocalizedText(en = "Al-Wajid", ur = "الواجد", bn = "আল-ওয়াজিদ"),
-            transliteration = "Al-Wājid",
+            transliteration = LocalizedText(en = "Al-Wājid", ur = "الواجد", bn = "আল-ওয়াজিদ"),
             meaning = DhikrMeaning(
                 en = "The Finder; the One who finds whatever He wills, lacking nothing",
                 ur = "پانے والا؛ جو جو چاہے پا لیتا ہے، اسے کسی چیز کی کمی نہیں",
@@ -615,7 +615,7 @@ object AsmaUlHusnaCatalog2 {
             key = "ASMA_66_AL_MAJID",
             arabicText = "الْمَاجِدُ",
             displayName = LocalizedText(en = "Al-Majid", ur = "الماجد", bn = "আল-মাজিদ"),
-            transliteration = "Al-Mājid",
+            transliteration = LocalizedText(en = "Al-Mājid", ur = "الماجد", bn = "আল-মাজিদ"),
             meaning = DhikrMeaning(
                 en = "The Noble One; the One distinguished by His excellent glory and character",
                 ur = "بزرگ؛ جو اپنی شاندار عظمت اور کردار کی وجہ سے ممتاز ہے",
