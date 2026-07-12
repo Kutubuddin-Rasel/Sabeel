@@ -60,8 +60,6 @@ data class SabeelColorTokens(
     // else in this file.
     val OnAccentTeal: Color,
     val OnGoldPrimary: Color,
-    // Data Visualization
-    val RingPalette: List<Color>
 )
 
 /** "Sakīnah Night" — near-black, OLED-friendly, zero halation. */
@@ -102,31 +100,7 @@ val DarkSabeelColors = SabeelColorTokens(
     // now instead of being a raw hex at the WirdEditScreen call site.
     Danger            = Color(0xFFE57373),
     OnAccentTeal      = Color(0xFF0E1311), // = Background
-    OnGoldPrimary     = Color(0xFF0E1311), // = Background
-    // 7 distinct hues so a 7-item wird (the common case) never repeats a
-    // color via modulo (the old 5-color list did). Terracotta is gone: it
-    // read as a near-universal "warning" hue and, by coincidence of list
-    // order, often landed on the largest slice. Color is now a secondary
-    // cue anyway — WirdRingLegend labels every slice by name.
-    // IX-11: slate blue and plum were the two most saturated/cool hues in
-    // this list — on a screen that's otherwise "near-black + one teal + gold
-    // reserved for milestones," they were the one place the app suddenly
-    // looked like a fitness-tracker activity ring instead of the calm,
-    // sacred tone everywhere else. Muted toward the same dusty/muted
-    // register as the rose/aqua/sand slices below, while keeping enough hue
-    // separation from their nearest neighbors (dusty rose, deep aqua) that
-    // WirdRingLegend's color+label pairing still disambiguates them. This is
-    // the most subjective change in this pass — worth eyeballing on-device
-    // against the old values (kept in comments) before committing to it.
-    RingPalette       = listOf(
-        Color(0xFF4FA88B), // teal
-        Color(0xFF6D8CA3), // muted slate (was 0xFF7798C5)
-        Color(0xFF8B7196), // muted heather (was 0xFFB474AF)
-        Color(0xFFD9B26A), // gold
-        Color(0xFFC98CA0), // dusty rose
-        Color(0xFF6FA5A0), // deep aqua
-        Color(0xFFB3A26A)  // warm sand
-    )
+    OnGoldPrimary     = Color(0xFF0E1311)
 )
 
 /** "Sakīnah Day" — warm parchment, greens + gold on calm cream. */
@@ -165,15 +139,7 @@ val LightSabeelColors = SabeelColorTokens(
     // hold contrast against the warm cream Background (#F4F1E9) instead of
     // washing out the way pale greens would.
     // IX-11 (light-mode pair — see the dark set above for the reasoning).
-    RingPalette       = listOf(
-        Color(0xFF2C6E5A), // teal
-        Color(0xFF3E5E76), // muted slate (was 0xFF355A8C)
-        Color(0xFF6B4F72), // muted heather (was 0xFF7F3979)
-        Color(0xFFB08D43), // gold
-        Color(0xFF8C4B5C), // dusty rose
-        Color(0xFF2E6E68), // deep aqua
-        Color(0xFF7A6A3A)  // warm sand
-    )
+
 )
 
 /** Provided by [SabeelTheme]; defaults to the dark set. */

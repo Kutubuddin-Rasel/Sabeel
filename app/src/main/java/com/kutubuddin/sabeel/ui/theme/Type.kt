@@ -6,6 +6,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.R
@@ -65,6 +66,27 @@ val Typography = Typography(
         lineHeight = 84.sp,
         letterSpacing = (-0.5).sp
     ),
+    // Ring-center stat on WirdEditScreen (target total).
+    displayMedium = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 36.sp,
+        lineHeight = 40.sp,
+        letterSpacing = (-0.25).sp
+    ),
+    // TajweedText transliteration line — needs to feel substantial but
+    // never compete with the Arabic above it.
+    displaySmall = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.sp
+    ),
+    // Ring-center completion fraction on WirdScreen.
+    headlineLarge = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 32.sp
+    ),
     titleLarge = TextStyle(
         fontWeight = FontWeight.SemiBold,
         fontSize = 22.sp,
@@ -91,6 +113,13 @@ val Typography = Typography(
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.8.sp
+    ),
+    // Smallest semantic label: ×N overflow badges, bottom-nav tab text.
+    labelSmall = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 11.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.5.sp
     ),
     headlineSmall = TextStyle(
         fontWeight = FontWeight.Bold,
@@ -119,6 +148,18 @@ private fun scaleTypography(scale: Int): Typography {
         displayLarge = Typography.displayLarge.copy(
             fontSize = (Typography.displayLarge.fontSize.value + scale).sp,
             lineHeight = (Typography.displayLarge.lineHeight.value + scale).sp
+        ),
+        displayMedium = Typography.displayMedium.copy(
+            fontSize = (Typography.displayMedium.fontSize.value + scale).sp,
+            lineHeight = (Typography.displayMedium.lineHeight.value + scale).sp
+        ),
+        displaySmall = Typography.displaySmall.copy(
+            fontSize = (Typography.displaySmall.fontSize.value + scale).sp,
+            lineHeight = (Typography.displaySmall.lineHeight.value + scale).sp
+        ),
+        headlineLarge = Typography.headlineLarge.copy(
+            fontSize = (Typography.headlineLarge.fontSize.value + scale).sp,
+            lineHeight = (Typography.headlineLarge.lineHeight.value + scale).sp
         ),
         titleLarge = Typography.titleLarge.copy(
             fontSize = (Typography.titleLarge.fontSize.value + scale).sp,
@@ -155,6 +196,10 @@ private fun scaleTypography(scale: Int): Typography {
         labelMedium = Typography.labelMedium.copy(
             fontSize = (Typography.labelMedium.fontSize.value + scale).sp,
             lineHeight = (Typography.labelMedium.lineHeight.value + scale).sp
+        ),
+        labelSmall = Typography.labelSmall.copy(
+            fontSize = (Typography.labelSmall.fontSize.value + scale).sp,
+            lineHeight = (Typography.labelSmall.lineHeight.value + scale).sp
         )
     )
 }
@@ -184,5 +229,8 @@ val arabicStyle = TextStyle(
     fontFamily = UthmanicHafsFontFamily,
     fontWeight = FontWeight.Normal,
     fontSize = 22.sp,
-    lineHeight = 42.sp
+    lineHeight = 42.sp,
+    // FIX 11: keep font padding so tall tashkīl stacks aren't clipped at the
+    // top of the line box (includeFontPadding = false would trim them).
+    platformStyle = PlatformTextStyle(includeFontPadding = true)
 )
