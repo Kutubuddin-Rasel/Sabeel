@@ -47,8 +47,13 @@ class DhikrViewModel @Inject constructor(
     // Filter catalog based on debounced query; recompute only when query or catalog changes
     private val filteredDhikr = dhikrRepository.getAllDhikr()
         .combine(debouncedQuery) { allDhikr, query ->
-            if (query.isBlank()) allDhikr
-            else allDhikr.filter { it.matches(query) }
+            if (query.isBlank()) {
+                // EXCLUDE individual Asma Ul Husna items from the default view
+                // Only keep ASMA_ALL_99 and other categories
+                allDhikr.filter { it.category != DhikrCategory.ASMA_UL_HUSNA || it.key == "ASMA_ALL_99" }
+            } else {
+                allDhikr.filter { it.matches(query) }
+            }
         }
 
     // Group filtered list by category — done on collection thread, not main
