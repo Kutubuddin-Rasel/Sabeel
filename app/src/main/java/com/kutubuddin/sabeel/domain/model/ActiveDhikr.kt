@@ -16,6 +16,8 @@ data class ActiveDhikr(
     val key: String,
     val arabicText: String,
     val displayName: LocalizedText,
+    val transliteration: LocalizedText? = null,
+    val meaning: DhikrMeaning? = null,
     val target: Int,
     val spiritualReward: LocalizedText,
     val hadithRef: String,
