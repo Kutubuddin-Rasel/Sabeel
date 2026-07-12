@@ -2,10 +2,12 @@ package com.kutubuddin.sabeel.ui.tasbih
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kutubuddin.sabeel.domain.haptic.HapticStrength
 import com.kutubuddin.sabeel.domain.model.ActiveDhikr
 import com.kutubuddin.sabeel.domain.model.DhikrCatalog
 import com.kutubuddin.sabeel.domain.model.DhikrSequence
 import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
+import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -29,7 +31,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class TasbihViewModel @Inject constructor(
-    private val repository: TasbihRepository
+    private val repository: TasbihRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TasbihState())
@@ -40,8 +43,25 @@ class TasbihViewModel @Inject constructor(
 
     private val intentMutex = Mutex()
 
+    /**
+     * Latest resolved haptic strength from the user's Settings choice, cached so
+     * every emitted [TasbihSideEffect.PlayHaptic] can be stamped with it without
+     * suspending on the flow at the tap site. Defaults to MEDIUM until first emit.
+     */
+    @Volatile
+    private var currentHapticStrength: HapticStrength = HapticStrength.MEDIUM
+
     init {
         observeRepositoryState()
+        observeHapticStrength()
+    }
+
+    private fun observeHapticStrength() {
+        viewModelScope.launch {
+            settingsRepository.hapticsLevel
+                .map { HapticStrength.fromSetting(it) }
+                .collect { currentHapticStrength = it }
+        }
     }
 
     private fun observeRepositoryState() {
@@ -75,9 +95,28 @@ class TasbihViewModel @Inject constructor(
                     // Sequence step targets are catalog-fixed and intentionally ignore any active
                     // target override; the override only shapes the single-dhikr `dhikr.target` fallback.
                     val target = sequence?.steps?.get(stepIndex)?.target ?: dhikr.target
+                    
+                    val displayedDhikr = if (dhikr.key == "ASMA_ALL_99") {
+                        val index = count.coerceIn(0, DhikrCatalog.asmaUlHusnaList.lastIndex)
+                        val item = DhikrCatalog.asmaUlHusnaList[index]
+                        ActiveDhikr(
+                            key = dhikr.key,
+                            arabicText = item.arabicText,
+                            displayName = item.displayName,
+                            transliteration = item.transliteration,
+                            meaning = item.meaning,
+                            target = dhikr.target,
+                            spiritualReward = item.spiritualReward,
+                            hadithRef = item.hadithRef
+                        )
+                    } else {
+                        dhikr
+                    }
+
                     currentState.copy(
                         count = count,
                         currentDhikr = dhikr,
+                        displayedDhikr = displayedDhikr,
                         sequence = sequence,
                         stepIndex = stepIndex,
                         isSmartFlowEnabled = smartFlow,
@@ -167,7 +206,7 @@ class TasbihViewModel @Inject constructor(
 
         _state.value = newState
 
-        _effect.emit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay))
+        _effect.emit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay, currentHapticStrength))
         if (showCelebration) _effect.emit(TasbihSideEffect.ShowCelebration)
 
         val dateString = LocalDate.now().toString()
@@ -189,7 +228,7 @@ class TasbihViewModel @Inject constructor(
             
             repository.setStepIndex(prevIndex)
             repository.setCount(prevCount)
-            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.TICK))
+            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.TICK, currentHapticStrength))
         } else {
             _state.update { state ->
                 val newCount = maxOf(0, state.count - 1)
@@ -211,7 +250,7 @@ class TasbihViewModel @Inject constructor(
         } else {
             _state.update { it.copy(count = 0) }
         }
-        _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.THUD))
+        _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.RESET, currentHapticStrength))
         repository.resetCount()
     }
 
