@@ -42,13 +42,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kutubuddin.sabeel.ui.components.AccentCard
+import com.kutubuddin.sabeel.ui.components.CollapsibleSectionHeader
+import com.kutubuddin.sabeel.ui.components.InfoCard
 import com.kutubuddin.sabeel.ui.components.ProgressFractionText
+import com.kutubuddin.sabeel.ui.components.SabeelSectionHeader
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.UiStrings
 import com.kutubuddin.sabeel.ui.i18n.localizeDigits
 import com.kutubuddin.sabeel.ui.i18n.toGroupedLocalizedNumerals
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.theme.arabicStyle
 import com.kutubuddin.sabeel.ui.wird.WirdSegmentedProgress
 import java.util.Locale
 
@@ -217,12 +222,19 @@ fun HomeContent(
         // whitespace. A small closing wordmark — the same gold-on-teal
         // treatment HeroStartCard already uses — gives the screen a
         // deliberate ending instead.
+        item { Spacer(Modifier.height(32.dp)) }
         item {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("سَبِيل", fontSize = 20.sp, color = SabeelColors.GoldPrimary.copy(alpha = 0.35f))
+                Text(
+                    text = "سَبِيل",
+                    // Arabic wordmark: arabicStyle ensures Uthmanic font; 20×1.9=38sp diacritic safety
+                    style = arabicStyle.copy(fontSize = 20.sp, lineHeight = 38.sp),
+                    // FIX 6: a faint signature, not gold — gold is milestone-only now.
+                    color = SabeelColors.TextSecondary.copy(alpha = 0.35f)
+                )
             }
         }
         item { Spacer(Modifier.height(8.dp)) }
@@ -293,12 +305,14 @@ private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> 
 private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
     val strings = LocalStrings.current
 
+    // 3B: Split tap targets — streak row is informational only (no nav),
+    // wird progress row navigates. Outer column is non-clickable.
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(SabeelColors.Surface)
-            .clickable(onClick = onOpenWird)
+            .border(1.dp, SabeelColors.BorderIdle, RoundedCornerShape(16.dp))
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -329,9 +343,16 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
             HorizontalDivider(color = SabeelColors.Divider)
         }
 
+        // 3B: Wird progress section — the ONLY tappable part of this card.
+        // Clicking it opens WirdScreen. The streak section above is intentionally
+        // non-clickable; it is an informational badge, not a navigation affordance.
         if (state.wird.isEmpty) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onOpenWird)
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -345,30 +366,39 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit) {
                     tint = SabeelColors.TextSecondary, modifier = Modifier.size(18.dp))
             }
         } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onOpenWird)
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Outlined.TrackChanges, contentDescription = null,
-                        tint = SabeelColors.TextSecondary, modifier = Modifier.size(16.dp))
-                    Text(strings.wirdTitle, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(Icons.Outlined.TrackChanges, contentDescription = null,
+                            tint = SabeelColors.TextSecondary, modifier = Modifier.size(16.dp))
+                        Text(strings.wirdTitle, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
+                    }
+                    Icon(Icons.Outlined.ChevronRight, contentDescription = null,
+                        tint = SabeelColors.TextSecondary, modifier = Modifier.size(18.dp))
                 }
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null,
-                    tint = SabeelColors.TextSecondary, modifier = Modifier.size(18.dp))
-            }
 
-            val allDone = state.wird.completed == state.wird.total
-            Text(
-                text = strings.wirdDoneOf.format(
-                    state.wird.completed.toLocalizedNumerals(state.language),
-                    state.wird.total.toLocalizedNumerals(state.language)
-                ),
-                style = MaterialTheme.typography.titleMedium,
-                color = if (allDone) SabeelColors.SageGreen else SabeelColors.TextPrimary
-            )
-            WirdSegmentedProgress(completed = state.wird.completed, total = state.wird.total)
+                val allDone = state.wird.completed == state.wird.total
+                Text(
+                    text = strings.wirdDoneOf.format(
+                        state.wird.completed.toLocalizedNumerals(state.language),
+                        state.wird.total.toLocalizedNumerals(state.language)
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (allDone) SabeelColors.SageGreen else SabeelColors.TextPrimary
+                )
+                WirdSegmentedProgress(completed = state.wird.completed, total = state.wird.total)
+            }
         }
     }
 }
@@ -404,16 +434,14 @@ private fun SessionRow(session: SessionSummary, language: String) {
 @Composable
 private fun AllTimeCard(state: HomeState) {
     val strings = LocalStrings.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(SabeelColors.Surface)
-            .padding(20.dp),
-        horizontalArrangement = Arrangement.SpaceAround
-    ) {
-        AllTimeStat(strings.homeTotalCounted, state.totalAllTime.toGroupedLocalizedNumerals(state.language))
-        AllTimeStat(strings.homeSessions, state.totalSessionCount.toLocalizedNumerals(state.language))
+    InfoCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            AllTimeStat(strings.homeTotalCounted, state.totalAllTime.toGroupedLocalizedNumerals(state.language))
+            AllTimeStat(strings.homeSessions, state.totalSessionCount.toLocalizedNumerals(state.language))
+        }
     }
 }
 
@@ -434,91 +462,64 @@ private fun AllTimeStat(label: String, value: String) {
 @Composable
 private fun FirstTimeEncouragementCard() {
     val strings = LocalStrings.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(SabeelColors.Surface)
-            .padding(20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Spa,
-            contentDescription = null,
-            tint = SabeelColors.SageGreen,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = strings.homeFirstTimeEncouragement,
-            style = MaterialTheme.typography.bodyMedium,
-            color = SabeelColors.TextSecondary
-        )
+    InfoCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Spa,
+                contentDescription = null,
+                tint = SabeelColors.SageGreen,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = strings.homeFirstTimeEncouragement,
+                style = MaterialTheme.typography.bodyMedium,
+                color = SabeelColors.TextSecondary
+            )
+        }
     }
 }
 
+// Delegated to shared SabeelSectionHeader — kept as a local alias for zero call-site churn
 @Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
-        color = SabeelColors.TextSecondary
-    )
-}
+private fun SectionHeader(text: String) = SabeelSectionHeader(text = text, letterSpacing = 1.5.dp)
 
+// Delegated to shared CollapsibleSectionHeader — kept as a local alias for zero call-site churn
 @Composable
-private fun CollapsibleSectionHeader(text: String, isExpanded: Boolean, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        SectionHeader(text)
-        Icon(
-            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-            contentDescription = if (isExpanded) "Collapse" else "Expand",
-            tint = SabeelColors.TextSecondary
-        )
-    }
-}
+private fun CollapsibleSectionHeader(text: String, isExpanded: Boolean, onClick: () -> Unit) =
+    com.kutubuddin.sabeel.ui.components.CollapsibleSectionHeader(text, isExpanded, onClick)
 
 @Composable
 private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false) {
     val strings = LocalStrings.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(SabeelColors.AccentTealSurface)
-            .border(1.dp, SabeelColors.AccentTeal.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
-            .clickable(onClick = onStart)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = if (hasProgressToday) strings.homeContinueToday else strings.homeBeginToday,
-            style = MaterialTheme.typography.titleMedium,
-            color = SabeelColors.TextPrimary
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = null,
-                tint = SabeelColors.AccentTeal,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = strings.homeStartCounting,
-                style = MaterialTheme.typography.labelLarge,
-                color = SabeelColors.AccentTeal
-            )
+    AccentCard(onClick = onStart, accentColor = SabeelColors.AccentTeal) {
+        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = if (hasProgressToday) strings.homeContinueToday else strings.homeBeginToday,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SabeelColors.TextPrimary
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = SabeelColors.AccentTeal,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = strings.homeStartCounting,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = SabeelColors.AccentTeal
+                    )
+                }
+            }
         }
     }
 }
@@ -526,37 +527,31 @@ private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false
 @Composable
 private fun SmartPlayCard(nextItemName: String, onStart: () -> Unit) {
     val strings = LocalStrings.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(SabeelColors.AccentTealSurface)
-            .border(1.dp, SabeelColors.AccentTeal.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
-            .clickable(onClick = onStart)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = strings.homeSmartPlayNext.format(nextItemName),
-            style = MaterialTheme.typography.titleMedium,
-            color = SabeelColors.TextPrimary
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = null,
-                tint = SabeelColors.AccentTeal,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = strings.homeStartCounting,
-                style = MaterialTheme.typography.labelLarge,
-                color = SabeelColors.AccentTeal
-            )
+    AccentCard(onClick = onStart, accentColor = SabeelColors.AccentTeal) {
+        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = strings.homeSmartPlayNext.format(nextItemName),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SabeelColors.TextPrimary
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = SabeelColors.AccentTeal,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = strings.homeStartCounting,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = SabeelColors.AccentTeal
+                    )
+                }
+            }
         }
     }
 }
@@ -564,37 +559,31 @@ private fun SmartPlayCard(nextItemName: String, onStart: () -> Unit) {
 @Composable
 private fun GoalCompleteCard(onStart: () -> Unit) {
     val strings = LocalStrings.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(SabeelColors.SageGreen.copy(alpha = 0.1f))
-            .border(1.dp, SabeelColors.SageGreen.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
-            .clickable(onClick = onStart)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = strings.homeGoalCompleteTitle,
-            style = MaterialTheme.typography.titleMedium,
-            color = SabeelColors.SageGreen
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = null,
-                tint = SabeelColors.SageGreen,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = strings.homeGoalCompleteAction,
-                style = MaterialTheme.typography.labelLarge,
-                color = SabeelColors.SageGreen
-            )
+    AccentCard(onClick = onStart, accentColor = SabeelColors.SageGreen) {
+        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = strings.homeGoalCompleteTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SabeelColors.SageGreen
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = SabeelColors.SageGreen,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = strings.homeGoalCompleteAction,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = SabeelColors.SageGreen
+                    )
+                }
+            }
         }
     }
 }
