@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,8 +58,7 @@ fun SequenceTracker(
                 (stepIndex + 1).toLocalizedNumerals(language),
                 stepCount.toLocalizedNumerals(language)
             ),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.bodySmall,
             color = SabeelColors.TextSecondary
         )
         Spacer(Modifier.height(8.dp))
