@@ -174,10 +174,9 @@ The visual design is inspired by illuminated Quranic manuscripts: **antique gold
 
 | Token | Value | Usage |
 |---|---|---|
-| `Background` | `#000000` | True OLED black — zero pixel emission |
-| `Surface` | `#0D0D0D` | Cards, sheets |
-| `GoldPrimary` | `#C9A84C` | Active states, title, arc fill |
-| `GoldLuminous` | `#E8C547` | Milestone flash, arc end |
+| `Background` | `#000000` | Count screen — true OLED black, the illuminated void behind the glass circle |
+| `Surface` | `#0E1311` | Cards, sheets, scrolling lists (near-black; avoids OLED scroll smear) |
+| `GoldPrimary` | `#D9B26A` | Milestone flash + 99-Names hero only (RARE — reclaimed rarity) |
 | `ArabicText` | `#F0F0F0` | All Arabic dhikr text |
 | `TextPrimary` | `#D4D4D4` | English labels, display names |
 | `StreakAmber` | `#FF8C42` | Streak fire indicator |

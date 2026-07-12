@@ -23,7 +23,7 @@ leankg*
 .gradle
 gradle-wrapper.jar
 !gradle-wrapper.jar
-
+/graphify-out
 # IntelliJ/Android Studio
 *.iml
 .idea/
@@ -51,3 +51,4 @@ ORIGINAL_REQUEST.md
 PROJECT.md
 app/proguard-rules.pro
 build_output.txt
+replace_transliteration.py
