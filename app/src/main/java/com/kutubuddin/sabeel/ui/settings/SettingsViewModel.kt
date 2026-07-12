@@ -23,9 +23,9 @@ class SettingsViewModel @Inject constructor(
             theme, lang, haptics, time -> listOf(theme, lang, haptics, time)
         },
         combine(
-            repository.translitEnabled, repository.autoReset, repository.soundEnabled, 
+            repository.translitEnabled, repository.autoReset, repository.soundEnabled,
             repository.showStreaks, repository.autoProgressWird, repository.isSmartFlowEnabled,
-            repository.dailyReminderEnabled
+            repository.dailyReminderEnabled, repository.leftHanded
         ) { args: Array<Boolean> -> args.toList() }
     ) { strings, booleans ->
         SettingsState(
@@ -39,7 +39,8 @@ class SettingsViewModel @Inject constructor(
             showStreaks     = booleans[3],
             autoProgressWird = booleans[4],
             isSmartFlowEnabled = booleans[5],
-            dailyReminderEnabled = booleans[6]
+            dailyReminderEnabled = booleans[6],
+            leftHanded      = booleans[7]
         )
     }.stateIn(
         scope = viewModelScope,
@@ -52,6 +53,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.SetTheme    -> repository.setTheme(intent.theme)
             is SettingsIntent.SetLanguage -> repository.setLanguage(intent.lang)
             is SettingsIntent.SetHaptics  -> repository.setHaptics(intent.level)
+            is SettingsIntent.SetLeftHanded -> repository.setLeftHanded(intent.on)
             is SettingsIntent.SetTranslit -> repository.setTranslitEnabled(intent.on)
             is SettingsIntent.SetAutoReset-> repository.setAutoReset(intent.on)
             is SettingsIntent.SetSoundOn  -> repository.setSoundEnabled(intent.on)
