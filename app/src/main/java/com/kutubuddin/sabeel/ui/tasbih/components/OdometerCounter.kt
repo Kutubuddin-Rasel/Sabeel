@@ -1,7 +1,6 @@
 package com.kutubuddin.sabeel.ui.tasbih.components
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Text
@@ -41,26 +40,34 @@ fun OdometerCounter(
                 transitionSpec = {
                     if (targetState > initialState) {
                         slideInVertically(
+                            // FIX 4: one calm, weighted spring shared with the
+                            // arc sweep so digits and ring move on the same clock.
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = 1500f
+                                dampingRatio = 0.62f,
+                                stiffness = 620f
                             )
                         ) { it } togetherWith slideOutVertically(
+                            // FIX 4: one calm, weighted spring shared with the
+                            // arc sweep so digits and ring move on the same clock.
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = 1500f
+                                dampingRatio = 0.62f,
+                                stiffness = 620f
                             )
                         ) { -it }
                     } else {
                         slideInVertically(
+                            // FIX 4: one calm, weighted spring shared with the
+                            // arc sweep so digits and ring move on the same clock.
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = 1500f
+                                dampingRatio = 0.62f,
+                                stiffness = 620f
                             )
                         ) { -it } togetherWith slideOutVertically(
+                            // FIX 4: one calm, weighted spring shared with the
+                            // arc sweep so digits and ring move on the same clock.
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = 1500f
+                                dampingRatio = 0.62f,
+                                stiffness = 620f
                             )
                         ) { it }
                     }
