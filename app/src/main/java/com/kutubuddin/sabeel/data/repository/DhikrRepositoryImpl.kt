@@ -41,7 +41,7 @@ class DhikrRepositoryImpl @Inject constructor(
         key = id,
         arabicText = arabicText,
         displayName = LocalizedText(en = displayName, ur = displayName, bn = displayName),
-        transliteration = transliteration,
+        transliteration = transliteration?.let { LocalizedText(en = it, ur = it, bn = it) },
         meaning = DhikrMeaning(en = spiritualReward ?: displayName),
         defaultTarget = target,
         spiritualReward = LocalizedText(en = spiritualReward ?: ""),
