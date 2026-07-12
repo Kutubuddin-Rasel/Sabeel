@@ -65,7 +65,11 @@ data class UiStrings(
     val wirdEditCta: String,        // labeled edit action, now shown only on WirdScreen's top bar
     val wirdGoalHintTitle: String,   // WirdEditScreen empty-state title
     val wirdGoalHintBody: String,    // WirdEditScreen empty-state body
-    val wirdRingCaptionProgress: String, // caption under the ring on WirdScreen ("tasks completed")
+    // FIX 8: state-driven hero label on WirdScreen — intention framing, not a
+    // to-do count. wirdInProgress is a template: "%1$s of %2$s remembered".
+    val wirdBeginToday: String,          // hero label at 0 completed ("Your wird awaits")
+    val wirdComplete: String,            // hero label when all items done
+    val wirdInProgress: String,          // template: "%1$s of %2$s remembered"
     val wirdRingCaptionTarget: String,   // caption under the ring on WirdEditScreen ("total reps configured")
     val wirdOverflowRounds: String,      // a11y/label for the "×N" overflow badge, template: "completed %1$s rounds"
     val wirdExpandRowA11y: String,       // a11y: expand/collapse a row to reveal its controls
@@ -75,6 +79,7 @@ data class UiStrings(
     val countStreakShort: String,     // template: "%1$sd"
     val countUndo: String,            // a11y: undo-last-count description
     val countDecrementAction: String, // a11y: onClick action label
+    val countIncrementA11y: String,   // a11y: increment onClick action label
     val countTapHint: String,
     val countComplete: String,        // template: "%1$s complete"
     val countFinish: String,
@@ -100,6 +105,8 @@ data class UiStrings(
     val settingsHapticLight: String,
     val settingsHapticMedium: String,
     val settingsHapticStrong: String,
+    val settingsLeftHanded: String,
+    val settingsLeftHandedDesc: String,
     val settingsTranslit: String,
     val settingsTranslitDesc: String,
     val settingsSound: String,
@@ -113,6 +120,7 @@ data class UiStrings(
     val settingsAutoProgressWirdDesc: String,
     val settingsSmartFlow: String,
     val settingsSmartFlowDesc: String,
+    val settingsAdvanced: String,         // label for the collapsible "Advanced" section header
     val settingsFont: String,
     val settingsVersion: String,
     // ── Notifications ──
@@ -136,6 +144,9 @@ data class UiStrings(
     val catTahlil: String,
     val catAsmaUlHusna: String,
     val catCustom: String,
+    // ── Dhikr Library: Asma ul Husna gallery card ──
+    val exploreGalleryTitle: String,
+    val exploreGallerySubtitle: String,
 ) {
     /**
      * Category labels resolve in the UI layer (not the domain enum) so the

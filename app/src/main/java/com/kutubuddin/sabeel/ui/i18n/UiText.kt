@@ -123,7 +123,10 @@ object UiText {
 
     // Best-effort ur/bn drafts, not a native-speaker review, same caveat as
     // wirdSetupTitle above.
-    val wirdRingCaptionProgress = LocalizedText(en = "tasks completed", ur = "مکمل کام", bn = "সম্পন্ন কাজ")
+    // FIX 8: intention framing, not "tasks". Best-effort ur/bn drafts.
+    val wirdBeginToday = LocalizedText(en = "Your wird awaits", ur = "آپ کا ورد منتظر ہے", bn = "আপনার ওয়ির্দ অপেক্ষা করছে")
+    val wirdComplete = LocalizedText(en = "Today's wird, complete", ur = "آج کا ورد مکمل", bn = "আজকের ওয়ির্দ সম্পূর্ণ")
+    val wirdInProgress = LocalizedText(en = "%1\$s of %2\$s remembered", ur = "%2\$s میں سے %1\$s مکمل", bn = "%2\$s-এর মধ্যে %1\$s সম্পন্ন")
     val wirdRingCaptionTarget = LocalizedText(en = "total reps today", ur = "آج کا مجموعی ہدف", bn = "আজকের মোট লক্ষ্য")
     val wirdOverflowRounds = LocalizedText(en = "completed %1\$s rounds", ur = "%1\$s چکر مکمل", bn = "%1\$s বার সম্পন্ন")
     val wirdExpandRowA11y = LocalizedText(en = "Show options", ur = "اختیارات دکھائیں", bn = "অপশন দেখান")
@@ -135,7 +138,8 @@ object UiText {
     val countStreakShort = LocalizedText(en = "%1\$sd", ur = "%1\$s دن", bn = "%1\$s দিন")
     val countUndo = LocalizedText(en = "Undo last count", ur = "آخری شمار واپس لیں", bn = "শেষ গণনা ফিরিয়ে নিন")
     val countDecrementAction = LocalizedText(en = "Decrement", ur = "کم کریں", bn = "কমান")
-    val countTapHint = LocalizedText(en = "Tap the circle to count", ur = "شمار کرنے کے لیے دائرے کو چھوئیں", bn = "গণনা করতে বৃত্তে ট্যাপ করুন")
+    val countIncrementA11y = LocalizedText(en = "Count", ur = "شمار کریں", bn = "গণনা করুন")
+    val countTapHint = LocalizedText(en = "Tap anywhere to count", ur = "شمار کرنے کے لیے کہیں بھی چھوئیں", bn = "গণনা করতে যেকোনো জায়গায় ট্যাপ করুন")
     val countComplete = LocalizedText(en = "%1\$s complete", ur = "%1\$s مکمل", bn = "%1\$s সম্পন্ন")
     val countFinish = LocalizedText(en = "Finish", ur = "ختم", bn = "শেষ")
     val countContinue = LocalizedText(en = "Continue", ur = "جاری رکھیں", bn = "চালিয়ে যান")
@@ -165,6 +169,8 @@ object UiText {
     val settingsHapticLight = LocalizedText(en = "Light", ur = "ہلکا", bn = "হালকা")
     val settingsHapticMedium = LocalizedText(en = "Medium", ur = "درمیانہ", bn = "মাঝারি")
     val settingsHapticStrong = LocalizedText(en = "Strong", ur = "مضبوط", bn = "জোরালো")
+    val settingsLeftHanded = LocalizedText(en = "Left-handed mode", ur = "بائیں ہاتھ کا موڈ", bn = "বাঁহাতি মোড")
+    val settingsLeftHandedDesc = LocalizedText(en = "Shift the counter toward the left thumb", ur = "شمار کنندہ کو بائیں انگوٹھے کی طرف منتقل کریں", bn = "কাউন্টারটি বাঁ বুড়ো আঙুলের দিকে সরান")
     val settingsTranslit = LocalizedText(en = "Show Transliteration", ur = "نقل حرفی دکھائیں", bn = "উচ্চারণ দেখান")
     val settingsTranslitDesc = LocalizedText(en = "Romanized pronunciation under Arabic", ur = "عربی کے نیچے رومن تلفظ", bn = "আরবির নিচে ইংরেজি উচ্চারণ")
     val settingsSound = LocalizedText(en = "Sound on Milestone", ur = "سنگ میل پر آواز", bn = "মাইলস্টোনে শব্দ")
@@ -182,6 +188,7 @@ object UiText {
     val settingsAutoProgressWirdDesc = LocalizedText(en = "Automatically transition to the next Dhikr in your daily Wird", ur = "اپنے روزمرہ کے وِرد میں خود بخود اگلے ذکر پر جائیں", bn = "স্বয়ংক্রিয়ভাবে আপনার দৈনন্দিন ওয়ির্দের পরবর্তী যিকিরে যান")
     val settingsSmartFlow = LocalizedText(en = "Smart Flow Sequence", ur = "اسمارٹ فلو سلسلہ", bn = "স্মার্ট ফ্লো সিকোয়েন্স")
     val settingsSmartFlowDesc = LocalizedText(en = "Automatically transition through multi-step Dhikrs (e.g., Tasbih after Salah)", ur = "خود بخود متعدد مراحل والے اذکار میں آگے بڑھیں", bn = "স্বয়ংক্রিয়ভাবে বহু-ধাপ যিকিরে (যেমন, নামাজের পর তাসবিহ) অগ্রসর হন")
+    val settingsAdvanced = LocalizedText(en = "Advanced", ur = "جدید ترتیبات", bn = "উন্নত সেটিংস")
     val settingsFont = LocalizedText(en = "Font", ur = "فونٹ", bn = "ফন্ট")
     val settingsVersion = LocalizedText(en = "Version", ur = "ورژن", bn = "সংস্করণ")
     
@@ -208,6 +215,18 @@ object UiText {
     val catTahlil = LocalizedText(en = "Tahlil", ur = "تہلیل", bn = "তাহলিল")
     val catAsmaUlHusna = LocalizedText(en = "Asma ul Husna", ur = "اسماء الحسنىٰ", bn = "আসমাউল হুসনা")
     val catCustom = LocalizedText(en = "My Dhikr", ur = "میرا ذکر", bn = "আমার যিকির")
+
+    // ── Dhikr Library: Asma ul Husna gallery card ──────
+    val exploreGalleryTitle = LocalizedText(
+        en = "Explore Individual Names",
+        ur = "انفرادی نام دریافت کریں",
+        bn = "পৃথকভাবে নাম অন্বেষণ করুন"
+    )
+    val exploreGallerySubtitle = LocalizedText(
+        en = "Recite any of the 99 Names individually",
+        ur = "اللہ کے ۹۹ ناموں میں سے کوئی بھی انفرادی طور پر پڑھیں",
+        bn = "আল্লাহর ৯৯টি নামের যেকোনো একটি পৃথকভাবে পড়ুন"
+    )
 
     fun resolve(lang: String) = UiStrings(
         a11yBack = a11yBack.get(lang),
@@ -257,7 +276,9 @@ object UiText {
         wirdEditCta = wirdEditCta.get(lang),
         wirdGoalHintTitle = wirdGoalHintTitle.get(lang),
         wirdGoalHintBody = wirdGoalHintBody.get(lang),
-        wirdRingCaptionProgress = wirdRingCaptionProgress.get(lang),
+        wirdBeginToday = wirdBeginToday.get(lang),
+        wirdComplete = wirdComplete.get(lang),
+        wirdInProgress = wirdInProgress.get(lang),
         wirdRingCaptionTarget = wirdRingCaptionTarget.get(lang),
         wirdOverflowRounds = wirdOverflowRounds.get(lang),
         wirdExpandRowA11y = wirdExpandRowA11y.get(lang),
@@ -266,6 +287,7 @@ object UiText {
         countStreakShort = countStreakShort.get(lang),
         countUndo = countUndo.get(lang),
         countDecrementAction = countDecrementAction.get(lang),
+        countIncrementA11y = countIncrementA11y.get(lang),
         countTapHint = countTapHint.get(lang),
         countComplete = countComplete.get(lang),
         countFinish = countFinish.get(lang),
@@ -290,6 +312,8 @@ object UiText {
         settingsHapticLight = settingsHapticLight.get(lang),
         settingsHapticMedium = settingsHapticMedium.get(lang),
         settingsHapticStrong = settingsHapticStrong.get(lang),
+        settingsLeftHanded = settingsLeftHanded.get(lang),
+        settingsLeftHandedDesc = settingsLeftHandedDesc.get(lang),
         settingsTranslit = settingsTranslit.get(lang),
         settingsTranslitDesc = settingsTranslitDesc.get(lang),
         settingsSound = settingsSound.get(lang),
@@ -303,6 +327,7 @@ object UiText {
         settingsAutoProgressWirdDesc = settingsAutoProgressWirdDesc.get(lang),
         settingsSmartFlow = settingsSmartFlow.get(lang),
         settingsSmartFlowDesc = settingsSmartFlowDesc.get(lang),
+        settingsAdvanced = settingsAdvanced.get(lang),
         settingsFont = settingsFont.get(lang),
         settingsVersion = settingsVersion.get(lang),
         settingsDailyReminders = settingsDailyReminders.get(lang),
@@ -323,5 +348,7 @@ object UiText {
         catTahlil = catTahlil.get(lang),
         catAsmaUlHusna = catAsmaUlHusna.get(lang),
         catCustom = catCustom.get(lang),
+        exploreGalleryTitle = exploreGalleryTitle.get(lang),
+        exploreGallerySubtitle = exploreGallerySubtitle.get(lang),
     )
 }
