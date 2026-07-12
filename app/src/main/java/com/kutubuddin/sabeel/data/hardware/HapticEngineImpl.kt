@@ -6,6 +6,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.domain.haptic.HapticStrength
 import com.kutubuddin.sabeel.domain.haptic.SabeelVibrator
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -27,27 +28,31 @@ class HapticEngineImpl @Inject constructor(
         }
     }
 
-    override fun playIncrementTick() {
+    override fun playIncrementTick(strength: HapticStrength) {
+        if (strength == HapticStrength.OFF) return
         val vibrator = this.vibrator ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
             vibrator.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_TICK)
         ) {
             val effect = VibrationEffect.startComposition()
-                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK)
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, strength.tick)
                 .compose()
             vibrator.vibrate(effect)
         } else {
+            // Legacy fallback: SabeelVibrator exposes duration only (no amplitude),
+            // so pre-R devices honour Off but can't scale strength. See plan FIX 1.
             sabeelVibrator.vibrate(durationMs = 15L)
         }
     }
 
-    override fun playMilestoneClick() {
+    override fun playMilestoneClick(strength: HapticStrength) {
+        if (strength == HapticStrength.OFF) return
         val vibrator = this.vibrator ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
             vibrator.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_CLICK)
         ) {
             val effect = VibrationEffect.startComposition()
-                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK)
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, strength.click)
                 .compose()
             vibrator.vibrate(effect)
         } else {
@@ -55,18 +60,42 @@ class HapticEngineImpl @Inject constructor(
         }
     }
 
-    override fun playCompletionThud() {
+    override fun playCompletionThud(strength: HapticStrength) {
+        if (strength == HapticStrength.OFF) return
         val vibrator = this.vibrator ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             vibrator.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_THUD)
         ) {
             val effect = VibrationEffect.startComposition()
-                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD)
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, strength.thud)
                 .compose()
             vibrator.vibrate(effect)
         } else {
             // Double-pulse vibration for heavy feedback fallback
             sabeelVibrator.vibratePattern(pattern = longArrayOf(0, 80, 50, 80))
+        }
+    }
+
+    /**
+     * A firm double-thud (THUD + a delayed TICK tail) so a manual reset feels
+     * distinct from a completion — recognisable eyes-free without looking.
+     */
+    override fun playReset(strength: HapticStrength) {
+        if (strength == HapticStrength.OFF) return
+        val vibrator = this.vibrator ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            vibrator.areAllPrimitivesSupported(
+                VibrationEffect.Composition.PRIMITIVE_THUD,
+                VibrationEffect.Composition.PRIMITIVE_TICK
+            )
+        ) {
+            val effect = VibrationEffect.startComposition()
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, strength.thud)
+                .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, strength.tick, 90) // delayMs tail
+                .compose()
+            vibrator.vibrate(effect)
+        } else {
+            sabeelVibrator.vibratePattern(pattern = longArrayOf(0, 70, 60, 40))
         }
     }
 }
