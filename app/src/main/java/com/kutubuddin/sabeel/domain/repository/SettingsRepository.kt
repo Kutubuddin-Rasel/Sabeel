@@ -6,6 +6,7 @@ interface SettingsRepository {
     val theme: Flow<String>          // "dark" | "light"
     val language: Flow<String>       // "en" | "ur" | "bn"
     val hapticsLevel: Flow<String>   // "light" | "medium" | "strong" | "off"
+    val leftHanded: Flow<Boolean>    // bias the count target toward the left thumb
     val translitEnabled: Flow<Boolean>
     val autoReset: Flow<Boolean>
     val soundEnabled: Flow<Boolean>
@@ -20,6 +21,7 @@ interface SettingsRepository {
     suspend fun setTheme(theme: String)
     suspend fun setLanguage(lang: String)
     suspend fun setHaptics(level: String)
+    suspend fun setLeftHanded(on: Boolean)
     suspend fun setTranslitEnabled(on: Boolean)
     suspend fun setAutoReset(on: Boolean)
     suspend fun setSoundEnabled(on: Boolean)

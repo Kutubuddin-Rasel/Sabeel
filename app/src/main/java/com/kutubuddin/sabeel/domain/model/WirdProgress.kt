@@ -5,7 +5,7 @@ data class WirdProgressItem(
     val dhikrKey: String,
     val displayName: LocalizedText,
     val arabicText: String,
-    val transliteration: String?,
+    val transliteration: LocalizedText?,
     val target: Int,
     val countToday: Int,
     val position: Int
