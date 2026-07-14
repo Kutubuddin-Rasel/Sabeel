@@ -30,7 +30,10 @@ data class TasbihState(
     val longestStreak: Int = 0,
     val isPocketModeActive: Boolean = false,
     val error: String? = null,
-    val sessionOrigin: SessionOrigin = SessionOrigin.LIBRARY
+    val sessionOrigin: SessionOrigin = SessionOrigin.LIBRARY,
+    // THREAD-02: hapticStrength is part of atomic state — no @Volatile field needed.
+    // Updated via the 7-flow combine in TasbihViewModel.observeRepositoryState().
+    val hapticStrength: HapticStrength = HapticStrength.MEDIUM
 )
 
 /**

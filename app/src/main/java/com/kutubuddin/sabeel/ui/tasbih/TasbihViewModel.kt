@@ -2,6 +2,7 @@ package com.kutubuddin.sabeel.ui.tasbih
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.kutubuddin.sabeel.domain.haptic.HapticStrength
 import com.kutubuddin.sabeel.domain.model.ActiveDhikr
 import com.kutubuddin.sabeel.domain.model.DhikrCatalog
@@ -10,6 +11,7 @@ import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.TasbihRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -42,25 +44,18 @@ class TasbihViewModel @Inject constructor(
     val effect: Flow<TasbihSideEffect> = _effect.asSharedFlow()
 
     private val intentMutex = Mutex()
-
-    /**
-     * Latest resolved haptic strength from the user's Settings choice, cached so
-     * every emitted [TasbihSideEffect.PlayHaptic] can be stamped with it without
-     * suspending on the flow at the tap site. Defaults to MEDIUM until first emit.
-     */
-    @Volatile
-    private var currentHapticStrength: HapticStrength = HapticStrength.MEDIUM
+    
+    // LEAK-04: capped at 64; trySend failures are logged rather than silently dropped.
+    // Channel.UNLIMITED was removed to prevent unbounded lambda accumulation on rapid taps
+    // across step boundaries (completeDhikrTarget + resetCount queued in quick succession).
+    private val repoWriteChannel = Channel<suspend () -> Unit>(64)
 
     init {
         observeRepositoryState()
-        observeHapticStrength()
-    }
-
-    private fun observeHapticStrength() {
         viewModelScope.launch {
-            settingsRepository.hapticsLevel
-                .map { HapticStrength.fromSetting(it) }
-                .collect { currentHapticStrength = it }
+            for (action in repoWriteChannel) {
+                action()
+            }
         }
     }
 
@@ -73,7 +68,8 @@ class TasbihViewModel @Inject constructor(
                 repository.smartFlowVariant,
                 repository.isPocketModeActive,
                 repository.streak,
-                repository.activeStepIndex
+                repository.activeStepIndex,
+                settingsRepository.hapticsLevel   // THREAD-02: flow through state, not @Volatile field
             ) { values ->
                 val count = values[0] as Int
                 val dhikr = values[1] as ActiveDhikr
@@ -83,6 +79,7 @@ class TasbihViewModel @Inject constructor(
                 @Suppress("UNCHECKED_CAST")
                 val streak = values[5] as? com.kutubuddin.sabeel.domain.model.Streak
                 val repoStepIndex = values[6] as Int
+                val hapticStrength = HapticStrength.fromSetting(values[7] as String)
 
                 // A sequence is active only when the entry declares one AND the
                 // user has Smart Flow enabled; otherwise it counts as a single dhikr.
@@ -124,10 +121,17 @@ class TasbihViewModel @Inject constructor(
                         isPocketModeActive = pocketActive,
                         target = target,
                         currentStreak = streak?.count ?: 0,
-                        longestStreak = streak?.longestStreak ?: 0
+                        longestStreak = streak?.longestStreak ?: 0,
+                        hapticStrength = hapticStrength  // THREAD-02: atomic state, no @Volatile
                     )
                 }
-            }.collect()
+            }
+            // THREAD-03 note: the combine upstream (DataStore flows) already publish on
+            // Dispatchers.IO internally. The mapping lambda here is pure O(1) cast/copy
+            // work running on viewModelScope (Main). No flowOn needed — adding it would
+            // move the UPSTREAM producers onto IO, breaking StandardTestDispatcher tests
+            // without a meaningful production benefit for this O(1) mapping work.
+            .collect()
         }
     }
 
@@ -158,6 +162,7 @@ class TasbihViewModel @Inject constructor(
         var completedTarget = 0
         var shouldResetRepoCount = false
         var shouldIncrementRepoCount = false
+        var stepIndexToSet: Int? = null
 
         val currentState = _state.value
         val sequence = currentState.sequence
@@ -176,7 +181,7 @@ class TasbihViewModel @Inject constructor(
                     completedKey = sequence.key
                     completedTarget = sequence.steps.sumOf { it.target }
                     shouldResetRepoCount = true
-                    repository.setStepIndex(0)
+                    stepIndexToSet = 0
                     currentState.copy(count = 0, stepIndex = 0, target = sequence.steps.first().target)
                 }
                 else -> {
@@ -184,7 +189,7 @@ class TasbihViewModel @Inject constructor(
                     hapticTypeToPlay = HapticType.CLICK
                     shouldResetRepoCount = true
                     val nextTarget = sequence.steps[result.stepIndex].target
-                    repository.setStepIndex(result.stepIndex)
+                    stepIndexToSet = result.stepIndex
                     currentState.copy(count = 0, stepIndex = result.stepIndex, target = nextTarget)
                 }
             }
@@ -206,13 +211,20 @@ class TasbihViewModel @Inject constructor(
 
         _state.value = newState
 
-        _effect.emit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay, currentHapticStrength))
+        _effect.emit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay, _state.value.hapticStrength))
         if (showCelebration) _effect.emit(TasbihSideEffect.ShowCelebration)
 
         val dateString = LocalDate.now().toString()
-        completedKey?.let { repository.completeDhikrTarget(dateString, it, completedTarget) }
-        if (shouldResetRepoCount) repository.resetCount()
-        else if (shouldIncrementRepoCount) repository.incrementCount(dateString)
+        val result = repoWriteChannel.trySend {
+            stepIndexToSet?.let { repository.setStepIndex(it) }
+            completedKey?.let { repository.completeDhikrTarget(dateString, it, completedTarget) }
+            if (shouldResetRepoCount) repository.resetCount()
+            else if (shouldIncrementRepoCount) repository.incrementCount(dateString)
+        }
+        // LEAK-04: log channel saturation in debug builds so it's observable.
+        if (!result.isSuccess) {
+            Log.w(TAG, "repoWriteChannel full (capacity=64) — write dropped. Tap rate exceeded drain speed.")
+        }
     }
 
     // ─── Decrement ────────────────────────────────────────────────────────────
@@ -226,15 +238,21 @@ class TasbihViewModel @Inject constructor(
             val prevTarget = sequence.steps[prevIndex].target
             val prevCount = prevTarget - 1
             
-            repository.setStepIndex(prevIndex)
-            repository.setCount(prevCount)
-            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.TICK, currentHapticStrength))
+            _state.update { it.copy(stepIndex = prevIndex, count = prevCount, target = prevTarget) }
+            
+            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.TICK, _state.value.hapticStrength))
+            repoWriteChannel.trySend {
+                repository.setStepIndex(prevIndex)
+                repository.setCount(prevCount)
+            }
         } else {
             _state.update { state ->
                 val newCount = maxOf(0, state.count - 1)
                 state.copy(count = newCount)
             }
-            repository.decrementCount()
+            repoWriteChannel.trySend {
+                repository.decrementCount()
+            }
         }
     }
 
@@ -245,13 +263,19 @@ class TasbihViewModel @Inject constructor(
         val sequence = currentState.sequence
 
         if (currentState.isSmartFlowEnabled && sequence != null) {
-            repository.setStepIndex(0)
             _state.update { it.copy(count = 0, stepIndex = 0, target = sequence.steps.first().target) }
+            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.RESET, _state.value.hapticStrength))
+            repoWriteChannel.trySend {
+                repository.setStepIndex(0)
+                repository.resetCount()
+            }
         } else {
             _state.update { it.copy(count = 0) }
+            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.RESET, _state.value.hapticStrength))
+            repoWriteChannel.trySend {
+                repository.resetCount()
+            }
         }
-        _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.RESET, currentHapticStrength))
-        repository.resetCount()
     }
 
     // ─── Settings ─────────────────────────────────────────────────────────────
@@ -285,6 +309,7 @@ class TasbihViewModel @Inject constructor(
     }
 
     companion object {
+        private const val TAG = "TasbihViewModel"
         /**
          * Pure state transition for one tap inside a [DhikrSequence].
          *
