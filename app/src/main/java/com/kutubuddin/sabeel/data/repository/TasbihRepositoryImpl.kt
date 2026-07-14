@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -77,8 +78,9 @@ class TasbihRepositoryImpl @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    // Current date cache to avoid passing date constantly
-    private var lastKnownDate: String = LocalDate.now().toString()
+    // THREAD-05: AtomicReference ensures safe visibility across Dispatchers.IO threads.
+    // incrementCount() writes, flushToDisk() and setDhikr() read — all on the IO pool.
+    private val lastKnownDate = AtomicReference(LocalDate.now().toString())
 
     override val activeDhikr: StateFlow<ActiveDhikr> = combine(
         counterDataStore.activeDhikrKeyFlow,
@@ -86,7 +88,11 @@ class TasbihRepositoryImpl @Inject constructor(
     ) { key, override -> applyTargetOverride(DhikrCatalog.resolve(key), override) }
     .stateIn(
         scope = applicationScope,
-        started = SharingStarted.Eagerly,
+        // OPT-07: WhileSubscribed — stops the two upstream DataStore flows when no UI
+        // observes activeDhikr (e.g. during tests or process near-death). TasbihViewModel
+        // is the only consumer and lives for the full app session, so the 5-second timeout
+        // is never triggered in normal usage — but it correctly cleans up during tests.
+        started = SharingStarted.WhileSubscribed(5_000),
         initialValue = applyTargetOverride(DhikrCatalog.resolve(DhikrType.SUBHANALLAH.name), null)
     )
 
@@ -141,7 +147,7 @@ class TasbihRepositoryImpl @Inject constructor(
             .flowOn(ioDispatcher)
 
     override suspend fun incrementCount(date: String): Int {
-        lastKnownDate = date
+        lastKnownDate.set(date)
         _activeCount.update { it + 1 }
         pendingSyncTrigger.tryEmit(Unit)
         return _activeCount.value
@@ -167,7 +173,7 @@ class TasbihRepositoryImpl @Inject constructor(
     override suspend fun setDhikr(key: String, targetOverride: Int?) = withContext(ioDispatcher) {
         val currentActiveKey = activeDhikr.value.key
         val currentCount = _activeCount.value
-        val date = lastKnownDate
+        val date = lastKnownDate.get()
 
         if (key != currentActiveKey) {
             // Save partial session if switching away
@@ -223,7 +229,7 @@ class TasbihRepositoryImpl @Inject constructor(
     override suspend fun flushToDisk() = withContext(ioDispatcher) {
         val currentCount = _activeCount.value
         val active = activeDhikr.value
-        val date = lastKnownDate
+        val date = lastKnownDate.get()
         
         counterDataStore.setCounter(currentCount)
 
@@ -253,8 +259,12 @@ class TasbihRepositoryImpl @Inject constructor(
         dhikrKey: String,
         targetCount: Int
     ) = withContext(ioDispatcher) {
-        // Ensure disk is fully synchronized before completing target
-        flushToDisk()
+        // OPT-03: flushToDisk() removed — it was causing 4 sequential disk writes:
+        // (1) setCounter + (2) insertDailyTarget from flushToDisk, then
+        // (3) updateProgressAndStreak + (4) insertSession below.
+        // Writes 1+2 were immediately overwritten by writes 3+4.
+        // Now: single counter write here is the authoritative completion write.
+        counterDataStore.setCounter(targetCount)
         
         val today       = LocalDate.parse(date)
         val curStreak   = sakinahDao.getStreak("current_streak")
