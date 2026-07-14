@@ -11,11 +11,12 @@ import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class CounterDataStore @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    @Named("counter") private val dataStore: DataStore<Preferences>
 ) {
     companion object {
         val KEY_COUNTER_VALUE = intPreferencesKey("counter_value")

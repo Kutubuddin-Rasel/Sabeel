@@ -23,7 +23,11 @@ import com.kutubuddin.sabeel.data.local.db.entity.WirdItemEntity
         WirdItemEntity::class
     ],
     version = 3,
-    exportSchema = false
+    // OPT-06: exportSchema=true — Room generates a JSON schema file per version in
+    // the directory configured via `room.schemaLocation` in build.gradle (KSP args).
+    // This enables MigrationTestHelper to verify MIGRATION_1_2 and MIGRATION_2_3
+    // produce the correct schema on upgrade, preventing silent data corruption.
+    exportSchema = true
 )
 abstract class SabeelDatabase : RoomDatabase() {
 
