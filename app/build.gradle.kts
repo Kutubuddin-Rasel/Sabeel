@@ -43,6 +43,13 @@ android {
     }
 }
 
+// OPT-06: tells Room's KSP processor where to write the per-version schema JSON files.
+// These files are checked into VCS and used by MigrationTestHelper to validate that
+// MIGRATION_1_2 and MIGRATION_2_3 produce the correct schema on upgrade.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 kotlin {
     jvmToolchain(17)
 }
@@ -108,7 +115,7 @@ dependencies {
     // Profile Installer
     implementation(libs.androidx.profileinstaller)
     implementation(kotlin("test"))
-    
     // UI
     implementation(libs.sh.calvin.reorderable)
+    implementation(libs.androidx.core.splashscreen)
 }
