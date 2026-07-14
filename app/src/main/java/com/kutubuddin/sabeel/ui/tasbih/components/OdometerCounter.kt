@@ -1,16 +1,17 @@
 package com.kutubuddin.sabeel.ui.tasbih.components
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.LayoutDirection
 import com.kutubuddin.sabeel.ui.i18n.localizeDigits
+import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 
 @Composable
 fun OdometerCounter(
@@ -35,41 +36,22 @@ fun OdometerCounter(
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Row(modifier = modifier) {
             countString.forEachIndexed { index, char ->
+            // JANK-03: key(index) gives Compose a stable slot identity per digit.
+            // Without it, going from a 1-digit to 2-digit count (9 → 10) caused all
+            // AnimatedContent instances to rebuild from scratch because slot positions shifted.
+            key(index) {
             AnimatedContent(
                 targetState = char,
                 transitionSpec = {
                     if (targetState > initialState) {
-                        slideInVertically(
-                            // FIX 4: one calm, weighted spring shared with the
-                            // arc sweep so digits and ring move on the same clock.
-                            animationSpec = spring(
-                                dampingRatio = 0.62f,
-                                stiffness = 620f
-                            )
-                        ) { it } togetherWith slideOutVertically(
-                            // FIX 4: one calm, weighted spring shared with the
-                            // arc sweep so digits and ring move on the same clock.
-                            animationSpec = spring(
-                                dampingRatio = 0.62f,
-                                stiffness = 620f
-                            )
-                        ) { -it }
+                        // POLISH-01 + token compliance: SabeelMotion.Spring.CounterSlide() is the
+                        // generic counterpart of Counter for IntOffset-typed slide transitions.
+                        // Physics identical to the arc sweep — one shared clock.
+                        slideInVertically(animationSpec = SabeelMotion.Spring.CounterSlide()) { it } togetherWith
+                        slideOutVertically(animationSpec = SabeelMotion.Spring.CounterSlide()) { -it }
                     } else {
-                        slideInVertically(
-                            // FIX 4: one calm, weighted spring shared with the
-                            // arc sweep so digits and ring move on the same clock.
-                            animationSpec = spring(
-                                dampingRatio = 0.62f,
-                                stiffness = 620f
-                            )
-                        ) { -it } togetherWith slideOutVertically(
-                            // FIX 4: one calm, weighted spring shared with the
-                            // arc sweep so digits and ring move on the same clock.
-                            animationSpec = spring(
-                                dampingRatio = 0.62f,
-                                stiffness = 620f
-                            )
-                        ) { it }
+                        slideInVertically(animationSpec = SabeelMotion.Spring.CounterSlide()) { -it } togetherWith
+                        slideOutVertically(animationSpec = SabeelMotion.Spring.CounterSlide()) { it }
                     }
                 },
                 label = "OdometerDigit_$index"
@@ -81,6 +63,7 @@ fun OdometerCounter(
                     )
                 )
             }
+            } // key
             }
         }
     }
