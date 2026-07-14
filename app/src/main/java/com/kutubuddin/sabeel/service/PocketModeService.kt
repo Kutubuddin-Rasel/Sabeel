@@ -65,7 +65,11 @@ class PocketModeService : Service() {
         } else {
             startForeground(notificationId, notification)
         }
-        return START_STICKY
+        // BATT-03: START_NOT_STICKY — Pocket Mode is user-initiated.
+        // If the process is killed mid-session, the service should NOT auto-restart;
+        // the user re-enables Pocket Mode explicitly. START_STICKY would cause a ghost
+        // foreground service to restart while isPocketModeActive=true lingers in DataStore.
+        return START_NOT_STICKY
     }
 
     private fun createNotificationChannel() {
@@ -101,6 +105,7 @@ class PocketModeService : Service() {
     }
 
     private fun setupMediaSession() {
+        if (mediaSession != null) return   // LEAK-03: idempotency guard — prevents double-registration on START_STICKY restart
         mediaSession = MediaSessionCompat(this, "PocketModeSession").apply {
             val volumeProvider = object : VolumeProviderCompat(
                 VOLUME_CONTROL_RELATIVE,
@@ -123,10 +128,13 @@ class PocketModeService : Service() {
     }
 
     override fun onDestroy() {
-        mediaSession?.apply {
-            isActive = false
-            release()
-        }
+        // LEAK-03: null the field first so any in-flight onAdjustVolume callbacks
+        // that read `mediaSession` see null and skip — prevents access to a
+        // deactivating session during the isActive=false → release() window.
+        val session = mediaSession
+        mediaSession = null
+        session?.isActive = false
+        session?.release()
         serviceScope.cancel()
         super.onDestroy()
     }
