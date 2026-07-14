@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,7 +62,12 @@ class MainActivity : ComponentActivity() {
     private val viewModel: TasbihViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        var isReady = false
+        splashScreen.setKeepOnScreenCondition { !isReady }
+        
         enableEdgeToEdge()
 
         observeServiceSideEffects()
@@ -70,6 +76,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { 
             wirdRepository.seedDefaultIfEmpty()
             settingsRepository.incrementAppLaunchCount()
+            isReady = true
         }
 
         setContent {
