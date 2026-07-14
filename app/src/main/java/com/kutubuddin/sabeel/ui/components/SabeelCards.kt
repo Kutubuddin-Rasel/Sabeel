@@ -1,7 +1,7 @@
 package com.kutubuddin.sabeel.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -52,13 +52,11 @@ fun AccentCard(
 
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.96f else 1.0f,
-        // Medium-bouncy spring: natural release "pop" that confirms the tap
-        // without feeling like a game button. Dip is instant (pressed=true
-        // is set in the same frame as the pointer-down event).
-        animationSpec = spring(
-            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-            stiffness    = androidx.compose.animation.core.Spring.StiffnessMedium
-        ),
+        // SabeelMotion.Spring.CardPress: NoBouncy + StiffnessMedium.
+        // iOS-parity: critically damped so the card dips and returns cleanly
+        // with no overshoot. The old MediumBouncy (0.5) bounced past 1.0 on
+        // release, producing a "cheap Android spring" read.
+        animationSpec = SabeelMotion.Spring.CardPress,
         label = "accent_card_scale"
     )
 
