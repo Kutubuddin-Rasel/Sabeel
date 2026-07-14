@@ -25,33 +25,41 @@ class TasbihRepositoryImplTest {
 
     @Before
     fun setUp() {
+        // Mock flows before initializing the repository so the eager stateIn gets them
+        coEvery { counterDataStore.counterValueFlow } returns flowOf(5)
+        coEvery { counterDataStore.activeDhikrKeyFlow } returns flowOf("SUBHANALLAH")
+        coEvery { counterDataStore.activeTargetOverrideFlow } returns flowOf(null)
+
         repository = TasbihRepositoryImpl(
             counterDataStore = counterDataStore,
             sakinahDao = sakinahDao,
             dhikrSessionDao = dhikrSessionDao,
-            ioDispatcher = testDispatcher
+            ioDispatcher = testDispatcher,
+            applicationScope = kotlinx.coroutines.test.TestScope(testDispatcher)
         )
     }
 
     @Test
     fun testIncrementCount() = runTest(testDispatcher) {
         val date = "2026-06-30"
-        coEvery { counterDataStore.counterValueFlow } returns flowOf(5)
-        coEvery { counterDataStore.activeDhikrKeyFlow } returns flowOf("SUBHANALLAH")
-        coEvery { counterDataStore.activeTargetOverrideFlow } returns flowOf(null)
-        coEvery { counterDataStore.incrementCounter() } just Runs
+
+        // Wait for initial state to load
+        testDispatcher.scheduler.advanceUntilIdle()
 
         val count = repository.incrementCount(date)
-
-        assertEquals(5, count)
-        coVerify(exactly = 1) { counterDataStore.incrementCounter() }
+        assertEquals(6, count)
+        
+        // Wait for debouncer (1.5s) to trigger flushToDisk
+        testDispatcher.scheduler.advanceTimeBy(2000)
+        
+        coVerify(exactly = 1) { counterDataStore.setCounter(6) }
         coVerify(exactly = 1) {
             sakinahDao.insertDailyTarget(
                 DailyTargetEntity(
                     id = "SUBHANALLAH_$date",
                     date = date,
                     dhikrType = "SUBHANALLAH",
-                    currentCount = 5,
+                    currentCount = 6,
                     targetCount = 33,
                     isCompleted = false
                 )
@@ -61,9 +69,9 @@ class TasbihRepositoryImplTest {
 
     @Test
     fun testResetCount() = runTest(testDispatcher) {
-        coEvery { counterDataStore.resetCounter() } just Runs
         repository.resetCount()
-        coVerify(exactly = 1) { counterDataStore.resetCounter() }
+        testDispatcher.scheduler.advanceTimeBy(2000)
+        coVerify(exactly = 1) { counterDataStore.setCounter(0) }
     }
 
     @Test

@@ -7,7 +7,14 @@ import org.junit.Test
 class TargetOverrideTest {
 
     private fun active(target: Int) =
-        ActiveDhikr("A", "ar", "name", target, LocalizedText(en = ""), "")
+        ActiveDhikr(
+            key = "A", 
+            arabicText = "ar", 
+            displayName = LocalizedText(en = "name"), 
+            target = target, 
+            spiritualReward = LocalizedText(en = ""), 
+            hadithRef = ""
+        )
 
     @Test
     fun override_replacesTarget_whenPresentAndPositive() {

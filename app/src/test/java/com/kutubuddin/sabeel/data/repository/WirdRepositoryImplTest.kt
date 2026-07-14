@@ -70,14 +70,9 @@ class WirdRepositoryImplTest {
     }
 
     @Test
-    fun seedDefaultIfEmpty_seedsPostSalahTasbih_andIsIdempotent() = runTest {
+    fun seedDefaultIfEmpty_isNoOp() = runTest {
         repo.seedDefaultIfEmpty()
-        repo.seedDefaultIfEmpty() // second call must not duplicate
         val items = repo.observeWird().first()
-        assertEquals(
-            listOf(DhikrType.SUBHANALLAH.name, DhikrType.ALHAMDULILLAH.name, DhikrType.ALLAHU_AKBAR.name),
-            items.map { it.dhikrKey }
-        )
-        assertEquals(listOf(33, 33, 34), items.map { it.target })
+        assertEquals(emptyList<String>(), items.map { it.dhikrKey })
     }
 }
