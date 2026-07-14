@@ -117,16 +117,11 @@ fun HomeContent(
                     color = SabeelColors.TextPrimary
                 )
                 Spacer(Modifier.height(4.dp))
-                val todayLabel = remember(state.language) {
-                    java.time.LocalDate.now()
-                        .format(
-                            java.time.format.DateTimeFormatter
-                                .ofPattern("EEEE, d MMMM yyyy", localeFor(state.language))
-                        )
-                        .localizeDigits(state.language)
-                }
+                // JANK-04: was remember(state.language) { LocalDate.now()... } which cached
+                // the date until the language changed. Now owned by HomeViewModel and
+                // refreshed via a midnight-aligned ticker flow — always correct.
                 Text(
-                    text = todayLabel,
+                    text = state.todayLabel,
                     style = MaterialTheme.typography.bodyMedium,
                     color = SabeelColors.TextSecondary
                 )
@@ -201,22 +196,23 @@ fun HomeContent(
                     modifier = Modifier.animateItem()
                 )
             }
-            item(key = "sessions_content") {
-                // animateItem() here is what makes the items BELOW this one
-                // (All Time / wordmark) glide into their new position when the
-                // section collapses, instead of snapping the instant the
-                // AnimatedVisibility finishes shrinking.
-                AnimatedVisibility(
-                    visible = isSessionsExpanded,
-                    enter = expandVertically(animationSpec = SabeelMotion.Spring.CardExpand()) + fadeIn(animationSpec = SabeelMotion.Spring.CardExpand()),
-                    exit = shrinkVertically(animationSpec = SabeelMotion.Spring.CardExpand()) + fadeOut(animationSpec = SabeelMotion.Spring.CardExpand()),
-                    modifier = Modifier.animateItem()
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                        state.todaysSessions.forEach { session ->
-                            SessionRow(session, state.language)
-                        }
-                    }
+            // SMOOTH-04 + POLISH-03: replaced single AnimatedVisibility item (forEach inside)
+            // with items{} so each row is lazily composed and has its own animateItem() slot.
+            // Previous approach:
+            //   • Eagerly composed ALL session rows into one LazyColumn slot
+            //   • animateItem() on the AnimatedVisibility wrapper caused a double-animation:
+            //     slot position animated at the same time as shrinkVertically, at different rates.
+            // Now each row exits individually (iOS-like per-item exit) with zero group re-measure.
+            if (isSessionsExpanded) {
+                items(
+                    items = state.todaysSessions,
+                    key = { session -> "${session.dhikrKey}_${session.count}_${session.isComplete}" }
+                ) { session ->
+                    SessionRow(
+                        session = session,
+                        language = state.language,
+                        modifier = Modifier.animateItem()
+                    )
                 }
             }
         }
@@ -428,10 +424,10 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit, modifier: M
 }
 
 @Composable
-private fun SessionRow(session: SessionSummary, language: String) {
+private fun SessionRow(session: SessionSummary, language: String, modifier: Modifier = Modifier) {
     val strings = LocalStrings.current
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(SabeelColors.Surface)

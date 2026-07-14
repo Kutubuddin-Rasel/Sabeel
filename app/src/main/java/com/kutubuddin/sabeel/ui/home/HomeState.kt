@@ -14,7 +14,11 @@ data class HomeState(
     val resumeSession: ResumeSession? = null,
     val greeting: GreetingType = GreetingType.DEFAULT,
     val showStreaks: Boolean = true,
-    val language: String = "en"
+    val language: String = "en",
+    // JANK-04: date label owned by ViewModel and refreshed by a midnight-aligned ticker.
+    // Previously computed in HomeScreen via remember(state.language) { LocalDate.now()... }
+    // which cached the date until the language changed — causing a stale label after midnight.
+    val todayLabel: String = ""
 )
 
 /** Non-null only when the user has an in-progress (incomplete) session. */
@@ -49,7 +53,12 @@ data class WirdSummary(
     val isEmpty: Boolean = true,
     val nextItemName: LocalizedText? = null,
     val nextItemKey: String? = null,
-    val nextItemTarget: Int? = null
+    val nextItemTarget: Int? = null,
+    // OPT-05: The Count tab needs these to derive isDailyGoalFinished and isDhikrInDailyGoal
+    // without holding its own WirdViewModel. By including them here, WirdViewModel can be
+    // scoped to home_graph and the Count tab reads HomeViewModel.state.wird instead.
+    val allComplete: Boolean = false,
+    val wirdItemKeys: Set<String> = emptySet()
 )
 
 fun WirdProgress.toSummary(): WirdSummary {
@@ -62,6 +71,8 @@ fun WirdProgress.toSummary(): WirdSummary {
         isEmpty = items.isEmpty(),
         nextItemName = next?.displayName,
         nextItemKey = next?.dhikrKey,
-        nextItemTarget = next?.target
+        nextItemTarget = next?.target,
+        allComplete = allComplete,
+        wirdItemKeys = items.map { it.dhikrKey }.toSet()
     )
 }
