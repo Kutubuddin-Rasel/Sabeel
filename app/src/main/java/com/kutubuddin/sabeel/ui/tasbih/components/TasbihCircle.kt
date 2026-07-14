@@ -3,8 +3,6 @@ package com.kutubuddin.sabeel.ui.tasbih.components
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -35,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 import kotlinx.coroutines.launch
 
 /**
@@ -86,7 +85,9 @@ fun TasbihCircle(
     LaunchedEffect(progress) {
         sweepAngle.animateTo(
             targetValue   = progress * 360f,
-            animationSpec = spring(dampingRatio = 0.62f, stiffness = 620f)
+            // POLISH-01: uses SabeelMotion.Spring.Counter token — critically damped,
+            // no overshoot. See Motion.kt for full tuning rationale.
+            animationSpec = SabeelMotion.Spring.Counter
         )
     }
 
@@ -98,7 +99,10 @@ fun TasbihCircle(
     val ringRadius = remember { Animatable(0f) }
     val ringAlpha  = remember { Animatable(0f) }
     // Convert diameter to px once; used as the ring's max radius target.
-    val diameterPx = with(androidx.compose.ui.platform.LocalDensity.current) { diameter.toPx() }
+    // JANK-02: diameter is a constant (280.dp); reading LocalDensity without remember
+    // caused a redundant toPx() call on every recomposition (every tap).
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val diameterPx = remember(diameter) { with(density) { diameter.toPx() } }
     val ringMaxRadius = diameterPx / 2f
 
     // ── Pre-allocate brushes — avoid per-frame allocation in draw phase ────────
@@ -121,6 +125,12 @@ fun TasbihCircle(
         )
     }
 
+    // ── SMOOTH-02+07: hoisted Job refs for ring pulse and press scale ────────
+    // Without explicit Job tracking, rapid tapping (5 taps/sec) accumulated
+    // 15+ concurrent coroutines competing for the ring Animatable. snapTo only
+    // cancelled the outer scope, not the two inner launch children.
+    val ringJob  = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -135,42 +145,42 @@ fun TasbihCircle(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = { _ ->
-                        // Layer 3a — dip immediately on finger-down
-                        scope.launch {
+                        // Layer 3a — dip immediately on finger-down.
+                        val downJob = scope.launch {
                             pressScale.animateTo(
                                 targetValue   = 0.93f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness    = Spring.StiffnessHigh
-                                )
+                                // SabeelMotion.Spring.PressFeedback: NoBouncy+High — instantaneous dip.
+                                animationSpec = SabeelMotion.Spring.PressFeedback
                             )
                         }
                         tryAwaitRelease()
+                        // Cancel dip animation before spring-back — prevents the two
+                        // coroutines from fighting over pressScale mid-gesture.
+                        downJob.cancel()
                         // Layer 3b — spring back (mild bounce = "releasing a bead")
                         scope.launch {
                             pressScale.animateTo(
                                 targetValue   = 1f,
-                                animationSpec = spring(
-                                    dampingRatio = 0.45f,
-                                    stiffness    = 500f
-                                )
+                                // SabeelMotion.Spring.PressRelease: 0.45 damping, one gentle rebound.
+                                animationSpec = SabeelMotion.Spring.PressRelease
                             )
                         }
                     },
                     onTap = { _ ->
-                        // Notify the ViewModel first — count increments immediately.
                         onTap()
-                        // Layer 4 — ring pulse fires concurrently with the spring-back.
-                        // snapTo resets any in-flight ring from rapid tapping so
-                        // animations never stack up under fast input.
-                        scope.launch {
+                        // SMOOTH-02: cancel any in-flight ring before starting a new one.
+                        // Previous approach used snapTo which only cancelled the outer Job,
+                        // leaving the two inner launch children still running.
+                        ringJob.value?.cancel()
+                        ringJob.value = scope.launch {
                             ringRadius.snapTo(0f)
                             ringAlpha.snapTo(0.55f)
                             launch {
                                 ringRadius.animateTo(
                                     targetValue   = ringMaxRadius,
+                                    // SabeelMotion.Duration.RingExpand: 600ms — extracted token.
                                     animationSpec = tween(
-                                        durationMillis = 600,
+                                        durationMillis = SabeelMotion.Duration.RingExpand,
                                         easing         = FastOutSlowInEasing
                                     )
                                 )
@@ -179,7 +189,7 @@ fun TasbihCircle(
                                 ringAlpha.animateTo(
                                     targetValue   = 0f,
                                     animationSpec = tween(
-                                        durationMillis = 550,
+                                        durationMillis = SabeelMotion.Duration.RingFade,
                                         easing         = LinearEasing
                                     )
                                 )
