@@ -3,6 +3,7 @@ package com.kutubuddin.sabeel.ui.navigation
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -12,8 +13,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -40,6 +42,7 @@ import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.wird.WirdEditScreen
 import com.kutubuddin.sabeel.ui.wird.WirdScreen
 import com.kutubuddin.sabeel.ui.wird.WirdViewModel
+import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 
 /** Sub-screen routes pushed on top of a tab — deliberately absent from [SabeelTab.all]. */
 private object WirdRoutes {
@@ -72,12 +75,9 @@ private val EaseOutCubic = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 // Cubic: starts slow, accelerates away. Clears the frame decisively.
 private val EaseInCubic = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
 
-// Tab → Tab: cross-fade only (no spatial movement, no easing needed on alpha)
-private const val TAB_ENTER_MS  = 300
-private const val TAB_EXIT_MS   = 200
-
 // Sheet sub-routes (Wird, WirdEdit, AsmaUlHusna): slide-up from partial
 // Longer enter gives the sheet time to decelerate gracefully into place
+// Tab → Tab timing is now owned by SabeelMotion.Duration.TabEnter/TabExit.
 private const val SHEET_ENTER_MS = 420
 private const val SHEET_EXIT_MS  = 260
 
@@ -120,10 +120,12 @@ fun SabeelNavHost(
 
     val tasbihViewModel: TasbihViewModel = hiltViewModel()
     val settingsViewModel: SettingsViewModel = hiltViewModel()
-    val wirdViewModel: WirdViewModel = hiltViewModel()
+    // OPT-05: WirdViewModel is NOT instantiated here at root scope.
+    // It is scoped to the home_graph NavBackStackEntry inside the navigation block below.
+    // This stops 3 Room flows (wird items, progress, sessions) from running when the
+    // user is on the Count or Settings tabs — they only run while home_graph is on stack.
 
     val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
-    val wirdUiState by wirdViewModel.state.collectAsStateWithLifecycle()
     val language = settingsState.language
 
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -153,17 +155,28 @@ fun SabeelNavHost(
             navController = navController,
             startDestination = SabeelTab.Count.graphRoute,
             modifier = Modifier.padding(innerPadding),
-            // ── Tab → Tab: pure cross-fade, no slide.
-            // Tabs are spatial peers (same hierarchy level); a directional
-            // slide would imply a push/pop hierarchy that doesn't exist.
-            // 300ms is the M3 "Standard" tab transition duration.
-            enterTransition    = { fadeIn(tween(TAB_ENTER_MS)) },
-            exitTransition     = { fadeOut(tween(TAB_EXIT_MS)) },
-            popEnterTransition = { fadeIn(tween(TAB_ENTER_MS)) },
-            popExitTransition  = { fadeOut(tween(TAB_EXIT_MS)) }
+            // ── Tab → Tab transition (Apple-parity) ────────────────────────────────
+            // Scale + fade with M3 Emphasized easing (defined in SabeelMotion).
+            //   Enter: 0.96→1.0 scale + fade, EmphasizedDecelerate — screen "materialises".
+            //   Exit:  1.0→0.98 scale + fade, EmphasizedAccelerate — screen "dissolves" fast.
+            // popEnter/popExit mirror the same tokens for back-gesture symmetry.
+            enterTransition    = { SabeelMotion.tabEnter() },
+            exitTransition     = { SabeelMotion.tabExit() },
+            popEnterTransition = { SabeelMotion.tabEnter() },
+            popExitTransition  = { SabeelMotion.tabExit() }
         ) {
             navigation(startDestination = SabeelTab.Home.startRoute, route = SabeelTab.Home.graphRoute) {
                 composable(SabeelTab.Home.startRoute) {
+                    // OPT-05: WirdViewModel scoped to the home_graph NavBackStackEntry.
+                    // hiltViewModel(backStackEntry) where backStackEntry is the graph-level
+                    // entry means this ViewModel is created when home_graph is entered and
+                    // destroyed when home_graph is popped — i.e. only while Home tab is alive.
+                    val homeGraphEntry = remember(it) {
+                        navController.getBackStackEntry(SabeelTab.Home.graphRoute)
+                    }
+                    val wirdViewModel: WirdViewModel = hiltViewModel(homeGraphEntry)
+                    val wirdUiState by wirdViewModel.state.collectAsStateWithLifecycle()
+
                     HomeScreen(
                         onResumeCounting = { key, target ->
                             if (key != null && target != null) {
@@ -199,7 +212,10 @@ fun SabeelNavHost(
                         fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
                     },
                     popEnterTransition = {
-                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                        // SMOOTH-06: iOS card-dismiss — background is always rendered under the
+                        // sheet; only the sheet exits. No enter animation prevents the dark flash
+                        // that occurred when the parent faded in while the sheet slid down.
+                        EnterTransition.None
                     },
                     popExitTransition = {
                         slideOutVertically(
@@ -231,7 +247,8 @@ fun SabeelNavHost(
                         fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
                     },
                     popEnterTransition = {
-                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                        // SMOOTH-06: see Wird route above — same iOS card-dismiss pattern.
+                        EnterTransition.None
                     },
                     popExitTransition = {
                         slideOutVertically(
@@ -257,29 +274,43 @@ fun SabeelNavHost(
                         navArgument("target") { type = NavType.IntType; defaultValue = -1 }
                     )
                 ) { backStackEntry ->
+                    // OPT-05: WirdViewModel no longer referenced here.
+                    // Wird progress data flows through HomeViewModel.state.wird (WirdSummary),
+                    // which is already alive for the full app session. WirdViewModel's 3 Room
+                    // flows are now scoped to home_graph — they stop when the user is on this tab.
+                    val homeViewModel: com.kutubuddin.sabeel.ui.home.HomeViewModel = hiltViewModel()
+                    val homeState by homeViewModel.state.collectAsStateWithLifecycle()
                     val tasbihState by tasbihViewModel.state.collectAsStateWithLifecycle()
                     val currentDhikrKey = tasbihState.currentDhikr.key
-                    val isDailyGoalFinished = wirdUiState.progress.allComplete
-                    val isDhikrInDailyGoal = wirdUiState.progress.items.any { it.dhikrKey == currentDhikrKey }
 
-                    val nextWirdItem = if (settingsState.autoProgressWird)
-                        wirdUiState.progress.nextIncompleteItem else null
+                    val isDailyGoalFinished = homeState.wird.allComplete
+                    val isDhikrInDailyGoal = homeState.wird.wirdItemKeys.contains(currentDhikrKey)
+                    val nextWirdItem = if (settingsState.autoProgressWird &&
+                        homeState.wird.nextItemKey != null && homeState.wird.nextItemTarget != null
+                    ) {
+                        object {
+                            val dhikrKey = homeState.wird.nextItemKey!!
+                            val target = homeState.wird.nextItemTarget!!
+                            val displayName = homeState.wird.nextItemName
+                        }
+                    } else null
 
                     // Self-Healing Deep Link Routing
                     val dhikrKeyArg = backStackEntry.arguments?.getString("dhikrKey")
                     val targetArg = backStackEntry.arguments?.getInt("target") ?: -1
-                    LaunchedEffect(dhikrKeyArg, targetArg, wirdUiState.progress.items) {
+                    LaunchedEffect(dhikrKeyArg, targetArg, homeState.wird.wirdItemKeys) {
                         if (dhikrKeyArg != null && targetArg > 0) {
-                            val itemInGoal = wirdUiState.progress.items.find { it.dhikrKey == dhikrKeyArg }
-                            if (itemInGoal != null && !itemInGoal.isComplete) {
+                            val isItemInGoal = homeState.wird.wirdItemKeys.contains(dhikrKeyArg)
+                            if (isItemInGoal) {
                                 tasbihViewModel.processIntent(
                                     TasbihIntent.SetDhikr(dhikrKeyArg, targetArg, SessionOrigin.DAILY_GOAL)
                                 )
                             } else {
-                                val nextWird = wirdUiState.progress.nextIncompleteItem
-                                if (nextWird != null) {
+                                val nextKey = homeState.wird.nextItemKey
+                                val nextTarget = homeState.wird.nextItemTarget
+                                if (nextKey != null && nextTarget != null) {
                                     tasbihViewModel.processIntent(
-                                        TasbihIntent.SetDhikr(nextWird.dhikrKey, nextWird.target, SessionOrigin.DAILY_GOAL)
+                                        TasbihIntent.SetDhikr(nextKey, nextTarget, SessionOrigin.DAILY_GOAL)
                                     )
                                 }
                             }
@@ -343,7 +374,8 @@ fun SabeelNavHost(
                         fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
                     },
                     popEnterTransition = {
-                        fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
+                        // SMOOTH-06: same iOS card-dismiss pattern for AsmaUlHusna sheet.
+                        EnterTransition.None
                     },
                     popExitTransition = {
                         slideOutVertically(
