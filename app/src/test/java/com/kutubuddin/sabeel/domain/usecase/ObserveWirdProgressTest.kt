@@ -25,7 +25,7 @@ class ObserveWirdProgressTest {
         key = key,
         arabicText = "ar-$key",
         displayName = LocalizedText(en = "name-$key"),
-        transliteration = "tr-$key",
+        transliteration = LocalizedText(en = "tr-$key"),
         meaning = DhikrMeaning(en = "m"),
         defaultTarget = target,
         spiritualReward = LocalizedText(en = "r"),
@@ -62,6 +62,7 @@ class ObserveWirdProgressTest {
     private fun fakeCounterObserver(active: ActiveDhikr, count: Int) = object : TasbihCounterObserver {
         override val activeCount = flowOf(count)
         override val activeDhikr = flowOf(active)
+        override val activeStepIndex = flowOf(0)
     }
 
     private fun active(key: String, target: Int) =

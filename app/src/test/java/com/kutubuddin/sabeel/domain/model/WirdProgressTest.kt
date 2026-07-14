@@ -8,7 +8,7 @@ import org.junit.Test
 class WirdProgressTest {
 
     private fun item(key: String, target: Int, count: Int) =
-        WirdProgressItem(key, key, "ar", null, target, count, 0)
+        WirdProgressItem(key, LocalizedText(en = key), "ar", null, target, count, 0)
 
     @Test
     fun isComplete_atOrAboveTarget() {
