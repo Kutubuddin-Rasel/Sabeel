@@ -57,6 +57,7 @@ class TasbihViewModelTest {
         every { repository.smartFlowVariant } returns flowOf(SmartFlowVariant.CLASSIC)
         every { repository.isPocketModeActive } returns flowOf(false)
         every { repository.streak } returns flowOf(null)
+        every { repository.activeStepIndex } returns flowOf(0)
         every { settingsRepository.hapticsLevel } returns flowOf("medium")
 
         viewModel = TasbihViewModel(repository, settingsRepository)
@@ -109,7 +110,7 @@ class TasbihViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, effects.size)
-        assertTrue(effects[0] is TasbihSideEffect.PlayHaptic && (effects[0] as TasbihSideEffect.PlayHaptic).type == HapticType.THUD)
+        assertTrue(effects[0] is TasbihSideEffect.PlayHaptic && (effects[0] as TasbihSideEffect.PlayHaptic).type == HapticType.RESET)
         coVerify(exactly = 1) { repository.resetCount() }
         job.cancel()
     }
