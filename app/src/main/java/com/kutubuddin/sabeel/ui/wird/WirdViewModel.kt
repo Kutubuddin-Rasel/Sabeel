@@ -15,9 +15,11 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
+import kotlinx.collections.immutable.persistentListOf
+
 /** Singular, immutable UI state for [WirdScreen] — today's progress + display language. */
 data class WirdUiState(
-    val progress: WirdProgress = WirdProgress(emptyList()),
+    val progress: WirdProgress = WirdProgress(persistentListOf()),
     val language: String = "en"
 )
 
