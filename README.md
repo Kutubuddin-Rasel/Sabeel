@@ -16,7 +16,7 @@
 
 **Sabeel** (Arabic: سَبِيل — *the path, the way*) is a premium, distraction-free digital tasbih designed to help you build a consistent dhikr habit.
 
-Sabeel is built on the philosophy of the **"Invisible Interface"**. Designed so you don't actually have to look at your screen. Anchored by a large, morphing glass-like circle on an OLED-black canvas, the app speaks to you entirely through touch, subtle ticks for counting, distinct clicks for milestones, and deep thuds for completions.
+Sabeel is built on the philosophy of the **"Invisible Interface"**. Designed so you don't actually have to look at your screen. Anchored by a large, morphing glass-like circle on an OLED-black canvas, the app speaks to you entirely through touch, subtle ticks for counting, distinct clicks for milestones, and deep thuds for completions. It feels like holding physical prayer beads, but with haptic feedback that gives you a sense of accomplishment.
 
 Whether you're commuting, walking, or focusing deeply after salah, Sabeel gets out of your way. It combines authentic Sahih-sourced adhkar and automatic post-salah sequencing (Smart Flow) with an incredibly polished, eyes-free experience.
 
