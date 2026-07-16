@@ -101,9 +101,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val devicePerformanceState = com.kutubuddin.sabeel.ui.theme.rememberDevicePerformanceState()
+
             CompositionLocalProvider(
                 LocalStrings provides strings,
                 LocalLayoutDirection provides layoutDirectionFor(language),
+                com.kutubuddin.sabeel.ui.theme.LocalDevicePerformance provides devicePerformanceState
             ) {
                 SabeelTheme(darkTheme = theme != "light") {
                     SabeelNavHost(
