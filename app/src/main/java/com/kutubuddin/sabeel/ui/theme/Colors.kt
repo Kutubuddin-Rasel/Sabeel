@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
  * RULE: never reference raw Color(0xFF...) in composables — always a token.
  */
 data class SabeelColorTokens(
+    val isLight: Boolean,
     // Backgrounds
     val Background: Color,
     val Surface: Color,
@@ -64,6 +65,7 @@ data class SabeelColorTokens(
 
 /** "Sakīnah Night" — near-black, OLED-friendly, zero halation. */
 val DarkSabeelColors = SabeelColorTokens(
+    isLight           = false,
     Background        = Color(0xFF0E1311),
     Surface           = Color(0xFF161D1A),
     SurfaceElevated   = Color(0xFF1E2723),
@@ -105,6 +107,7 @@ val DarkSabeelColors = SabeelColorTokens(
 
 /** "Sakīnah Day" — warm parchment, greens + gold on calm cream. */
 val LightSabeelColors = SabeelColorTokens(
+    isLight           = true,
     Background        = Color(0xFFF4F1E9),
     Surface           = Color(0xFFFBF9F3),
     SurfaceElevated   = Color(0xFFECE7DA),
