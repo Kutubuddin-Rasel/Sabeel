@@ -22,7 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.collections.immutable.toImmutableList
+
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.model.WirdProgress
 import com.kutubuddin.sabeel.domain.model.WirdProgressItem
 import com.kutubuddin.sabeel.ui.components.ProgressFractionText
@@ -80,7 +82,6 @@ fun WirdContent(
     Column(
         Modifier
             .fillMaxSize()
-            .background(SabeelColors.Background)
             .navigationBarsPadding()
     ) {
         SabeelTopBar(
@@ -156,7 +157,7 @@ fun WirdContent(
             // LinearProgressIndicator did, so there's one progress statement on
             // this screen instead of two that could disagree.
             WirdVisualRing(
-                itemStates = progress.items.map { it.isComplete },
+                itemStates = progress.items.map { it.isComplete }.toImmutableList(),
                 modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

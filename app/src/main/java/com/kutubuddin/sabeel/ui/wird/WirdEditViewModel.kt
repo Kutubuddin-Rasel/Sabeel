@@ -10,7 +10,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineDispatcher
+import com.kutubuddin.sabeel.di.DefaultDispatcher
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import javax.inject.Inject
 
 /**
@@ -24,7 +29,8 @@ import javax.inject.Inject
 class WirdEditViewModel @Inject constructor(
     private val wirdRepository: WirdRepository,
     dhikrRepository: DhikrRepository,
-    settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository,
+    @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     val state: StateFlow<WirdEditState> = combine(
@@ -33,18 +39,18 @@ class WirdEditViewModel @Inject constructor(
         settingsRepository.language
     ) { plan, catalog, language ->
         resolveWirdEditState(plan, catalog, language)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WirdEditState())
+    }.flowOn(defaultDispatcher).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WirdEditState())
 
     fun addDhikr(key: String, target: Int) = viewModelScope.launch { wirdRepository.addToWird(key, target) }
     fun updateTarget(key: String, target: Int) = viewModelScope.launch { wirdRepository.updateTarget(key, target) }
     fun remove(key: String) = viewModelScope.launch { wirdRepository.removeFromWird(key) }
 
     fun move(key: String, up: Boolean) = viewModelScope.launch {
-        val order = state.value.rows.map { it.dhikrKey }
+        val order = state.value.rows.map { it.dhikrKey }.toImmutableList()
         swapAdjacent(order, key, up)?.let { wirdRepository.reorder(it) }
     }
 
-    fun reorder(keys: List<String>) = viewModelScope.launch {
+    fun reorder(keys: ImmutableList<String>) = viewModelScope.launch {
         wirdRepository.reorder(keys)
     }
 }

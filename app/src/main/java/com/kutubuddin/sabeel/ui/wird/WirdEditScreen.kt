@@ -25,7 +25,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.kutubuddin.sabeel.ui.components.SabeelTopBar
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
@@ -57,6 +58,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 import com.kutubuddin.sabeel.domain.model.DhikrCategory
 import com.kutubuddin.sabeel.domain.model.DhikrItem
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Route-level wrapper (DIP): sole owner of ViewModel injection, state
@@ -115,7 +118,7 @@ fun WirdEditContent(
     onAddDhikr: (key: String, target: Int) -> Unit,
     onUpdateTarget: (key: String, target: Int) -> Unit,
     onRemove: (key: String) -> Unit,
-    onReorder: (keys: List<String>) -> Unit
+    onReorder: (keys: ImmutableList<String>) -> Unit
 ) {
     val strings = LocalStrings.current
 
@@ -124,7 +127,6 @@ fun WirdEditContent(
     Column(
         Modifier
             .fillMaxSize()
-            .background(SabeelColors.Background)
             .navigationBarsPadding()
     ) {
         SabeelTopBar(
@@ -151,7 +153,7 @@ fun WirdEditContent(
         // composition (target total in the centre), not daily progress; compare
         // WirdScreen, where the same composable is fed real completion state.
         WirdVisualRing(
-            itemStates = state.rows.map { true },
+            itemStates = state.rows.map { true }.toImmutableList(),
             modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
         ) {
             val totalTarget = state.rows.sumOf { it.target }
@@ -187,7 +189,7 @@ fun WirdEditContent(
             val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
                 localRows = localRows.toMutableList().apply {
                     add(to.index, removeAt(from.index))
-                }
+                }.toImmutableList()
             }
 
             LazyColumn(
@@ -225,7 +227,7 @@ fun WirdEditContent(
                                         .padding(horizontal = 20.dp),
                                     contentAlignment = Alignment.CenterEnd
                                 ) {
-                                    Icon(Icons.Outlined.Delete, contentDescription = "Delete", tint = Color.White)
+                                    Icon(Icons.Outlined.Delete, contentDescription = strings.a11yDelete, tint = Color.White)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -289,7 +291,7 @@ fun WirdEditContent(
                                                 .size(24.dp)
                                                 .draggableHandle(
                                                     onDragStopped = { 
-                                                        onReorder(localRows.map { it.dhikrKey })
+                                                        onReorder(localRows.map { it.dhikrKey }.toImmutableList())
                                                     }
                                                 )
                                         )
@@ -460,7 +462,7 @@ fun WirdEditContent(
                         }
                         item(key = "card_${category.name}") {
                             PickerCategoryCard(
-                                items = items,
+                                items = items.toImmutableList(),
                                 language = state.language,
                                 onAdd = onAddDhikr,
                                 modifier = Modifier.padding(horizontal = 20.dp)
@@ -575,7 +577,7 @@ private fun pickerRowShape(index: Int, size: Int): RoundedCornerShape {
  *  every row in the group share one continuous visual block. */
 @Composable
 private fun PickerCategoryCard(
-    items: List<DhikrItem>,
+    items: ImmutableList<DhikrItem>,
     language: String,
     onAdd: (key: String, target: Int) -> Unit,
     modifier: Modifier = Modifier

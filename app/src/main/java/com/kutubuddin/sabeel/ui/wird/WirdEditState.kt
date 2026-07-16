@@ -3,7 +3,13 @@ package com.kutubuddin.sabeel.ui.wird
 import com.kutubuddin.sabeel.domain.model.DhikrItem
 import com.kutubuddin.sabeel.domain.model.WirdItem
 
+import androidx.compose.runtime.Immutable
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
 /** A wird row resolved for editing (plan + display name). */
+@Immutable
 data class WirdEditRow(
     val dhikrKey: String,
     val displayName: String,
@@ -11,9 +17,10 @@ data class WirdEditRow(
     val position: Int
 )
 
+@Immutable
 data class WirdEditState(
-    val rows: List<WirdEditRow> = emptyList(),
-    val pickable: List<DhikrItem> = emptyList(), // non-SmartFlow, not already added
+    val rows: ImmutableList<WirdEditRow> = persistentListOf(),
+    val pickable: ImmutableList<DhikrItem> = persistentListOf(), // non-SmartFlow, not already added
     val language: String = "en"
 )
 
@@ -43,8 +50,8 @@ fun resolveWirdEditState(
         }
     }
     val addedKeys = plan.map { it.dhikrKey }.toSet()
-    val pickable = catalog.filter { !it.isSmartFlow && it.key !in addedKeys }
-    return WirdEditState(rows = rows, pickable = pickable, language = language)
+    val pickable = catalog.filter { !it.isSmartFlow && it.key !in addedKeys }.toImmutableList()
+    return WirdEditState(rows = rows.toImmutableList(), pickable = pickable, language = language)
 }
 
 /**
@@ -54,12 +61,12 @@ fun resolveWirdEditState(
  * absent, or it is already at the edge in the requested direction. Callers skip
  * the persist when null, so an edge tap costs nothing.
  */
-fun swapAdjacent(order: List<String>, key: String, up: Boolean): List<String>? {
+fun swapAdjacent(order: ImmutableList<String>, key: String, up: Boolean): ImmutableList<String>? {
     val i = order.indexOf(key)
     if (i < 0) return null
     val j = if (up) i - 1 else i + 1
     if (j !in order.indices) return null
     val out = order.toMutableList()
     out[i] = out[j].also { out[j] = out[i] }
-    return out
+    return out.toImmutableList()
 }
