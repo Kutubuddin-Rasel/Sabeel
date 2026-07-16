@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.withTransform
+import kotlinx.coroutines.isActive
+import com.kutubuddin.sabeel.ui.theme.SabeelColors
 
 /**
  * SMOOTH-01: Replaced 8-point star path-morph with a dual radial-gradient approach.
@@ -53,51 +57,90 @@ fun FluidWaveBackground(
     }
 
     // Gentle breathing pulse for the accent gradient radius (GPU-only animation)
-    val infiniteTransition = rememberInfiniteTransition(label = "WaveBreathTransition")
-    val pulseState = infiniteTransition.animateFloat(
-        initialValue = 0.95f,
-        targetValue  = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(4000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "WaveBreath"
-    )
+    // We use an Animatable instead of rememberInfiniteTransition so we can coast
+    // to a graceful stop if Battery Saver / Low Tier device is detected.
+    val isReducedMotion = com.kutubuddin.sabeel.ui.theme.LocalDevicePerformance.current.reduceAnimations
+    val pulseState = remember { Animatable(1.0f) }
 
-    // Pre-compute static color stops — never allocated inside drawBehind
-    val baseGradientColors   = remember { listOf(Color(0x2A0C2116), Color.Transparent) }
-    val accentGradientColors = remember { listOf(Color(0x1A1B5E42), Color.Transparent) }
+    LaunchedEffect(isReducedMotion) {
+        if (isReducedMotion) {
+            // Graceful coast to resting state
+            pulseState.animateTo(
+                targetValue = 1.0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessVeryLow
+                )
+            )
+        } else {
+            // Infinite wave loop
+            while (isActive) {
+                pulseState.animateTo(1.05f, tween(4000, easing = FastOutSlowInEasing))
+                pulseState.animateTo(0.95f, tween(4000, easing = FastOutSlowInEasing))
+            }
+        }
+    }
+
+    // Pre-compute theme-aware color stops — never allocated inside drawBehind
+    val colors = SabeelColors
+    val baseGradientColors = remember(colors) {
+        val alpha = if (colors.isLight) 0.12f else 0.16f
+        listOf(colors.WaveLapis.copy(alpha = alpha), Color.Transparent)
+    }
+    val accentGradientColors = remember(colors) {
+        val alpha = if (colors.isLight) 0.08f else 0.12f
+        listOf(colors.AccentTeal.copy(alpha = alpha), Color.Transparent)
+    }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .drawBehind {
-                // All state reads inside drawBehind — bypasses composition phase.
-                val progress = animProgress.value.coerceIn(0f, 1f)
-                val pulse    = pulseState.value
-                val w        = size.width
-                val h        = size.height
+            .drawWithCache {
+                val w = size.width
+                val h = size.height
 
-                // Layer 1: full-screen base radial gradient — same dark-teal mood
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = baseGradientColors,
-                        center = Offset(w / 2f, h / 2f),
-                        radius = maxOf(w, h) * 0.9f
-                    )
+                // Layer 1: full-screen base radial gradient
+                val baseRadius = maxOf(w, h) * 0.9f
+                val baseBrush = Brush.radialGradient(
+                    colors = baseGradientColors,
+                    center = Offset(w / 2f, h / 2f),
+                    radius = if (baseRadius > 0f) baseRadius else 1f
                 )
 
-                // Layer 2: accent radial gradient — centre rises as progress increases,
-                // radius pulses subtly. Replicates the "level filling" of the old morph
-                // at ~50× lower GPU cost.
-                val accentCenterY = h - (progress * h * 0.55f) - (h * 0.15f)
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = accentGradientColors,
-                        center = Offset(w / 2f, accentCenterY),
-                        radius = minOf(w, h) * 0.65f * pulse
-                    )
+                // Layer 2: fixed accent brush at 0,0 with fixed radius.
+                val accentBaseRadius = minOf(w, h) * 0.65f
+                val accentBrush = Brush.radialGradient(
+                    colors = accentGradientColors,
+                    center = Offset.Zero,
+                    radius = if (accentBaseRadius > 0f) accentBaseRadius else 1f
                 )
+
+                onDrawBehind {
+                    // All state reads inside drawBehind — bypasses composition phase.
+                    val progress = animProgress.value.coerceIn(0f, 1f)
+                    val pulse    = pulseState.value
+
+                    // Layer 1: full-screen base radial gradient — same dark-teal mood
+                    drawRect(brush = baseBrush)
+
+                    // Layer 2: accent radial gradient — centre rises as progress increases,
+                    // radius pulses subtly. Replicates the "level filling" of the old morph
+                    // at ~50× lower GPU cost.
+                    if (accentBaseRadius > 0f) {
+                        val accentCenterY = h - (progress * h * 0.55f) - (h * 0.15f)
+                        
+                        withTransform({
+                            translate(left = w / 2f, top = accentCenterY)
+                            scale(scaleX = pulse, scaleY = pulse)
+                        }) {
+                            drawRect(
+                                brush = accentBrush,
+                                topLeft = Offset(-accentBaseRadius, -accentBaseRadius),
+                                size = Size(accentBaseRadius * 2, accentBaseRadius * 2)
+                            )
+                        }
+                    }
+                }
             }
     )
 }
