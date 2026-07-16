@@ -204,7 +204,6 @@ private fun scaleTypography(scale: Int): Typography {
     )
 }
 
-private val TypographyUrdu = scaleTypography(2)
 private val TypographyBengali = scaleTypography(1)
 
 /**
@@ -214,7 +213,6 @@ private val TypographyBengali = scaleTypography(1)
  */
 fun getScaledTypography(languageCode: String): Typography {
     return when (languageCode) {
-        "ur" -> TypographyUrdu
         "bn" -> TypographyBengali
         else -> Typography
     }

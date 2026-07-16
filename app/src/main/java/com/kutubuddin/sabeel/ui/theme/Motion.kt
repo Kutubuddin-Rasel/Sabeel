@@ -140,6 +140,15 @@ object SabeelMotion {
             dampingRatio = ComposeSpring.DampingRatioNoBouncy,
             stiffness    = ComposeSpring.StiffnessMediumLow
         )
+
+        /**
+         * Switch toggle — satisfying native-feeling snap for settings switches.
+         * Critically damped (no bounce) with high stiffness for instant response.
+         */
+        val SwitchSnap: FiniteAnimationSpec<Float> = spring(
+            dampingRatio = ComposeSpring.DampingRatioNoBouncy,
+            stiffness    = ComposeSpring.StiffnessHigh
+        )
     }
 
     object Duration {
