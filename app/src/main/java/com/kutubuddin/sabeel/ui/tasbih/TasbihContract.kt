@@ -7,6 +7,8 @@ import com.kutubuddin.sabeel.domain.model.DhikrSequence
 import com.kutubuddin.sabeel.domain.model.DhikrType
 import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Represents the immutable visual state of the Tasbih screen.
  * All fields are derived from repository observables — the UI is a pure
@@ -16,6 +18,7 @@ import com.kutubuddin.sabeel.domain.model.SmartFlowVariant
  * entry can be counted. When [sequence] is non-null the screen is running a
  * multi-step Tasbīḥ-after-Salah, and [stepIndex] is the current step.
  */
+@Immutable
 data class TasbihState(
     val count: Int = 0,
     val target: Int = 33,

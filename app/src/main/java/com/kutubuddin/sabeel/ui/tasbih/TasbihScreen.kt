@@ -183,7 +183,6 @@ fun TasbihContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(SabeelColors.Background)
     ) {
         // ── Layer 0: Living background ─────────────────────────────────────────
         FluidWaveBackground(count = state.count, target = state.target)

@@ -40,7 +40,11 @@ class TasbihViewModel @Inject constructor(
     private val _state = MutableStateFlow(TasbihState())
     val state: StateFlow<TasbihState> = _state.asStateFlow()
 
-    private val _effect = MutableSharedFlow<TasbihSideEffect>(replay = 0)
+    private val _effect = MutableSharedFlow<TasbihSideEffect>(
+        replay = 0,
+        extraBufferCapacity = 64,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
     val effect: Flow<TasbihSideEffect> = _effect.asSharedFlow()
 
     private val intentMutex = Mutex()
@@ -211,8 +215,8 @@ class TasbihViewModel @Inject constructor(
 
         _state.value = newState
 
-        _effect.emit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay, _state.value.hapticStrength))
-        if (showCelebration) _effect.emit(TasbihSideEffect.ShowCelebration)
+        _effect.tryEmit(TasbihSideEffect.PlayHaptic(hapticTypeToPlay, _state.value.hapticStrength))
+        if (showCelebration) _effect.tryEmit(TasbihSideEffect.ShowCelebration)
 
         val dateString = LocalDate.now().toString()
         val result = repoWriteChannel.trySend {
@@ -240,7 +244,7 @@ class TasbihViewModel @Inject constructor(
             
             _state.update { it.copy(stepIndex = prevIndex, count = prevCount, target = prevTarget) }
             
-            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.TICK, _state.value.hapticStrength))
+            _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.TICK, _state.value.hapticStrength))
             repoWriteChannel.trySend {
                 repository.setStepIndex(prevIndex)
                 repository.setCount(prevCount)
@@ -264,14 +268,14 @@ class TasbihViewModel @Inject constructor(
 
         if (currentState.isSmartFlowEnabled && sequence != null) {
             _state.update { it.copy(count = 0, stepIndex = 0, target = sequence.steps.first().target) }
-            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.RESET, _state.value.hapticStrength))
+            _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.RESET, _state.value.hapticStrength))
             repoWriteChannel.trySend {
                 repository.setStepIndex(0)
                 repository.resetCount()
             }
         } else {
             _state.update { it.copy(count = 0) }
-            _effect.emit(TasbihSideEffect.PlayHaptic(HapticType.RESET, _state.value.hapticStrength))
+            _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.RESET, _state.value.hapticStrength))
             repoWriteChannel.trySend {
                 repository.resetCount()
             }
@@ -298,7 +302,7 @@ class TasbihViewModel @Inject constructor(
     private suspend fun handleSetPocketModeActive(active: Boolean) {
         repository.setPocketModeActive(active)
         // Instruct MainActivity to start/stop the foreground service
-        _effect.emit(
+        _effect.tryEmit(
             if (active) TasbihSideEffect.StartPocketModeService
             else TasbihSideEffect.StopPocketModeService
         )
