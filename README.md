@@ -14,9 +14,11 @@
 
 ## Project Name and Description
 
-**Sabeel** (Arabic: سَبِيل — *the path, the way*) is a distraction-free Android application designed to help Muslims perform **dhikr** (remembrance of Allah) consistently throughout their day.
+**Sabeel** (Arabic: سَبِيل — *the path, the way*) is a premium, distraction-free digital tasbih designed to help you build a consistent dhikr habit.
 
-The core philosophy of Sabeel is the **"Invisible Interface"**. It transforms the smartphone into a digital prayer bead (tasbih) that requires zero visual attention. By utilizing OLED-black canvases and sophisticated spring-physics haptic feedback, a single tap anywhere on the screen counts. This allows users to maintain spiritual consistency during commuting, walking, or any moment when hands are free but eyes are not.
+Sabeel is built on the philosophy of the **"Invisible Interface"**. Designed so you don't actually have to look at your screen. Anchored by a large, morphing glass-like circle on an OLED-black canvas, the app speaks to you entirely through touch, subtle ticks for counting, distinct clicks for milestones, and deep thuds for completions.
+
+Whether you're commuting, walking, or focusing deeply after salah, Sabeel gets out of your way. It combines authentic Sahih-sourced adhkar and automatic post-salah sequencing (Smart Flow) with an incredibly polished, eyes-free experience.
 
 ## Technology Stack
 
@@ -49,7 +51,7 @@ Sabeel is built on **Clean Architecture** with a strict **MVI (Model-View-Intent
 │                    Data Layer                           │
 │   Room Database   │   DataStore Preferences             │
 │  (sessions, streak,│  (live counter, active dhikr,      │
-│   custom dhikr)   │   settings, pocket mode)            │
+│   custom dhikr)   │   settings)                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -87,7 +89,6 @@ The codebase follows a clear feature-by-layer organization inside `app/src/main/
 - `/data` - Concrete repository implementations, Room database configuration (DAOs, Entities), and DataStore preferences.
 - `/di` - Dagger Hilt modules (`DataModule`, `RepositoryModule`, `DispatchersModule`, etc.) for dependency injection.
 - `/domain` - Pure business logic interfaces, domain models (e.g., `DhikrCatalog`), and repository contracts.
-- `/service` - Android Services, such as the `PocketModeService` for background counting.
 - `/ui` - Jetpack Compose screens, ViewModels, and UI state categorized by feature (`/home`, `/tasbih`, `/dhikr`, `/settings`, `/navigation`, `/theme`).
 
 ## Key Features
@@ -95,7 +96,6 @@ The codebase follows a clear feature-by-layer organization inside `app/src/main/
 - **Theological Foundation:** Over 35 authentic dhikr entries sourced from Sahih al-Bukhari, Sahih Muslim, Sunan Abu Dawud, and Jami' at-Tirmidhi.
 - **Circle-Centric Counting:** A glowing gold circle acts as a massive tap target with spring-physics animation and precision haptic feedback.
 - **Smart Flow (Post-Salah Engine):** Automatically sequences post-prayer dhikr (e.g., SubhanAllah → Alhamdulillah → Allahu Akbar) silently transitioning between milestones.
-- **Pocket Mode:** A foreground service that allows for physical volume-button counting while the screen remains off.
 - **Home Dashboard:** Tracks daily streaks, goals, and maintains session history.
 - **Dhikr Library:** An expandable, searchable catalog including an immersive Asma Ul Husna (99 Names of Allah) gallery.
 
