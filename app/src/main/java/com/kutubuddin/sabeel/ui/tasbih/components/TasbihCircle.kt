@@ -105,7 +105,13 @@ fun TasbihCircle(
     val diameterPx = remember(diameter) { with(density) { diameter.toPx() } }
     val ringMaxRadius = diameterPx / 2f
 
-    // ── Pre-allocate brushes — avoid per-frame allocation in draw phase ────────
+    // ── Pre-allocate brushes and strokes — avoid per-frame allocation in draw phase ────────
+    val mainStrokeWidth = remember(density) { with(density) { 5.dp.toPx() } }
+    val mainStroke = remember(mainStrokeWidth) { Stroke(width = mainStrokeWidth, cap = StrokeCap.Round) }
+    
+    val ringStrokeWidth = remember(density) { with(density) { 3.dp.toPx() } }
+    val ringStroke = remember(ringStrokeWidth) { Stroke(width = ringStrokeWidth, cap = StrokeCap.Round) }
+
     val sweepGradient = remember(arcStartColor, arcEndColor) {
         Brush.sweepGradient(
             colorStops = arrayOf(
@@ -209,8 +215,7 @@ fun TasbihCircle(
     ) {
         // ── Canvas: arc track + progress arc + ring pulse (Layers 1, 2, 4) ────
         Canvas(modifier = Modifier.size(diameter + 20.dp)) {
-            val strokeWidth = 5.dp.toPx()
-            val arcDiameter = size.minDimension - strokeWidth
+            val arcDiameter = size.minDimension - mainStrokeWidth
             val topLeft = androidx.compose.ui.geometry.Offset(
                 x = (size.width  - arcDiameter) / 2f,
                 y = (size.height - arcDiameter) / 2f
@@ -225,7 +230,7 @@ fun TasbihCircle(
                 useCenter  = false,
                 topLeft    = topLeft,
                 size       = arcSize,
-                style      = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                style      = mainStroke
             )
 
             // Layer 2 — progress arc (teal; gold reserved for milestone flash)
@@ -237,7 +242,7 @@ fun TasbihCircle(
                     useCenter  = false,
                     topLeft    = topLeft,
                     size       = arcSize,
-                    style      = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    style      = mainStroke
                 )
             }
 
@@ -247,7 +252,7 @@ fun TasbihCircle(
                 drawCircle(
                     color  = arcStartColor.copy(alpha = ringAlpha.value),
                     radius = ringRadius.value,
-                    style  = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                    style  = ringStroke
                 )
             }
         }

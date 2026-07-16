@@ -1,7 +1,7 @@
 package com.kutubuddin.sabeel.ui.tasbih.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,14 +77,14 @@ fun SequenceTracker(
 @Composable
 private fun SequenceSegment(completed: Boolean, current: Boolean) {
     // Current step swells to a filled dot; completed shows a tick; upcoming is idle.
-    val dotSize by animateDpAsState(
-        targetValue = if (current) 12.dp else 8.dp,
-        animationSpec = tween(250),
-        label = "segmentSize"
+    val dotScale by animateFloatAsState(
+        targetValue = if (current) 1f else (8f / 12f),
+        animationSpec = com.kutubuddin.sabeel.ui.theme.SabeelMotion.Spring.Counter,
+        label = "segmentScale"
     )
     val fill by animateColorAsState(
         targetValue = if (completed || current) SabeelColors.AccentTeal else SabeelColors.Surface,
-        animationSpec = tween(250),
+        animationSpec = com.kutubuddin.sabeel.ui.theme.SabeelMotion.Tween.ColorTransition,
         label = "segmentFill"
     )
 
@@ -101,7 +102,11 @@ private fun SequenceSegment(completed: Boolean, current: Boolean) {
         } else {
             Box(
                 modifier = Modifier
-                    .size(dotSize)
+                    .size(12.dp)
+                    .graphicsLayer {
+                        scaleX = dotScale
+                        scaleY = dotScale
+                    }
                     .clip(CircleShape)
                     .background(fill)
                     .border(1.dp, if (current) SabeelColors.AccentTeal else SabeelColors.BorderIdle, CircleShape)
