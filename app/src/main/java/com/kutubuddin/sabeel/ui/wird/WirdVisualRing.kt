@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * FIX 7 — a tasbih string, not an activity ring.
@@ -44,7 +45,7 @@ import com.kutubuddin.sabeel.ui.theme.SabeelColors
  */
 @Composable
 fun WirdVisualRing(
-    itemStates: List<Boolean>,
+    itemStates: ImmutableList<Boolean>,
     modifier: Modifier = Modifier,
     centerContent: @Composable () -> Unit
 ) {
@@ -59,18 +60,21 @@ fun WirdVisualRing(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val strokeWidth = androidx.compose.runtime.remember(density) { with(density) { 10.dp.toPx() } }
+        val strokeStyle = androidx.compose.runtime.remember(strokeWidth) { Stroke(width = strokeWidth, cap = StrokeCap.Round) }
+        
         Box(
             modifier = Modifier.size(160.dp),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val stroke = 10.dp.toPx()
                 drawArc(
                     color = trackColor,
                     startAngle = -90f,
                     sweepAngle = 360f,
                     useCenter = false,
-                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    style = strokeStyle
                 )
                 if (fraction > 0f) {
                     drawArc(
@@ -78,7 +82,7 @@ fun WirdVisualRing(
                         startAngle = -90f,
                         sweepAngle = 360f * fraction,
                         useCenter = false,
-                        style = Stroke(width = stroke, cap = StrokeCap.Round)
+                        style = strokeStyle
                     )
                 }
             }
@@ -100,7 +104,7 @@ fun WirdVisualRing(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BeadRow(states: List<Boolean>, modifier: Modifier = Modifier) {
+private fun BeadRow(states: ImmutableList<Boolean>, modifier: Modifier = Modifier) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
