@@ -25,11 +25,12 @@ class SystemSabeelVibrator @Inject constructor(
         }
     }
 
-    override fun vibrate(durationMs: Long) {
+    override fun vibrate(durationMs: Long, amplitude: Int) {
         val vibrator = this.vibrator ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val safeAmplitude = if (vibrator.hasAmplitudeControl()) amplitude else VibrationEffect.DEFAULT_AMPLITUDE
             vibrator.vibrate(
-                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+                VibrationEffect.createOneShot(durationMs, safeAmplitude)
             )
         } else {
             @Suppress("DEPRECATION")
@@ -37,10 +38,15 @@ class SystemSabeelVibrator @Inject constructor(
         }
     }
 
-    override fun vibratePattern(pattern: LongArray, repeat: Int) {
+    override fun vibratePattern(pattern: LongArray, amplitudes: IntArray?, repeat: Int) {
         val vibrator = this.vibrator ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createWaveform(pattern, repeat))
+            val effect = if (amplitudes != null && amplitudes.size == pattern.size && vibrator.hasAmplitudeControl()) {
+                VibrationEffect.createWaveform(pattern, amplitudes, repeat)
+            } else {
+                VibrationEffect.createWaveform(pattern, repeat)
+            }
+            vibrator.vibrate(effect)
         } else {
             @Suppress("DEPRECATION")
             vibrator.vibrate(pattern, repeat)
