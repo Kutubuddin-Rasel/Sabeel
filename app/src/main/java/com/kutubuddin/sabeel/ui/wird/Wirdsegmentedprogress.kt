@@ -45,7 +45,7 @@ fun WirdSegmentedProgress(
             val isFilled = index < completed
             val color by animateColorAsState(
                 targetValue = if (isFilled) filledColor else trackColor,
-                animationSpec = tween(400),
+                animationSpec = com.kutubuddin.sabeel.ui.theme.SabeelMotion.Tween.ColorTransition,
                 label = "wird_segment_$index"
             )
             Box(
