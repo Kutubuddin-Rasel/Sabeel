@@ -18,6 +18,8 @@ class HapticEngineImpl @Inject constructor(
     private val sabeelVibrator: SabeelVibrator
 ) : HapticEngine {
 
+    private fun Float.toAmplitude(): Int = (this * 255).toInt().coerceIn(1, 255)
+
     private val vibrator: Vibrator? by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
@@ -39,9 +41,10 @@ class HapticEngineImpl @Inject constructor(
                 .compose()
             vibrator.vibrate(effect)
         } else {
-            // Legacy fallback: SabeelVibrator exposes duration only (no amplitude),
-            // so pre-R devices honour Off but can't scale strength. See plan FIX 1.
-            sabeelVibrator.vibrate(durationMs = 15L)
+            // ERM fallback: Scale duration up for stronger feedback, as ERMs need time to spin up.
+            // A flat 15ms at low amplitude is imperceptible on many Samsung/older devices.
+            val duration = (15L + (strength.tick * 20L)).toLong()
+            sabeelVibrator.vibrate(durationMs = duration, amplitude = strength.tick.toAmplitude())
         }
     }
 
@@ -56,7 +59,8 @@ class HapticEngineImpl @Inject constructor(
                 .compose()
             vibrator.vibrate(effect)
         } else {
-            sabeelVibrator.vibrate(durationMs = 45L)
+            val duration = (35L + (strength.click * 25L)).toLong()
+            sabeelVibrator.vibrate(durationMs = duration, amplitude = strength.click.toAmplitude())
         }
     }
 
@@ -72,7 +76,10 @@ class HapticEngineImpl @Inject constructor(
             vibrator.vibrate(effect)
         } else {
             // Double-pulse vibration for heavy feedback fallback
-            sabeelVibrator.vibratePattern(pattern = longArrayOf(0, 80, 50, 80))
+            sabeelVibrator.vibratePattern(
+                pattern = longArrayOf(0, 80, 50, 80),
+                amplitudes = intArrayOf(0, strength.thud.toAmplitude(), 0, strength.thud.toAmplitude())
+            )
         }
     }
 
@@ -95,7 +102,10 @@ class HapticEngineImpl @Inject constructor(
                 .compose()
             vibrator.vibrate(effect)
         } else {
-            sabeelVibrator.vibratePattern(pattern = longArrayOf(0, 70, 60, 40))
+            sabeelVibrator.vibratePattern(
+                pattern = longArrayOf(0, 70, 60, 40),
+                amplitudes = intArrayOf(0, strength.thud.toAmplitude(), 0, strength.tick.toAmplitude())
+            )
         }
     }
 }
