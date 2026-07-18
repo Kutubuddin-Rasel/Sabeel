@@ -15,6 +15,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
@@ -62,14 +64,15 @@ import com.kutubuddin.sabeel.domain.model.DhikrMeaning
  * Keying on Arabic text ensures the crossfade fires exactly when the dhikr changes,
  * not on every tap. Avoids the Triple allocation the original code made per recomposition.
  */
-private data class DhikrTexts(val arabic: String)
+private data class DhikrTexts(
+    val arabic: String,
+    val transliteration: String?,
+    val meaning: String?
+)
 
 /**
  * Route-level wrapper (SRP/DIP): owns [viewModel] (injected by the caller —
  * [com.kutubuddin.sabeel.ui.navigation.SabeelNavHost] — never defaulted here)
- * and the effect-collection side of the counting screen. [language]/
- * [showStreaks] are plain display data, not services, so they arrive as
- * simple parameters from the SAME settings state the NavHost already
  * collects — this screen no longer instantiates its own second
  * `SettingsViewModel` to re-derive values the caller already has.
  */
@@ -78,8 +81,7 @@ fun TasbihScreen(
     viewModel: TasbihViewModel,
     hapticEngine: HapticEngine,
     language: String = "en",
-    showStreaks: Boolean = true,
-    leftHanded: Boolean = false,
+    showTransliteration: Boolean = true,
     isDailyGoalFinished: Boolean = false,
     isDhikrInDailyGoal: Boolean = false,
     nextWirdItemName: String? = null,
@@ -90,7 +92,23 @@ fun TasbihScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showCelebration by remember { mutableStateOf(false) }
+    var triggerGoldenBloom by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val currentDhikrKey = state.currentDhikr.key
+    val wasDailyGoalCompleteBeforeSession = remember(currentDhikrKey) { isDailyGoalFinished }
+
+    LaunchedEffect(isDailyGoalFinished) {
+        if (isDailyGoalFinished && !wasDailyGoalCompleteBeforeSession) {
+            if (state.sessionOrigin == SessionOrigin.DAILY_GOAL) {
+                showCelebration = true
+            } else if (state.sessionOrigin == SessionOrigin.LIBRARY) {
+                showCelebration = true
+                kotlinx.coroutines.delay(1200)
+                showCelebration = false
+            }
+        }
+    }
 
     LaunchedEffect(viewModel.effect, lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -104,10 +122,10 @@ fun TasbihScreen(
                             HapticType.RESET -> hapticEngine.playReset(effect.strength)
                         }
                     }
-                    is TasbihSideEffect.ShowCelebration -> showCelebration = true
+                    is TasbihSideEffect.ShowSessionSummary -> showCelebration = true
+                    is TasbihSideEffect.TriggerGoldenBloom -> triggerGoldenBloom = true
+                    is TasbihSideEffect.AutoProgressDailyGoal -> onContinueWird?.invoke()
                     is TasbihSideEffect.ShowToast -> {}
-                    is TasbihSideEffect.StartPocketModeService -> {}
-                    is TasbihSideEffect.StopPocketModeService -> {}
                 }
             }
         }
@@ -116,19 +134,21 @@ fun TasbihScreen(
     TasbihContent(
         state = state,
         showCelebration = showCelebration,
-        showStreaks = showStreaks,
+        triggerGoldenBloom = triggerGoldenBloom,
+        onGoldenBloomEnd = { triggerGoldenBloom = false },
         language = language,
-        leftHanded = leftHanded,
         onCelebrationEnd = { showCelebration = false },
         onIncrement = { viewModel.processIntent(TasbihIntent.Increment) },
         onDecrement = { viewModel.processIntent(TasbihIntent.Decrement) },
         onReset = { viewModel.processIntent(TasbihIntent.Reset) },
         isDailyGoalFinished = isDailyGoalFinished,
+        wasDailyGoalCompleteBeforeSession = wasDailyGoalCompleteBeforeSession,
         isDhikrInDailyGoal = isDhikrInDailyGoal,
         nextWirdItemName = nextWirdItemName,
         onContinueWird = onContinueWird,
         onNavigateHome = onNavigateHome,
         onNavigateLibrary = onNavigateLibrary,
+        showTransliteration = showTransliteration,
         modifier = modifier
     )
 }
@@ -149,20 +169,22 @@ fun TasbihScreen(
 fun TasbihContent(
     state: TasbihState,
     showCelebration: Boolean,
+    triggerGoldenBloom: Boolean = false,
+    onGoldenBloomEnd: () -> Unit = {},
     onCelebrationEnd: () -> Unit,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onReset: () -> Unit,
     isDailyGoalFinished: Boolean = false,
+    wasDailyGoalCompleteBeforeSession: Boolean = false,
     isDhikrInDailyGoal: Boolean = false,
     nextWirdItemName: String? = null,
     onContinueWird: (() -> Unit)? = null,
     onNavigateHome: () -> Unit = {},
     onNavigateLibrary: () -> Unit = {},
     modifier: Modifier = Modifier,
-    showStreaks: Boolean = true,
-    language: String = "en",
-    leftHanded: Boolean = false
+    showTransliteration: Boolean = true,
+    language: String = "en"
 ) {
     val strings = LocalStrings.current
     val activeStep = state.sequence?.steps?.getOrNull(state.stepIndex)
@@ -176,9 +198,7 @@ fun TasbihContent(
     val rewardText = state.displayedDhikr.spiritualReward.get(language)
     val rewardRef = state.displayedDhikr.hadithRef
         .takeIf { it.isNotBlank() }
-        ?.let { strings.dhikrRef.format(localizeHadithRef(it, language)) }
-    val currentDhikrKey = state.currentDhikr.key
-    val wasDailyGoalCompleteBeforeSession = remember(currentDhikrKey) { isDailyGoalFinished }
+        ?.let { localizeHadithRef(it, language) }
 
     Box(
         modifier = modifier
@@ -194,63 +214,63 @@ fun TasbihContent(
                 .padding(top = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // JANK-01: StaticDhikrInfo is its own recomposition scope. It reads
-            // displayArabic/displayTransliteration/displayMeaning which only change
-            // when state.currentDhikr or state.sequence changes — not on every tap.
-            StaticDhikrInfo(
-                displayArabic = displayArabic,
-                displayTransliteration = displayTransliteration,
-                displayMeaning = displayMeaning,
-                language = language
-            )
+            // TOP ZONE: Elastic and Scrollable Context
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // JANK-01: StaticDhikrInfo is its own recomposition scope.
+                StaticDhikrInfo(
+                    displayArabic = displayArabic,
+                    displayTransliteration = displayTransliteration,
+                    displayMeaning = displayMeaning,
+                    language = language,
+                    showTransliteration = showTransliteration
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
-            Spacer(modifier = Modifier.weight(1f))
+            // BOTTOM ZONE: Anchored and Rigid Action
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                // JANK-01: CountingLayer owns the hot-path (every tap).
+                CountingLayer(
+                    count = state.count,
+                    target = state.target,
+                    stepIndex = state.stepIndex,
+                    stepCount = state.sequence?.steps?.size,
+                    triggerGoldenBloom = triggerGoldenBloom,
+                    onGoldenBloomEnd = onGoldenBloomEnd,
+                    onIncrement = onIncrement,
+                    onDecrement = onDecrement,
+                    onReset = onReset,
+                    language = language
+                )
 
-            // JANK-01: CountingLayer owns the hot-path (every tap). Sequence tracker
-            // is here because it reads stepIndex (also changes per-step, not per-tap).
-            CountingLayer(
-                count = state.count,
-                target = state.target,
-                stepIndex = state.stepIndex,
-                stepCount = state.sequence?.steps?.size,
-                onIncrement = onIncrement,
-                onReset = onReset,
-                language = language
-            )
-
-            // IX-CR: "show the spiritual reward properly under the circle" —
-            // this used to live up with the Arabic text (StaticDhikrInfo),
-            // visually detached from the counter and stranding the undo pill
-            // in a huge empty gap below. Reward + undo now sit directly under
-            // the circle as one cohesive "counting cluster": tap → see why it
-            // matters → undo if needed, all in one glance, no scanning back
-            // up the screen. The reward call is a plain, stable-arg composable
-            // call (same rewardText/rewardRef values every recomposition
-            // unless the dhikr changes), so it keeps the same tap-skip
-            // guarantee StaticDhikrInfo had — it does not join the hot path.
-            Spacer(modifier = Modifier.height(20.dp))
-            SpiritualRewardCard(
-                reward = rewardText,
-                reference = rewardRef,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-            UndoPill(
-                onDecrement = onDecrement,
-                language = language,
-                leftHanded = leftHanded
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                SpiritualRewardCard(
+                    reward = rewardText,
+                    reference = rewardRef,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
         // ── CompletionRest overlay ────────────────────────────────────────────
         val completionContext = when {
             state.sessionOrigin == SessionOrigin.DAILY_GOAL && !wasDailyGoalCompleteBeforeSession && isDailyGoalFinished -> CompletionContext.VICTORY
             state.sessionOrigin == SessionOrigin.DAILY_GOAL && !isDailyGoalFinished -> CompletionContext.FLOW
-            state.sessionOrigin == SessionOrigin.LIBRARY && !wasDailyGoalCompleteBeforeSession && isDailyGoalFinished -> CompletionContext.VICTORY
+            state.sessionOrigin == SessionOrigin.LIBRARY && !wasDailyGoalCompleteBeforeSession && isDailyGoalFinished -> CompletionContext.VICTORY_TRANSIENT
             else -> CompletionContext.AD_HOC
         }
         AnimatedVisibility(
@@ -279,6 +299,7 @@ fun TasbihContent(
                             if (onContinueWird != null) onContinueWird() else onReset()
                             onCelebrationEnd()
                         }
+                        CompletionContext.VICTORY_TRANSIENT -> {} // No primary action button is shown for transient
                     }
                 },
                 onSecondaryAction = if (completionContext == CompletionContext.VICTORY) null else {
@@ -301,11 +322,17 @@ private fun StaticDhikrInfo(
     displayArabic: String,
     displayTransliteration: LocalizedText?,
     displayMeaning: DhikrMeaning?,
-    language: String
+    language: String,
+    showTransliteration: Boolean
 ) {
+    val resolvedTransliteration = displayTransliteration?.get(language)
+    val resolvedMeaning = displayMeaning?.get(language)
+
     // SMOOTH-03: stable key — AnimatedContent only re-runs its content block
     // when displayArabic changes (different dhikr), not on every count tap.
-    val dhikrKey = remember(displayArabic) { DhikrTexts(displayArabic) }
+    val dhikrKey = remember(displayArabic, resolvedTransliteration, resolvedMeaning) { 
+        DhikrTexts(displayArabic, resolvedTransliteration, resolvedMeaning) 
+    }
     AnimatedContent(
         targetState = dhikrKey,
         transitionSpec = {
@@ -313,11 +340,12 @@ private fun StaticDhikrInfo(
                 .togetherWith(fadeOut(animationSpec = tween(300)) + slideOutHorizontally(targetOffsetX = { -it / 4 }))
         },
         label = "dhikr_transition"
-    ) {
+    ) { targetState ->
         TajweedText(
-            arabicText = displayArabic,
-            transliteration = displayTransliteration?.get(language),
-            meaning = displayMeaning?.get(language),
+            arabicText = targetState.arabic,
+            showTransliteration = showTransliteration,
+            transliteration = targetState.transliteration,
+            meaning = targetState.meaning,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -338,7 +366,10 @@ private fun CountingLayer(
     target: Int,
     stepIndex: Int,
     stepCount: Int?,
+    triggerGoldenBloom: Boolean,
+    onGoldenBloomEnd: () -> Unit,
     onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
     onReset: () -> Unit,
     language: String
 ) {
@@ -356,48 +387,10 @@ private fun CountingLayer(
         count = count,
         target = target,
         language = language,
+        triggerGoldenBloom = triggerGoldenBloom,
+        onGoldenBloomEnd = onGoldenBloomEnd,
         onTap = onIncrement,
         onLongPress = onReset,
+        onDecrement = onDecrement,
     )
-}
-
-// ── Undo pill ──────────────────────────────────────────────────────────────────
-// IX-CR: extracted from CountingLayer so it can be positioned AFTER the
-// spiritual reward in the flow (circle → reward → undo, per design review),
-// while still not depending on count/target — it never needed to be inside
-// the hot-path composable in the first place.
-@Composable
-private fun UndoPill(
-    onDecrement: () -> Unit,
-    language: String,
-    leftHanded: Boolean
-) {
-    val strings = LocalStrings.current
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (leftHanded) Arrangement.Start else Arrangement.End
-    ) {
-        Box(
-            modifier = Modifier
-                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(SabeelColors.CounterWhite.copy(alpha = 0.10f))
-                .border(1.dp, SabeelColors.BorderIdle, RoundedCornerShape(14.dp))
-                .semantics {
-                    contentDescription = strings.countUndo
-                    onClick(label = strings.countDecrementAction) { onDecrement(); true }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = { onDecrement() })
-                }
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "−" + 1.toLocalizedNumerals(language),
-                style = MaterialTheme.typography.labelLarge,
-                color = SabeelColors.TextSecondary
-            )
-        }
-    }
 }
