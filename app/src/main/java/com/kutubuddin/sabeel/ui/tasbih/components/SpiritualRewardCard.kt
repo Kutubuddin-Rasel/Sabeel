@@ -8,13 +8,20 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Eco
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,35 +69,74 @@ fun SpiritualRewardCard(
         label = "SpiritualRewardTransition",
         modifier = modifier
     ) { (rewardText, ref) ->
-        // FIX 5: no fill, no leading accent stripe — the reward is quiet
-        // supporting text below the counter, not a card competing with it.
+        // FIX 7: Typographic overhaul matching the profound weight of Dhikr.
+        // Introduces an eyebrow label, classical serif italics for the promise,
+        // and a subtle visual break before the theological citation.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
                 .semantics {  },  // Readable by TalkBack as plain text container
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = strings.countReward,
-                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
-                color = SabeelColors.SageGreen,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(6.dp))
+            // Eyebrow Label
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Eco,
+                    contentDescription = null,
+                    tint = SabeelColors.SageGreen.copy(alpha = 0.5f),
+                    modifier = Modifier.size(12.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = strings.countReward.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.5.sp
+                    ),
+                    color = SabeelColors.SageGreen.copy(alpha = 0.5f),
+                    textAlign = TextAlign.Center
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Main Reward Text (Poetic, Serif, Italic)
             Text(
                 text = rewardText,
-                style = MaterialTheme.typography.bodyMedium,
-                color = SabeelColors.TextSecondary,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontFamily = FontFamily.Serif,
+                    fontStyle = FontStyle.Italic,
+                    lineHeight = 34.sp
+                ),
+                color = SabeelColors.CounterWhite.copy(alpha = 0.95f),
                 textAlign = TextAlign.Center
             )
+            
             if (!ref.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Minimalist Divider ( —   — )
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.width(18.dp).height(1.dp).background(SabeelColors.SageGreen.copy(alpha = 0.25f)))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Box(modifier = Modifier.width(18.dp).height(1.dp).background(SabeelColors.SageGreen.copy(alpha = 0.25f)))
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Subdued Citation
                 Text(
                     text = ref,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SabeelColors.TextSecondary,
-                    letterSpacing = 0.5.sp,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = SabeelColors.SageGreen.copy(alpha = 0.6f),
+                    letterSpacing = 0.8.sp,
                     textAlign = TextAlign.Center
                 )
             }
