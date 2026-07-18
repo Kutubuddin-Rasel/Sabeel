@@ -31,9 +31,9 @@ data class TasbihState(
     val smartFlowVariant: SmartFlowVariant = SmartFlowVariant.CLASSIC,
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
-    val isPocketModeActive: Boolean = false,
     val error: String? = null,
     val sessionOrigin: SessionOrigin = SessionOrigin.LIBRARY,
+    val isTransitioning: Boolean = false,
     // THREAD-02: hapticStrength is part of atomic state — no @Volatile field needed.
     // Updated via the 7-flow combine in TasbihViewModel.observeRepositoryState().
     val hapticStrength: HapticStrength = HapticStrength.MEDIUM
@@ -47,10 +47,9 @@ sealed interface TasbihIntent {
     object Increment : TasbihIntent
     object Decrement : TasbihIntent
     object Reset : TasbihIntent
-    data class SetDhikr(val key: String, val target: Int? = null, val origin: SessionOrigin = SessionOrigin.LIBRARY) : TasbihIntent
+    data class SetDhikr(val key: String, val target: Int? = null, val origin: SessionOrigin = SessionOrigin.LIBRARY, val preserveCount: Boolean = false) : TasbihIntent
     data class SetSmartFlowEnabled(val enabled: Boolean) : TasbihIntent
     data class SetSmartFlowVariant(val variant: SmartFlowVariant) : TasbihIntent
-    data class SetPocketModeActive(val active: Boolean) : TasbihIntent
     object SyncProgress : TasbihIntent
     object ClearError : TasbihIntent
 }
@@ -61,12 +60,10 @@ sealed interface TasbihIntent {
  */
 sealed interface TasbihSideEffect {
     data class PlayHaptic(val type: HapticType, val strength: HapticStrength) : TasbihSideEffect
-    object ShowCelebration : TasbihSideEffect
+    object TriggerGoldenBloom : TasbihSideEffect
+    object AutoProgressDailyGoal : TasbihSideEffect
+    object ShowSessionSummary : TasbihSideEffect
     data class ShowToast(val message: String) : TasbihSideEffect
-    /** Instructs MainActivity to start the PocketModeService foreground service. */
-    object StartPocketModeService : TasbihSideEffect
-    /** Instructs MainActivity to stop the PocketModeService foreground service. */
-    object StopPocketModeService : TasbihSideEffect
 }
 
 /**
