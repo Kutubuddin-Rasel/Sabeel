@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -17,7 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -209,7 +211,9 @@ fun SabeelNavHost(
                         fadeIn(tween(SHEET_ENTER_MS, easing = EaseOutCubic))
                     },
                     exitTransition = {
-                        fadeOut(tween(SHEET_EXIT_MS, easing = EaseInCubic))
+                        // SMOOTH-06: iOS card-dismiss — keep background fully opaque under
+                        // incoming modal sheets (like WIRD_EDIT) to prevent dark flashes.
+                        ExitTransition.None
                     },
                     popEnterTransition = {
                         // SMOOTH-06: iOS card-dismiss — background is always rendered under the
@@ -323,16 +327,20 @@ fun SabeelNavHost(
                         viewModel = tasbihViewModel,
                         hapticEngine = hapticEngine,
                         language = language,
-                        showStreaks = settingsState.showStreaks,
-                        leftHanded = settingsState.leftHanded,
+                        showTransliteration = settingsState.translitEnabled,
                         isDailyGoalFinished = isDailyGoalFinished,
                         isDhikrInDailyGoal = isDhikrInDailyGoal,
                         nextWirdItemName = nextWirdItem?.displayName?.get(language),
-                        onContinueWird = nextWirdItem?.let { item ->
-                            {
-                                tasbihViewModel.processIntent(
-                                    TasbihIntent.SetDhikr(item.dhikrKey, item.target, SessionOrigin.DAILY_GOAL)
-                                )
+                        onContinueWird = {
+                            if (settingsState.autoProgressWird) {
+                                val currentHomeState = homeViewModel.state.value
+                                val nextKey = currentHomeState.wird.nextItemKey
+                                val nextTarget = currentHomeState.wird.nextItemTarget
+                                if (nextKey != null && nextTarget != null) {
+                                    tasbihViewModel.processIntent(
+                                        TasbihIntent.SetDhikr(nextKey, nextTarget, SessionOrigin.DAILY_GOAL, preserveCount = true)
+                                    )
+                                }
                             }
                         },
                         onNavigateHome = {
@@ -386,6 +394,7 @@ fun SabeelNavHost(
                 ) {
                     com.kutubuddin.sabeel.ui.dhikr.AsmaUlHusnaGalleryScreen(
                         language = language,
+                        showTransliteration = settingsState.translitEnabled,
                         onBack = { navController.popBackStack() },
                         onCountNow = { key ->
                             tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key))

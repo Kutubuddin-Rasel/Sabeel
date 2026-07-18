@@ -5,10 +5,12 @@ import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Adjust
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -44,8 +46,8 @@ sealed class SabeelTab(
     object Settings : SabeelTab(
         graphRoute = "settings_graph",
         startRoute = "settings",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Filled.Settings
+        icon = Icons.Outlined.Tune,
+        selectedIcon = Icons.Filled.Tune
     )
 
     companion object {
