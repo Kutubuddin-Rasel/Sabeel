@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
 import com.kutubuddin.sabeel.ui.theme.SabeelMotion
+import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 
 /**
  * Canonical section header used across the app.
@@ -89,6 +90,7 @@ fun CollapsibleSectionHeader(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalStrings.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -110,7 +112,7 @@ fun CollapsibleSectionHeader(
         )
         Icon(
             imageVector = Icons.Filled.ExpandMore,
-            contentDescription = if (isExpanded) "Collapse" else "Expand",
+            contentDescription = if (isExpanded) strings.a11yCollapse else strings.a11yExpand,
             tint = SabeelColors.TextSecondary,
             modifier = Modifier
                 .size(24.dp)
