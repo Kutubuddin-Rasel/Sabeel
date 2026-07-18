@@ -9,6 +9,10 @@ import com.kutubuddin.sabeel.domain.repository.TasbihCounterObserver
 import com.kutubuddin.sabeel.domain.repository.WirdRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.CoroutineDispatcher
+import com.kutubuddin.sabeel.di.DefaultDispatcher
+import kotlinx.collections.immutable.toImmutableList
 import javax.inject.Inject
 
 /**
@@ -25,20 +29,23 @@ class ObserveWirdProgress @Inject constructor(
     private val wirdRepository: WirdRepository,
     private val dhikrRepository: DhikrRepository,
     private val sessionRepository: SessionRepository,
-    private val counterObserver: TasbihCounterObserver
+    private val counterObserver: TasbihCounterObserver,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) {
     operator fun invoke(dateKey: String): Flow<WirdProgress> = combine(
         wirdRepository.observeWird(),
         dhikrRepository.getAllDhikr(),
         sessionRepository.getCountsByKeyForDate(dateKey),
         counterObserver.activeDhikr,
-        counterObserver.activeCount
-    ) { plan, catalog, savedByKey, activeDhikr, activeCount ->
+        combine(counterObserver.activeCount, counterObserver.sessionStartCount) { a, b -> a to b }
+    ) { plan, catalog, savedByKey, activeDhikr, countPair ->
+        val activeCount = countPair.first
+        val startCount = countPair.second
         val catalogByKey = catalog.associateBy { it.key }
         val items = plan.mapNotNull { item ->
             val d = catalogByKey[item.dhikrKey] ?: return@mapNotNull null
             val saved = savedByKey[item.dhikrKey] ?: 0
-            val live = liveContribution(item.dhikrKey, activeDhikr.key, activeCount, activeDhikr.target)
+            val live = liveContribution(item.dhikrKey, activeDhikr.key, activeCount, startCount)
             WirdProgressItem(
                 dhikrKey = item.dhikrKey,
                 displayName = d.displayName,
@@ -49,6 +56,6 @@ class ObserveWirdProgress @Inject constructor(
                 position = item.position
             )
         }
-        WirdProgress(items)
-    }
+        WirdProgress(items.toImmutableList())
+    }.flowOn(defaultDispatcher)
 }
