@@ -8,6 +8,7 @@ import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.R
 
@@ -204,7 +205,7 @@ private fun scaleTypography(scale: Int): Typography {
     )
 }
 
-private val TypographyBengali = scaleTypography(1)
+private val TypographyBengali = scaleTypography(2)
 
 /**
  * Dynamically scales the entire typography set for languages with smaller
@@ -228,6 +229,10 @@ val arabicStyle = TextStyle(
     fontWeight = FontWeight.Normal,
     fontSize = 22.sp,
     lineHeight = 42.sp,
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Proportional,
+        trim = LineHeightStyle.Trim.Both
+    ),
     // FIX 11: keep font padding so tall tashkīl stacks aren't clipped at the
     // top of the line box (includeFontPadding = false would trim them).
     platformStyle = PlatformTextStyle(includeFontPadding = true)
