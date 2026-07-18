@@ -4,8 +4,16 @@ import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.domain.model.WirdGoalHintState
 import com.kutubuddin.sabeel.domain.model.WirdProgress
 
+import androidx.compose.runtime.Immutable
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableSet
+
+@Immutable
 data class HomeState(
-    val todaysSessions: List<SessionSummary> = emptyList(),
+    val todaysSessions: ImmutableList<SessionSummary> = persistentListOf(),
     val totalToday: Int = 0,
     val wird: WirdSummary = WirdSummary(),
     val currentStreak: Int = 0,
@@ -13,7 +21,6 @@ data class HomeState(
     val totalSessionCount: Int = 0,
     val resumeSession: ResumeSession? = null,
     val greeting: GreetingType = GreetingType.DEFAULT,
-    val showStreaks: Boolean = true,
     val language: String = "en",
     // JANK-04: date label owned by ViewModel and refreshed by a midnight-aligned ticker.
     // Previously computed in HomeScreen via remember(state.language) { LocalDate.now()... }
@@ -22,6 +29,7 @@ data class HomeState(
 )
 
 /** Non-null only when the user has an in-progress (incomplete) session. */
+@Immutable
 data class ResumeSession(
     val dhikrKey: String,
     val displayName: LocalizedText,
@@ -37,7 +45,9 @@ data class ResumeSession(
  * is a domain lookup, not rendering — both concerns are handled once, in
  * [HomeViewModel], never inside a Composable.
  */
+@Immutable
 data class SessionSummary(
+    val id: Long,
     val dhikrKey: String,
     val displayName: LocalizedText,
     val count: Int,
@@ -45,6 +55,7 @@ data class SessionSummary(
 )
 
 /** Lean wird view for the Home summary card — numbers only, no item list. */
+@Immutable
 data class WirdSummary(
     val completed: Int = 0,
     val total: Int = 0,
@@ -58,7 +69,7 @@ data class WirdSummary(
     // without holding its own WirdViewModel. By including them here, WirdViewModel can be
     // scoped to home_graph and the Count tab reads HomeViewModel.state.wird instead.
     val allComplete: Boolean = false,
-    val wirdItemKeys: Set<String> = emptySet()
+    val wirdItemKeys: ImmutableSet<String> = persistentSetOf()
 )
 
 fun WirdProgress.toSummary(): WirdSummary {
@@ -73,6 +84,6 @@ fun WirdProgress.toSummary(): WirdSummary {
         nextItemKey = next?.dhikrKey,
         nextItemTarget = next?.target,
         allComplete = allComplete,
-        wirdItemKeys = items.map { it.dhikrKey }.toSet()
+        wirdItemKeys = items.map { it.dhikrKey }.toImmutableSet()
     )
 }

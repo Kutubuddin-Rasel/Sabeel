@@ -19,6 +19,7 @@ import com.kutubuddin.sabeel.domain.repository.TasbihCounterObserver
 import com.kutubuddin.sabeel.domain.usecase.ObserveWirdProgress
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,7 +30,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineDispatcher
+import com.kutubuddin.sabeel.di.DefaultDispatcher
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -58,7 +62,8 @@ class HomeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val counterObserver: TasbihCounterObserver,
     private val streakObserver: StreakObserver,
-    private val observeWirdProgress: ObserveWirdProgress
+    private val observeWirdProgress: ObserveWirdProgress,
+    @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     // THREAD-04: reactive date — updates exactly at midnight via system broadcast.
@@ -128,11 +133,11 @@ class HomeViewModel @Inject constructor(
             // per dhikr target completion. 300ms is imperceptible lag on the Home tab;
             // the Tasbih screen itself reads the atomic _activeCount directly and is instant.
             counterObserver.activeCount.debounce(300L),
+            counterObserver.sessionStartCount.debounce(300L),
             counterObserver.activeDhikr,
-            streakObserver.streak,
-            settingsRepository.showStreaks
-        ) { wird, lastCount, lastDhikr, streak, showStreaks ->
-            listOf<Any?>(wird, lastCount, lastDhikr, streak, showStreaks)
+            streakObserver.streak
+        ) { wird, lastCount, startCount, lastDhikr, streak ->
+            listOf<Any?>(wird, lastCount, startCount, lastDhikr, streak)
         }
     }
 
@@ -151,9 +156,9 @@ class HomeViewModel @Inject constructor(
 
         val wird        = c[0] as WirdSummary
         val lastCount   = c[1] as Int
-        val lastDhikr   = c[2] as ActiveDhikr
-        val streak      = c[3] as? Streak
-        val showStreaks = c[4] as Boolean
+        val startCount  = c[2] as Int
+        val lastDhikr   = c[3] as ActiveDhikr
+        val streak      = c[4] as? Streak
 
         val greeting = resolveGreeting()
         val target = lastDhikr.target
@@ -168,19 +173,18 @@ class HomeViewModel @Inject constructor(
         } else null
 
         HomeState(
-            todaysSessions    = sessions,
-            totalToday        = displayedToday(totalToday, lastCount, target),
+            todaysSessions    = sessions.toImmutableList(),
+            totalToday        = displayedToday(totalToday, lastCount, startCount),
             wird              = wird,
             currentStreak     = displayedStreak(streak?.count ?: 0, lastCount),
-            totalAllTime      = displayedAllTime(totalAllTime, lastCount, target),
+            totalAllTime      = displayedAllTime(totalAllTime, lastCount, startCount),
             totalSessionCount = totalSessions,
             resumeSession     = resume,
             greeting          = greeting,
-            showStreaks        = showStreaks,
             language          = language,
             todayLabel        = todayLabel
         )
-    }.stateIn(
+    }.flowOn(defaultDispatcher).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = HomeState()
@@ -197,11 +201,11 @@ class HomeViewModel @Inject constructor(
     }
 
     companion object {
-        internal fun displayedToday(savedToday: Int, activeCount: Int, target: Int): Int =
-            savedToday + if (activeCount in 1 until target) activeCount else 0
+        internal fun displayedToday(savedToday: Int, activeCount: Int, startCount: Int): Int =
+            savedToday + if (activeCount > startCount) (activeCount - startCount) else 0
 
-        internal fun displayedAllTime(savedAllTime: Int, activeCount: Int, target: Int): Int =
-            savedAllTime + if (activeCount in 1 until target) activeCount else 0
+        internal fun displayedAllTime(savedAllTime: Int, activeCount: Int, startCount: Int): Int =
+            savedAllTime + if (activeCount > startCount) (activeCount - startCount) else 0
 
         internal fun displayedStreak(streakCount: Int, activeCount: Int): Int =
             if (streakCount == 0 && activeCount > 0) 1 else streakCount
@@ -210,6 +214,7 @@ class HomeViewModel @Inject constructor(
     private fun resolveGreeting(): GreetingType = greetingTypeForHour(LocalTime.now().hour)
 
     private fun DhikrSessionEntity.toSummary(): SessionSummary = SessionSummary(
+        id          = id,
         dhikrKey    = dhikrKey,
         displayName = DhikrCatalog.displayNameFor(dhikrKey),
         count       = count,

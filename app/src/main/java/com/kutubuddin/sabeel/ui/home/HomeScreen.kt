@@ -42,11 +42,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.kutubuddin.sabeel.ui.components.AccentCard
 import com.kutubuddin.sabeel.ui.components.CollapsibleSectionHeader
 import com.kutubuddin.sabeel.ui.components.InfoCard
 import com.kutubuddin.sabeel.ui.components.ProgressFractionText
+import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.ui.components.SabeelSectionHeader
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.UiStrings
@@ -102,8 +104,7 @@ fun HomeContent(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .background(SabeelColors.Background),
+            .fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
@@ -130,48 +131,56 @@ fun HomeContent(
 
         // ── Primary action (hero, above the fold) ─────────────────────────────
         // AnimatedContent crossfades between the four hero variants (Resume /
-        // GoalComplete / SmartPlay / HeroStart) keyed on `heroCardKind`. Before
+        // GoalComplete / SmartPlay / HeroStart) keyed on `heroCardState`. Before
         // this fix, each branch was a *different composable in the same
         // LazyColumn slot* — Compose has no way to animate between unrelated
         // composable identities, so finishing a session and coming back to
         // Home was a hard cut. Modifier.animateItem() on top additionally
         // animates this item's own position if something above it changes size.
-        val heroCardKind = when {
-            state.resumeSession != null -> "resume"
-            !state.wird.isEmpty && state.wird.completed == state.wird.total -> "complete"
-            !state.wird.isEmpty -> "smart_play"
-            else -> "hero_start"
+        // JANK-FIX: We use a sealed class HeroCardState as targetState to capture
+        // the required data (like resumeSession) at the moment the state is determined.
+        // This prevents NPEs when AnimatedContent recomposes outgoing content with
+        // a newer, null state.
+        val heroCardState = when {
+            state.resumeSession != null -> HeroCardState.Resume(state.resumeSession)
+            !state.wird.isEmpty && state.wird.completed == state.wird.total -> HeroCardState.GoalComplete
+            !state.wird.isEmpty && state.wird.nextItemName != null -> HeroCardState.SmartPlay(
+                nextItemName = state.wird.nextItemName,
+                nextItemKey = state.wird.nextItemKey,
+                nextItemTarget = state.wird.nextItemTarget
+            )
+            else -> HeroCardState.HeroStart(hasProgressToday = state.todaysSessions.isNotEmpty())
         }
         item(key = "hero_card") {
             AnimatedContent(
-                targetState = heroCardKind,
+                targetState = heroCardState,
                 transitionSpec = {
                     fadeIn(tween(SabeelMotion.Duration.HeroCardCrossfadeIn)) togetherWith
                         fadeOut(tween(SabeelMotion.Duration.HeroCardCrossfadeOut))
                 },
                 modifier = Modifier.animateItem(),
                 label = "home_hero_card"
-            ) { kind ->
-                when (kind) {
-                    "resume" -> ResumeCard(
-                        session = state.resumeSession!!,
+            ) { cardState ->
+                when (cardState) {
+                    is HeroCardState.Resume -> ResumeCard(
+                        session = cardState.session,
                         language = state.language,
-                        onClick = { onResumeCounting(state.resumeSession.dhikrKey, state.resumeSession.target) }
+                        onClick = { onResumeCounting(cardState.session.dhikrKey, cardState.session.target) }
                     )
-                    "complete" -> GoalCompleteCard(
+                    HeroCardState.GoalComplete -> GoalCompleteCard(
                         onStart = { onResumeCounting(null, null) }
                     )
-                    "smart_play" -> SmartPlayCard(
-                        nextItemName = state.wird.nextItemName!!.get(state.language),
-                        onStart = { onResumeCounting(state.wird.nextItemKey, state.wird.nextItemTarget) }
+                    is HeroCardState.SmartPlay -> SmartPlayCard(
+                        nextItemName = cardState.nextItemName.get(state.language),
+                        onStart = { onResumeCounting(cardState.nextItemKey, cardState.nextItemTarget) }
                     )
-                    else -> HeroStartCard(
+                    is HeroCardState.HeroStart -> HeroStartCard(
                         onStart = { onResumeCounting(null, null) },
                         // IX-09: this card used to read "Begin today's dhikr" even
                         // right after finishing the first session of the day (no
                         // *in-progress* session to resume, but clearly not a
                         // zero-progress day either). Acknowledge it instead.
-                        hasProgressToday = state.todaysSessions.isNotEmpty()
+                        hasProgressToday = cardState.hasProgressToday
                     )
                 }
             }
@@ -206,7 +215,7 @@ fun HomeContent(
             if (isSessionsExpanded) {
                 items(
                     items = state.todaysSessions,
-                    key = { session -> "${session.dhikrKey}_${session.count}_${session.isComplete}" }
+                    key = { session -> session.id }
                 ) { session ->
                     SessionRow(
                         session = session,
@@ -336,32 +345,30 @@ private fun StreakGoalCard(state: HomeState, onOpenWird: () -> Unit, modifier: M
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if (state.showStreaks) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(Icons.Outlined.Spa, contentDescription = null,
-                    tint = SabeelColors.AccentTeal, modifier = Modifier.size(18.dp))
-                Text(strings.homeConsistency, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
-                Spacer(Modifier.weight(1f))
-                val streakDigits = state.currentStreak.toLocalizedNumerals(state.language)
-                Text(
-                    text = when {
-                        // IX-07: "0 days" on a scoreboard reads as a deficit,
-                        // whether this is a brand-new install or a streak
-                        // that just broke. "Start today" is true either way
-                        // and doesn't frame either case as a failure.
-                        state.currentStreak == 0 -> strings.homeStreakStart
-                        state.currentStreak == 1 -> strings.homeDayOne.format(streakDigits)
-                        else -> strings.homeDayOther.format(streakDigits)
-                    },
-                    style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary
-                )
-            }
-            HorizontalDivider(color = SabeelColors.Divider)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(Icons.Outlined.Spa, contentDescription = null,
+                tint = SabeelColors.AccentTeal, modifier = Modifier.size(18.dp))
+            Text(strings.homeConsistency, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
+            Spacer(Modifier.weight(1f))
+            val streakDigits = state.currentStreak.toLocalizedNumerals(state.language)
+            Text(
+                text = when {
+                    // IX-07: "0 days" on a scoreboard reads as a deficit,
+                    // whether this is a brand-new install or a streak
+                    // that just broke. "Start today" is true either way
+                    // and doesn't frame either case as a failure.
+                    state.currentStreak == 0 -> strings.homeStreakStart
+                    state.currentStreak == 1 -> strings.homeDayOne.format(streakDigits)
+                    else -> strings.homeDayOther.format(streakDigits)
+                },
+                style = MaterialTheme.typography.titleMedium, color = SabeelColors.TextPrimary
+            )
         }
+        HorizontalDivider(color = SabeelColors.Divider)
 
         // 3B: Wird progress section — the ONLY tappable part of this card.
         // Clicking it opens WirdScreen. The streak section above is intentionally
@@ -542,6 +549,17 @@ private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false
             }
         }
     }
+}
+
+private sealed class HeroCardState {
+    data class Resume(val session: ResumeSession) : HeroCardState()
+    object GoalComplete : HeroCardState()
+    data class SmartPlay(
+        val nextItemName: LocalizedText,
+        val nextItemKey: String?,
+        val nextItemTarget: Int?
+    ) : HeroCardState()
+    data class HeroStart(val hasProgressToday: Boolean) : HeroCardState()
 }
 
 @Composable
