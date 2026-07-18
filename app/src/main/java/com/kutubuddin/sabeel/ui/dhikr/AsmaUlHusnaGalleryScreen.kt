@@ -31,6 +31,7 @@ import com.kutubuddin.sabeel.ui.theme.arabicStyle
 @Composable
 fun AsmaUlHusnaGalleryScreen(
     language: String,
+    showTransliteration: Boolean = true,
     onBack: () -> Unit,
     onCountNow: (key: String) -> Unit
 ) {
@@ -60,6 +61,7 @@ fun AsmaUlHusnaGalleryScreen(
                 AsmaUlHusnaGridCell(
                     item = item,
                     language = language,
+                    showTransliteration = showTransliteration,
                     // animateItem() gives each cell a fade+placement slide-in.
                     // On a 3-col grid this produces a natural top-to-bottom
                     // stagger as rows of 3 render sequentially.
@@ -75,6 +77,7 @@ fun AsmaUlHusnaGalleryScreen(
 private fun AsmaUlHusnaGridCell(
     item: DhikrItem,
     language: String,
+    showTransliteration: Boolean = true,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -98,14 +101,16 @@ private fun AsmaUlHusnaGridCell(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = item.transliteration?.get(language) ?: "",
-            color = SabeelColors.TextSecondary,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
+        if (showTransliteration) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = item.transliteration?.get(language) ?: "",
+                color = SabeelColors.TextSecondary,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
