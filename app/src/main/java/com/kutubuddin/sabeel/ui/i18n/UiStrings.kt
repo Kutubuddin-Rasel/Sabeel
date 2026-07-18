@@ -5,6 +5,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.LayoutDirection
 import com.kutubuddin.sabeel.domain.model.DhikrCategory
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Resolved, per-language chrome strings — the type-safe bundle composables read
  * via [LocalStrings]. Grows one field per string as screens migrate.
@@ -12,10 +14,14 @@ import com.kutubuddin.sabeel.domain.model.DhikrCategory
  * The compiler keeps this in sync with [UiText.resolve]: adding a field here
  * without filling it there is a compile error, and vice-versa.
  */
+@Immutable
 data class UiStrings(
     // ── Generic navigation / chrome a11y ──────────────
     val a11yBack: String,
     val a11yDismiss: String,
+    val a11yDelete: String,
+    val a11yExpand: String,
+    val a11yCollapse: String,
     // ── Bottom navigation ─────────────────────────────
     val navHome: String,
     val navCount: String,
@@ -105,17 +111,10 @@ data class UiStrings(
     val settingsHapticLight: String,
     val settingsHapticMedium: String,
     val settingsHapticStrong: String,
-    val settingsLeftHanded: String,
-    val settingsLeftHandedDesc: String,
+
     val settingsTranslit: String,
     val settingsTranslitDesc: String,
-    val settingsSound: String,
-    val settingsSoundDesc: String,
-    val settingsAutoReset: String,
-    val settingsAutoResetDesc: String,
-    val settingsShowStreaks: String,
-    val settingsShowStreaksDescOn: String,
-    val settingsShowStreaksDescOff: String,
+
     val settingsAutoProgressWird: String,
     val settingsAutoProgressWirdDesc: String,
     val settingsSmartFlow: String,
@@ -134,6 +133,7 @@ data class UiStrings(
     val dhikrCountNow: String,
     val dhikrNoResults: String,    // template: "No dhikr found for \"%1$s\""
     val dhikrSearchHint: String,
+    val dhikrSequenceLabel: String,   // NEW — template: "%1$s-step sequence"
     // ── Dhikr categories (resolved via categoryLabel) ──
     val catAfterPrayer: String,
     val catDaily: String,
@@ -175,6 +175,6 @@ data class UiStrings(
 val LocalStrings: ProvidableCompositionLocal<UiStrings> =
     staticCompositionLocalOf { UiText.resolve("en") }
 
-/** Urdu is right-to-left; English and Bengali are left-to-right. */
+/** English and Bengali are left-to-right. */
 fun layoutDirectionFor(lang: String): LayoutDirection =
-    if (lang == "ur") LayoutDirection.Rtl else LayoutDirection.Ltr
+    LayoutDirection.Ltr
