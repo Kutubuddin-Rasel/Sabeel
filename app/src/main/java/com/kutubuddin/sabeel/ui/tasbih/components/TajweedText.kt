@@ -25,6 +25,7 @@ import com.kutubuddin.sabeel.ui.theme.arabicStyle
 @Composable
 fun TajweedText(
     arabicText: String,
+    showTransliteration: Boolean = true,
     transliteration: String? = null,
     meaning: String? = null,
     modifier: Modifier = Modifier
@@ -51,7 +52,7 @@ fun TajweedText(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(12.dp))
-            if (trans != null && trans.isNotBlank()) {
+            if (showTransliteration && trans != null && trans.isNotBlank()) {
                 Text(
                     text = trans,
                     style = MaterialTheme.typography.displaySmall,

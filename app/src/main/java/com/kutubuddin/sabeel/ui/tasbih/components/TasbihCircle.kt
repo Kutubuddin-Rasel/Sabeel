@@ -8,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +57,7 @@ import kotlinx.coroutines.launch
  * @param target      Target to complete (33, 34, 100, etc.)
  * @param onTap       Called on each confirmed tap to increment the count.
  * @param onLongPress Called on long-press to reset. Optional.
+ * @param onDecrement Called on swipe-down to undo. Optional.
  * @param scale       Reserved for external override (defaults to 1f; internal
  *                    pressScale takes precedence via graphicsLayer).
  * @param diameter    Circle diameter; default 280.dp
@@ -64,8 +66,11 @@ import kotlinx.coroutines.launch
 fun TasbihCircle(
     count: Int,
     target: Int,
+    triggerGoldenBloom: Boolean = false,
+    onGoldenBloomEnd: () -> Unit = {},
     onTap: () -> Unit,
     onLongPress: (() -> Unit)? = null,
+    onDecrement: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     scale: Float = 1f,
     diameter: Dp = 280.dp,
@@ -137,6 +142,63 @@ fun TasbihCircle(
     // cancelled the outer scope, not the two inner launch children.
     val ringJob  = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
+    // ── Layer 5: Golden Bloom — triggers on milestone (33, 100, etc.) ─────────
+    val bloomRadius = remember { Animatable(0f) }
+    val bloomAlpha  = remember { Animatable(0f) }
+    val bloomSweep  = remember { Animatable(0f) }
+    
+    val goldStartColor = SabeelColors.GoldPrimary
+    val goldEndColor   = SabeelColors.GoldLuminous
+    
+    val bloomGradient = remember(goldStartColor, goldEndColor) {
+        Brush.sweepGradient(
+            colorStops = arrayOf(
+                0.0f to goldStartColor,
+                1.0f to goldEndColor
+            )
+        )
+    }
+
+    LaunchedEffect(triggerGoldenBloom) {
+        if (triggerGoldenBloom) {
+            bloomRadius.snapTo(ringMaxRadius) // Start at arc boundary
+            bloomAlpha.snapTo(0.85f)
+            bloomSweep.snapTo(0f)
+            
+            launch {
+                bloomRadius.animateTo(
+                    targetValue   = ringMaxRadius + diameterPx * 0.5f,
+                    animationSpec = tween(
+                        durationMillis = 800,
+                        easing         = FastOutSlowInEasing
+                    )
+                )
+            }
+            launch {
+                bloomAlpha.animateTo(
+                    targetValue   = 0f,
+                    animationSpec = tween(
+                        durationMillis = 800,
+                        easing         = LinearEasing
+                    )
+                )
+            }
+            launch {
+                bloomSweep.animateTo(
+                    targetValue   = 360f,
+                    animationSpec = tween(
+                        durationMillis = 600,
+                        easing         = FastOutSlowInEasing
+                    )
+                )
+            }
+            
+            // Wait for 800ms
+            kotlinx.coroutines.delay(800)
+            onGoldenBloomEnd()
+        }
+    }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -147,62 +209,97 @@ fun TasbihCircle(
                 scaleX = pressScale.value * scale
                 scaleY = pressScale.value * scale
             }
-            // ── Gesture handler ───────────────────────────────────────────────
+            // ── Gesture handler: Swipe Down to Undo ───────────────────────────
             .pointerInput(Unit) {
+                var totalDragY = 0f
+                detectVerticalDragGestures(
+                    onDragStart = { _ -> totalDragY = 0f },
+                    onDragEnd = {
+                        if (totalDragY > 60f) { // Swipe threshold
+                            onDecrement?.invoke()
+                        }
+                    },
+                    onVerticalDrag = { change, dragAmount ->
+                        totalDragY += dragAmount
+                    }
+                )
+            }
+            // ── Gesture handler: Tap & Hold ───────────────────────────────────
+            .pointerInput(Unit) {
+                var wasReset = false
                 detectTapGestures(
                     onPress = { _ ->
-                        // Layer 3a — dip immediately on finger-down.
-                        val downJob = scope.launch {
+                        wasReset = false
+                        // Layer 3a — sequenced press animations and delayed reset
+                        val pressJob = scope.launch {
+                            // 1. Immediate dip on finger-down (PressFeedback)
                             pressScale.animateTo(
                                 targetValue   = 0.93f,
-                                // SabeelMotion.Spring.PressFeedback: NoBouncy+High — instantaneous dip.
                                 animationSpec = SabeelMotion.Spring.PressFeedback
                             )
+                            
+                            // 2. Slow, continuous shrink to indicate "keep holding to reset"
+                            pressScale.animateTo(
+                                targetValue   = 0.82f,
+                                animationSpec = tween(durationMillis = 2500, easing = FastOutSlowInEasing)
+                            )
+                            
+                            // 3. Reached 2.5s without being cancelled — trigger reset!
+                            wasReset = true
+                            onLongPress?.invoke()
+                            
+                            // 4. "Pop" back to 1f to visually confirm reset to the user
+                            pressScale.animateTo(
+                                targetValue   = 1f,
+                                animationSpec = SabeelMotion.Spring.PressRelease
+                            )
                         }
+
+                        // Wait until the user lifts their finger or drags out
                         tryAwaitRelease()
-                        // Cancel dip animation before spring-back — prevents the two
-                        // coroutines from fighting over pressScale mid-gesture.
-                        downJob.cancel()
-                        // Layer 3b — spring back (mild bounce = "releasing a bead")
+                        
+                        // User released finger. Cancel the press sequence (if it hasn't finished)
+                        pressJob.cancel()
+                        
+                        // Layer 3b — spring back if they let go before reset
                         scope.launch {
                             pressScale.animateTo(
                                 targetValue   = 1f,
-                                // SabeelMotion.Spring.PressRelease: 0.45 damping, one gentle rebound.
                                 animationSpec = SabeelMotion.Spring.PressRelease
                             )
                         }
                     },
                     onTap = { _ ->
-                        onTap()
-                        // SMOOTH-02: cancel any in-flight ring before starting a new one.
-                        // Previous approach used snapTo which only cancelled the outer Job,
-                        // leaving the two inner launch children still running.
-                        ringJob.value?.cancel()
-                        ringJob.value = scope.launch {
-                            ringRadius.snapTo(0f)
-                            ringAlpha.snapTo(0.55f)
-                            launch {
-                                ringRadius.animateTo(
-                                    targetValue   = ringMaxRadius,
-                                    // SabeelMotion.Duration.RingExpand: 600ms — extracted token.
-                                    animationSpec = tween(
-                                        durationMillis = SabeelMotion.Duration.RingExpand,
-                                        easing         = FastOutSlowInEasing
+                        // Only increment if we didn't just trigger a reset
+                        if (!wasReset) {
+                            onTap()
+                            // SMOOTH-02: cancel any in-flight ring before starting a new one.
+                            ringJob.value?.cancel()
+                            ringJob.value = scope.launch {
+                                ringRadius.snapTo(0f)
+                                ringAlpha.snapTo(0.55f)
+                                launch {
+                                    ringRadius.animateTo(
+                                        targetValue   = ringMaxRadius,
+                                        animationSpec = tween(
+                                            durationMillis = SabeelMotion.Duration.RingExpand,
+                                            easing         = FastOutSlowInEasing
+                                        )
                                     )
-                                )
-                            }
-                            launch {
-                                ringAlpha.animateTo(
-                                    targetValue   = 0f,
-                                    animationSpec = tween(
-                                        durationMillis = SabeelMotion.Duration.RingFade,
-                                        easing         = LinearEasing
+                                }
+                                launch {
+                                    ringAlpha.animateTo(
+                                        targetValue   = 0f,
+                                        animationSpec = tween(
+                                            durationMillis = SabeelMotion.Duration.RingFade,
+                                            easing         = LinearEasing
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
-                    },
-                    onLongPress = { _ -> onLongPress?.invoke() }
+                    }
+                    // onLongPress is completely removed. We handle it manually in onPress.
                 )
             }
             .clearAndSetSemantics {
@@ -253,6 +350,27 @@ fun TasbihCircle(
                     color  = arcStartColor.copy(alpha = ringAlpha.value),
                     radius = ringRadius.value,
                     style  = ringStroke
+                )
+            }
+            
+            // Layer 5 — Golden Bloom arc flash
+            if (bloomAlpha.value > 0f) {
+                // Expanding golden aura
+                drawCircle(
+                    color  = goldStartColor.copy(alpha = bloomAlpha.value * 0.5f),
+                    radius = bloomRadius.value,
+                    style  = Stroke(width = ringStrokeWidth * 2, cap = StrokeCap.Round)
+                )
+                
+                // Fast sweep arc flash
+                drawArc(
+                    brush      = bloomGradient,
+                    startAngle = -90f,
+                    sweepAngle = bloomSweep.value,
+                    useCenter  = false,
+                    topLeft    = topLeft,
+                    size       = arcSize,
+                    style      = mainStroke
                 )
             }
         }
