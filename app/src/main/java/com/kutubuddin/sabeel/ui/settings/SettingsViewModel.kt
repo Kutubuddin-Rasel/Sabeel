@@ -23,9 +23,8 @@ class SettingsViewModel @Inject constructor(
             theme, lang, haptics, time -> listOf(theme, lang, haptics, time)
         },
         combine(
-            repository.translitEnabled, repository.autoReset, repository.soundEnabled,
-            repository.showStreaks, repository.autoProgressWird, repository.isSmartFlowEnabled,
-            repository.dailyReminderEnabled, repository.leftHanded
+            repository.translitEnabled, repository.autoProgressWird, repository.isSmartFlowEnabled,
+            repository.dailyReminderEnabled, repository.isOnboardingComplete
         ) { args: Array<Boolean> -> args.toList() }
     ) { strings, booleans ->
         SettingsState(
@@ -34,13 +33,10 @@ class SettingsViewModel @Inject constructor(
             hapticsLevel    = strings[2],
             dailyReminderTime = strings[3],
             translitEnabled = booleans[0],
-            autoReset       = booleans[1],
-            soundEnabled    = booleans[2],
-            showStreaks     = booleans[3],
-            autoProgressWird = booleans[4],
-            isSmartFlowEnabled = booleans[5],
-            dailyReminderEnabled = booleans[6],
-            leftHanded      = booleans[7]
+            autoProgressWird = booleans[1],
+            isSmartFlowEnabled = booleans[2],
+            dailyReminderEnabled = booleans[3],
+            isOnboardingComplete = booleans[4]
         )
     }.stateIn(
         scope = viewModelScope,
@@ -53,11 +49,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsIntent.SetTheme    -> repository.setTheme(intent.theme)
             is SettingsIntent.SetLanguage -> repository.setLanguage(intent.lang)
             is SettingsIntent.SetHaptics  -> repository.setHaptics(intent.level)
-            is SettingsIntent.SetLeftHanded -> repository.setLeftHanded(intent.on)
             is SettingsIntent.SetTranslit -> repository.setTranslitEnabled(intent.on)
-            is SettingsIntent.SetAutoReset-> repository.setAutoReset(intent.on)
-            is SettingsIntent.SetSoundOn  -> repository.setSoundEnabled(intent.on)
-            is SettingsIntent.SetShowStreaks -> repository.setShowStreaks(intent.on)
             is SettingsIntent.SetAutoProgressWird -> repository.setAutoProgressWird(intent.on)
             is SettingsIntent.SetSmartFlowEnabled -> repository.setSmartFlowEnabled(intent.on)
             is SettingsIntent.SetDailyReminderEnabled -> {
@@ -74,6 +66,7 @@ class SettingsViewModel @Inject constructor(
                     notificationScheduler.scheduleDailyReminder(intent.time)
                 }
             }
+            is SettingsIntent.SetOnboardingComplete -> repository.setOnboardingComplete(intent.complete)
         }
     }
 }

@@ -21,6 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kutubuddin.sabeel.ui.theme.SabeelColors
+import kotlinx.collections.immutable.ImmutableList
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.graphicsLayer
 import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 
 /**
@@ -98,18 +101,13 @@ fun SettingsBaseRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = SabeelColors.TextPrimary
                 )
                 if (description != null) {
                     Text(
                         text = description,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 11.5.sp
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
                         color = SabeelColors.TextHint,
                         modifier = Modifier.padding(top = 2.dp)
                     )
@@ -122,56 +120,57 @@ fun SettingsBaseRow(
     }
 }
 
-/**
- * A 4-dot intensity stepper for haptic magnitude.
- */
-@Composable
-fun SabeelIntensityStepper(
-    currentLevel: String,
-    onLevelSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val levels = listOf("off", "light", "medium", "strong")
-    val levelLabels = mapOf(
-        "off" to "Off",
-        "light" to "Light",
-        "medium" to "Medium",
-        "strong" to "Strong"
-    )
-    val currentIndex = levels.indexOf(currentLevel).coerceAtLeast(0)
+@Immutable
+data class SegmentOption(
+    val id: String,
+    val display: String,
+    val icon: ImageVector? = null
+)
 
+@Composable
+fun SettingsSegmentRow(
+    options: ImmutableList<SegmentOption>,
+    selected: String,
+    onSelect: (String) -> Unit
+) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 14.dp, end = 14.dp, bottom = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(start = 14.dp, end = 14.dp, bottom = 13.dp, top = 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
     ) {
-        levels.indices.forEach { index ->
-            val isOn = index <= currentIndex && currentLevel != "off"
-            val color by animateColorAsState(
-                targetValue = if (isOn) SabeelColors.AccentTeal else SabeelColors.SurfaceElevated,
-                label = "stepper_dot_color"
-            )
+        options.forEach { option ->
+            val isSelected = selected == option.id
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .background(color)
-                    .clickable { onLevelSelected(levels[index]) }
-            )
+                    .width(0.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (isSelected) SabeelColors.AccentTeal else SabeelColors.SurfaceElevated)
+                    .clickable { onSelect(option.id) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (option.icon != null) {
+                    Icon(
+                        imageVector = option.icon,
+                        contentDescription = option.display,
+                        modifier = Modifier.size(20.dp),
+                        tint = if (isSelected) SabeelColors.OnAccentTeal else SabeelColors.TextSecondary
+                    )
+                } else {
+                    Text(
+                        text = option.display,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+                        ),
+                        color = if (isSelected) SabeelColors.OnAccentTeal else SabeelColors.TextSecondary,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
-        Text(
-            text = levelLabels[currentLevel] ?: "Medium",
-            style = MaterialTheme.typography.labelLarge.copy(
-                fontSize = 11.5.sp,
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = SabeelColors.TextSecondary,
-            modifier = Modifier.widthIn(min = 52.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Right
-        )
     }
 }
 
@@ -186,14 +185,17 @@ fun SabeelSwitch(
 ) {
     val thumbPosition by animateFloatAsState(
         targetValue = if (checked) 19f else 2f,
+        animationSpec = com.kutubuddin.sabeel.ui.theme.SabeelMotion.Spring.SwitchSnap,
         label = "switch_thumb_pos"
     )
     val trackColor by animateColorAsState(
         targetValue = if (checked) SabeelColors.AccentTeal else SabeelColors.SurfaceElevated,
+        animationSpec = com.kutubuddin.sabeel.ui.theme.SabeelMotion.Tween.ColorTransition,
         label = "switch_track_color"
     )
     val thumbColor by animateColorAsState(
         targetValue = if (checked) SabeelColors.OnAccentTeal else SabeelColors.TextSecondary,
+        animationSpec = com.kutubuddin.sabeel.ui.theme.SabeelMotion.Tween.ColorTransition,
         label = "switch_thumb_color"
     )
 
@@ -212,7 +214,7 @@ fun SabeelSwitch(
     ) {
         Box(
             modifier = Modifier
-                .offset(x = thumbPosition.dp)
+                .graphicsLayer { translationX = thumbPosition.dp.toPx() }
                 .size(19.dp)
                 .clip(CircleShape)
                 .background(thumbColor),
