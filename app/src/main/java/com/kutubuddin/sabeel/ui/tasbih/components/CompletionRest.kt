@@ -53,6 +53,8 @@ enum class CompletionContext {
     FLOW,
     /** Completed the final dhikr of the entire daily goal. */
     VICTORY,
+    /** Completed the daily goal from a Library flow (transient, auto-dismissing, non-blocking). */
+    VICTORY_TRANSIENT,
     /** Doing an ad-hoc dhikr outside of the daily goal. */
     AD_HOC
 }
@@ -85,8 +87,11 @@ fun CompletionRest(
             .fillMaxSize()
             .background(SabeelColors.Background.copy(alpha = 0.94f))
             .navigationBarsPadding()
-            // Consume all taps so they never reach the count surface beneath.
-            .pointerInput(Unit) { detectTapGestures { } },
+            // Consume all taps so they never reach the count surface beneath, EXCEPT for transient contexts
+            .then(
+                if (context == CompletionContext.VICTORY_TRANSIENT) Modifier
+                else Modifier.pointerInput(Unit) { detectTapGestures { } }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -94,14 +99,15 @@ fun CompletionRest(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(horizontal = 40.dp)
         ) {
-            val iconTint = if (context == CompletionContext.VICTORY) SabeelColors.GoldPrimary else SabeelColors.AccentTeal
-            val arabicText = if (context == CompletionContext.VICTORY) strings.countAlhamdulillah else "تَمَّ"
+            val isVictory = context == CompletionContext.VICTORY || context == CompletionContext.VICTORY_TRANSIENT
+            val iconTint = if (isVictory) SabeelColors.GoldPrimary else SabeelColors.AccentTeal
+            val arabicText = if (isVictory) strings.countAlhamdulillah else "تَمَّ"
             
             Icon(
                 imageVector = Icons.Outlined.CheckCircle,
                 contentDescription = null,
                 tint = iconTint,
-                modifier = Modifier.size(if (context == CompletionContext.VICTORY) 72.dp else 56.dp)
+                modifier = Modifier.size(if (isVictory) 72.dp else 56.dp)
             )
             
             Text(
@@ -109,13 +115,13 @@ fun CompletionRest(
                 color = iconTint,
                 style = arabicStyle.copy(
                     // 1.9× diacritic-safety rule: 48×1.9=91sp, 40×1.9=76sp
-                    fontSize = if (context == CompletionContext.VICTORY) 48.sp else 40.sp,
-                    lineHeight = if (context == CompletionContext.VICTORY) 91.sp else 76.sp
+                    fontSize = if (isVictory) 48.sp else 40.sp,
+                    lineHeight = if (isVictory) 91.sp else 76.sp
                 ),
                 textAlign = TextAlign.Center
             )
             
-            val statusText = if (context == CompletionContext.VICTORY) {
+            val statusText = if (isVictory) {
                 strings.countDailyGoalCompleted
             } else {
                 strings.countComplete.format(total.toLocalizedNumerals(language))
@@ -128,7 +134,7 @@ fun CompletionRest(
                 textAlign = TextAlign.Center
             )
             
-            if (context != CompletionContext.VICTORY) {
+            if (!isVictory) {
                 Text(
                     text = dhikrName,
                     style = MaterialTheme.typography.bodyMedium,
@@ -148,11 +154,12 @@ fun CompletionRest(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                if (onSecondaryAction != null) {
+            if (context != CompletionContext.VICTORY_TRANSIENT) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (onSecondaryAction != null) {
                     // Press-scale: each button gets its own interactionSource so
                     // pressing one doesn't scale the other. 0.95f is slightly more
                     // pronounced than AccentCard (0.96f) — smaller target, needs
@@ -207,10 +214,12 @@ fun CompletionRest(
                         CompletionContext.VICTORY -> strings.wirdDone
                         CompletionContext.AD_HOC -> strings.countAgain
                         CompletionContext.FLOW -> if (nextWirdItemName != null) "${strings.countContinue} →" else strings.countContinue
+                        CompletionContext.VICTORY_TRANSIENT -> "" // Unused
                     }
                     Text(primaryText, style = MaterialTheme.typography.titleSmall, color = primaryTextColor)
                 }
             }
         }
     }
+}
 }
