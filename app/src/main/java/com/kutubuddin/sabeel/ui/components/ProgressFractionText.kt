@@ -25,15 +25,6 @@ import com.kutubuddin.sabeel.ui.theme.SabeelColors
  * (Today's Wird rows, the Home resume card, ...) instead of each call site
  * interpolating its own raw string (the old pattern — see WirdItemRow and
  * ResumeCard before this file existed).
- *
- * DT-01 fix: dhikr counts can legitimately exceed target (looping a wird
- * more than once in a sitting is completely normal), but a raw fraction like
- * "102/34" reads as broken math, not "completed 3 times over" — especially
- * for tasbih counts, where 33, 100 etc. are specific, meaningful numbers.
- * When count > target, the fraction is capped at target/target and the
- * overflow is carried by a small gold "×N" badge instead — gold because
- * completing extra rounds is genuinely the kind of milestone moment
- * [SabeelColors.GoldPrimary] is reserved for elsewhere in this app.
  */
 @Composable
 fun ProgressFractionText(
@@ -47,33 +38,8 @@ fun ProgressFractionText(
 ) {
     val textColor = if (isComplete) completeColor else normalColor
 
-    if (target > 0 && count > target) {
-        val rounds = count / target
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = "${target.toLocalizedNumerals(language)} / ${target.toLocalizedNumerals(language)}",
-                style = style.copy(color = textColor)
-            )
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SabeelColors.GoldSurface)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = "×${rounds.toLocalizedNumerals(language)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = SabeelColors.GoldPrimary
-                )
-            }
-        }
-    } else {
-        Text(
-            text = "${count.toLocalizedNumerals(language)} / ${target.toLocalizedNumerals(language)}",
-            style = style.copy(color = textColor)
-        )
-    }
+    Text(
+        text = "${count.toLocalizedNumerals(language)} / ${target.toLocalizedNumerals(language)}",
+        style = style.copy(color = textColor)
+    )
 }
