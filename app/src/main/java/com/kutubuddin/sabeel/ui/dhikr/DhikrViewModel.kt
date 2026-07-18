@@ -18,6 +18,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.coroutines.CoroutineDispatcher
+import com.kutubuddin.sabeel.di.DefaultDispatcher
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 /**
@@ -35,11 +40,12 @@ import javax.inject.Inject
 @HiltViewModel
 class DhikrViewModel @Inject constructor(
     private val dhikrRepository: DhikrRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val _searchQuery  = MutableStateFlow("")
-    private val _expandedKey  = MutableStateFlow<String?>(null)
+    private val _selectedDhikrKey  = MutableStateFlow<String?>(null)
 
     // Debounce search to avoid filtering on every keystroke
     private val debouncedQuery = _searchQuery.debounce(300L)
@@ -58,22 +64,25 @@ class DhikrViewModel @Inject constructor(
 
     // Group filtered list by category — done on collection thread, not main
     private val categorized = filteredDhikr.map { items ->
-        DhikrCategory.values()
-            .associateWith { cat -> items.filter { it.category == cat } }
+        DhikrCategory.entries
+            .associateWith { cat -> items.filter { it.category == cat }.toImmutableList() }
             .filterValues { it.isNotEmpty() }
-    }
+            .toImmutableMap()
+    }.flowOn(defaultDispatcher)
 
     val state: StateFlow<DhikrLibraryState> = combine(
         categorized,
         _searchQuery,       // raw (for display), not debounced
         settingsRepository.language,
-        _expandedKey
-    ) { cat, query, language, expandedKey ->
+        settingsRepository.translitEnabled,
+        _selectedDhikrKey
+    ) { cat, query, language, translit, selectedDhikrKey ->
         DhikrLibraryState(
             categorized = cat,
             searchQuery = query,
             language    = language,
-            expandedKey = expandedKey
+            showTransliteration = translit,
+            selectedDhikrKey = selectedDhikrKey
         )
     }.stateIn(
         scope   = viewModelScope,
@@ -85,8 +94,8 @@ class DhikrViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    /** Toggle expand: same key collapses, different key expands. */
-    fun onToggleExpand(key: String) {
-        _expandedKey.value = if (_expandedKey.value == key) null else key
+    /** Toggle selection for bottom sheet */
+    fun onSelectDhikr(key: String?) {
+        _selectedDhikrKey.value = if (_selectedDhikrKey.value == key) null else key
     }
 }

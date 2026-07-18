@@ -21,9 +21,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -37,8 +39,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalConfiguration
+
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.model.DhikrItem
+import com.kutubuddin.sabeel.domain.model.DhikrSequence
+import com.kutubuddin.sabeel.domain.model.DhikrStep
+import com.kutubuddin.sabeel.domain.model.DhikrCatalog
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.outlined.Shield
 import com.kutubuddin.sabeel.ui.tasbih.TasbihIntent
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
@@ -66,7 +77,7 @@ fun DhikrLibraryScreen(
     DhikrLibraryContent(
         state = state,
         onSearch = viewModel::onSearch,
-        onToggleExpand = viewModel::onToggleExpand,
+        onSelectDhikr = viewModel::onSelectDhikr,
         onCountNow = { key ->
             tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key))
             onCountNow() // Calls the parameter
@@ -84,11 +95,17 @@ fun DhikrLibraryScreen(
 fun DhikrLibraryContent(
     state: DhikrLibraryState,
     onSearch: (String) -> Unit,
-    onToggleExpand: (String) -> Unit,
+    onSelectDhikr: (String?) -> Unit,
     onCountNow: (key: String) -> Unit,
     onOpenGallery: () -> Unit
 ) {
     val strings = LocalStrings.current
+
+    val selectedItem = remember(state.selectedDhikrKey, state.categorized) {
+        state.selectedDhikrKey?.let { key ->
+            state.categorized.values.flatten().find { it.key == key }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -116,17 +133,10 @@ fun DhikrLibraryContent(
                     }
                     items(items, key = { "item_${it.key}" }) { item ->
                         DhikrCard(
-                            // animateItem() is the fix for the "one card animates, its
-                            // neighbours teleport" gap: whenever this card's own height
-                            // changes (expand/collapse) or the list is filtered by search,
-                            // every sibling in the LazyColumn animates to its new position
-                            // instead of snapping there in the same frame.
                             modifier = Modifier.animateItem(),
                             item = item,
                             language = state.language,
-                            isExpanded = state.expandedKey == item.key,
-                            onToggle = { onToggleExpand(item.key) },
-                            onCountNow = { onCountNow(item.key) }
+                            onSelect = { onSelectDhikr(item.key) }
                         )
                     }
                     if (category == com.kutubuddin.sabeel.domain.model.DhikrCategory.ASMA_UL_HUSNA && state.searchQuery.isBlank()) {
@@ -136,6 +146,32 @@ fun DhikrLibraryContent(
                     }
                 }
                 item { Spacer(Modifier.height(16.dp)) }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    if (selectedItem != null) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val configuration = LocalConfiguration.current
+        val maxSheetHeight = configuration.screenHeightDp.dp * 0.85f
+
+        ModalBottomSheet(
+            onDismissRequest = { onSelectDhikr(null) },
+            sheetState = sheetState,
+            containerColor = SabeelColors.SurfaceElevated,
+            dragHandle = { BottomSheetDefaults.DragHandle(color = SabeelColors.BorderIdle) }
+        ) {
+            Box(modifier = Modifier.heightIn(max = maxSheetHeight)) {
+                DhikrDetailSheetContent(
+                    item = selectedItem,
+                    language = state.language,
+                    showTransliteration = state.showTransliteration,
+                    onCountNow = {
+                        onSelectDhikr(null)
+                        onCountNow(selectedItem.key)
+                    }
+                )
             }
         }
     }
@@ -179,249 +215,343 @@ private fun CategoryHeader(name: String) = SharedCategoryHeader(name = name)
 private fun DhikrCard(
     item: DhikrItem,
     language: String,
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    onCountNow: () -> Unit,
+    onSelect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val strings = LocalStrings.current
-    val stripeWidthPx = with(androidx.compose.ui.platform.LocalDensity.current) { 3.dp.toPx() }
+    val isSmartFlow = item.isSmartFlow
+    val sequence = remember(item.key, isSmartFlow) { if (isSmartFlow) DhikrCatalog.sequenceFor(item.key) else null }
 
-    val borderColor by animateColorAsState(
-        targetValue = if (isExpanded) SabeelColors.AccentTeal.copy(alpha = 0.6f)
-                      else SabeelColors.BorderIdle,
-        animationSpec = tween(durationMillis = SabeelMotion.Duration.ColorTransition), label = "border"
-    )
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isExpanded) SabeelColors.SurfaceElevated else SabeelColors.Surface,
-        animationSpec = tween(durationMillis = SabeelMotion.Duration.ColorTransition), label = "bg"
-    )
-    val stripeColor by animateColorAsState(
-        targetValue = if (isExpanded) SabeelColors.AccentTeal else Color.Transparent,
-        animationSpec = tween(durationMillis = SabeelMotion.Duration.ColorTransition), label = "stripe"
-    )
-
-    // Chevron: rotates 0° (collapsed) → 180° (expanded).
-    // Spring spec matches the AnimatedVisibility body expansion so icon and
-    // content reach their final position at the same time — they feel coupled.
-    val chevronRotation by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-        animationSpec = SabeelMotion.Spring.ChevronRotate,
-        label = "chevron_rotation"
-    )
-    // Tint transitions with the same colour-transition duration as border/bg/stripe —
-    // consistent animation language across all card state changes.
-    val chevronTint by animateColorAsState(
-        targetValue = if (isExpanded) SabeelColors.AccentTeal else SabeelColors.TextHint,
-        animationSpec = tween(SabeelMotion.Duration.ColorTransition),
-        label = "chevron_tint"
-    )
-
-    // Arabic text: font size and line height animate on the same spring as the
-    // card body so the text grows in sync with the expand animation.
-    // Using animateFloatAsState (raw float → .sp) is the correct approach:
-    // Compose cannot interpolate TextStyle objects, so we animate the scalar
-    // values directly and apply them each frame.
-    val arabicFontSize by animateFloatAsState(
-        targetValue = if (isExpanded) 28f else 20f,
-        animationSpec = SabeelMotion.Spring.CardExpand(),
-        label = "arabic_font_size"
-    )
-    val arabicLineHeight by animateFloatAsState(
-        targetValue = if (isExpanded) 53.2f else 38f,
-        animationSpec = SabeelMotion.Spring.CardExpand(),
-        label = "arabic_line_height"
-    )
-
-    // FIX 6: gold demoted to teal here — it’s per-row chrome, not a milestone.
-    // Gold now survives only on the 99-Names hero card and completion victories.
-    val accentColor = SabeelColors.AccentTeal
-
-    // drawBehind draws the stripe onto the canvas AFTER layout, so size.height is always
-    // the real current height — it follows AnimatedVisibility frames naturally.
-    // matchParentSize() was wrong: it overrides width(3.dp) and filled the entire card.
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(backgroundColor)
-            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
-            .drawBehind {
-                drawRect(
-                    color = stripeColor,
-                    size = androidx.compose.ui.geometry.Size(stripeWidthPx, size.height)
-                )
-            }
-            .clickable(onClick = onToggle)
+            .background(SabeelColors.Surface)
+            .border(1.dp, SabeelColors.BorderIdle, RoundedCornerShape(16.dp))
+            .clickable(onClick = onSelect)
             .padding(start = 17.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)
     ) {
-            // Arabic — full width, right-aligned. Expands to 28sp when open.
+        // Shared Header Block
+        if (!isSmartFlow) {
             Text(
                 text = item.arabicText,
-                maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = SabeelColors.ArabicText,
                 textAlign = TextAlign.End,
                 style = arabicStyle.copy(
-                    fontSize = arabicFontSize.sp,
-                    lineHeight = arabicLineHeight.sp
+                    fontSize = 20.sp,
+                    lineHeight = 38.sp
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
-
             Spacer(Modifier.height(8.dp))
+        }
 
-            // Name row — chevron here, semantically paired with the name it expands.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = item.displayName.get(language),
+                style = MaterialTheme.typography.titleSmall,
+                color = SabeelColors.TextPrimary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = item.displayName.get(language),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = SabeelColors.TextPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                CountPill(target = item.defaultTarget, language = language)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                    contentDescription = strings.wirdExpandRowA11y,
+                    tint = SabeelColors.TextHint,
+                    modifier = Modifier.size(18.dp)
                 )
+            }
+        }
+
+        if (isSmartFlow && sequence != null) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(top = 10.dp)
+            ) {
+                sequence.steps.forEach { step ->
+                    MiniTargetChip(target = step.target, language = language)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DhikrDetailSheetContent(
+    item: DhikrItem,
+    language: String,
+    showTransliteration: Boolean,
+    onCountNow: () -> Unit
+) {
+    val strings = LocalStrings.current
+    val isSmartFlow = item.isSmartFlow
+    val sequence = remember(item.key, isSmartFlow) { if (isSmartFlow) DhikrCatalog.sequenceFor(item.key) else null }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+    ) {
+        // Scrollable Body
+        Column(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState())
+        ) {
+            if (!isSmartFlow) {
+                Text(
+                    text = item.arabicText,
+                    color = SabeelColors.ArabicText,
+                    textAlign = TextAlign.End,
+                    style = arabicStyle.copy(
+                        fontSize = 28.sp,
+                        lineHeight = 53.2.sp
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+            }
+
+            Text(
+                text = item.displayName.get(language),
+                style = MaterialTheme.typography.titleLarge,
+                color = SabeelColors.TextPrimary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            if (!isSmartFlow) {
+                SinglePhraseBody(item = item, language = language, showTransliteration = showTransliteration)
+            } else if (sequence != null) {
+                SequenceBody(sequence = sequence, meaning = item.meaning.get(language), language = language)
+            }
+
+            val reward = item.spiritualReward.get(language)
+            val hasReward = reward.isNotBlank()
+            val hasRef = item.hadithRef.isNotBlank()
+
+            if (hasReward || hasRef) {
+                Spacer(Modifier.height(24.dp))
+                RewardCallout(
+                    reward = reward,
+                    hadithRef = if (hasRef) strings.dhikrRef.format(com.kutubuddin.sabeel.ui.i18n.localizeHadithRef(item.hadithRef, language)) else ""
+                )
+            }
+            Spacer(Modifier.height(16.dp)) // padding at bottom of scroll content
+        }
+
+        // Fixed Bottom Action
+        Button(
+            onClick = onCountNow,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp, top = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = SabeelColors.AccentTeal
+            ),
+            shape = RoundedCornerShape(14.dp),
+            contentPadding = PaddingValues(vertical = 14.dp)
+        ) {
+            Text(
+                text = strings.dhikrCountNow,
+                color = SabeelColors.OnAccentTeal,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+    }
+}
+
+/** Single-phrase expanded content: quiet transliteration caption + promoted meaning. */
+@Composable
+private fun SinglePhraseBody(item: DhikrItem, language: String, showTransliteration: Boolean = true) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (showTransliteration) {
+            item.transliteration?.let {
+                Text(
+                    text = it.get(language),
+                    style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                    color = SabeelColors.TextSecondary
+                )
+            }
+        }
+        Text(
+            text = item.meaning.get(language),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+            color = SabeelColors.TextPrimary
+        )
+    }
+}
+
+/** Sequence expanded content: short caption + numbered step-by-step breakdown. */
+@Composable
+private fun SequenceBody(sequence: DhikrSequence, meaning: String, language: String) {
+    val connectorColor = SabeelColors.BorderIdle
+
+    Text(
+        text = meaning,
+        style = MaterialTheme.typography.bodyMedium,
+        color = SabeelColors.TextSecondary,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            // MEMORY CHURN OPTIMIZATION: Use drawWithCache instead of drawBehind
+            // to avoid allocating Offsets on every single frame rendering pass.
+            .drawWithCache {
+                val circleRadius = 13.dp.toPx()
+                val strokeWidthPx = 1.5.dp.toPx()
+                val startOffset = Offset(circleRadius, circleRadius)
+                val endOffset = Offset(circleRadius, size.height - circleRadius)
+                
+                onDrawBehind {
+                    drawLine(
+                        color = connectorColor,
+                        start = startOffset,
+                        end = endOffset,
+                        strokeWidth = strokeWidthPx
+                    )
+                }
+            }
+    ) {
+        sequence.steps.forEachIndexed { index, step ->
+            SequenceStepRow(number = index + 1, step = step, language = language)
+        }
+    }
+}
+@Composable
+private fun SequenceStepRow(number: Int, step: DhikrStep, language: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(26.dp)
+                .clip(CircleShape)
+                .background(SabeelColors.AccentTealSurface),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = number.toLocalizedNumerals(language),
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
+                color = SabeelColors.AccentTeal,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Text(
+            text = step.displayName.get(language),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+            color = SabeelColors.TextPrimary,
+            modifier = Modifier.weight(0.35f)
+        )
+
+        Text(
+            text = step.arabicText,
+            color = SabeelColors.ArabicText,
+            textAlign = TextAlign.End,
+            style = arabicStyle.copy(fontSize = 19.sp, lineHeight = 30.sp),
+            modifier = Modifier
+                .padding(horizontal = 4.dp)
+                .weight(0.65f)
+        )
+
+        CountPill(target = step.target, language = language)
+    }
+}
+
+/** The teal count badge — used for both the header total and per-step targets. */
+@Composable
+private fun CountPill(target: Int, language: String) {
+    Text(
+        text = "${target.toLocalizedNumerals(language)}\u00D7",
+        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp, fontWeight = FontWeight.SemiBold),
+        color = SabeelColors.AccentTeal,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(SabeelColors.AccentTealSurface)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    )
+}
+
+/** Muted collapsed-state chip — previews a sequence step's target without the teal accent. */
+@Composable
+private fun MiniTargetChip(target: Int, language: String) {
+    Text(
+        text = "${target.toLocalizedNumerals(language)}\u00D7",
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp, fontWeight = FontWeight.Medium),
+        color = SabeelColors.TextSecondary,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(SabeelColors.SurfaceElevated)
+            .padding(horizontal = 9.dp, vertical = 3.dp)
+    )
+}
+
+/** Flat, icon-led reward block — replaces the old bordered/striped nested box. */
+@Composable
+private fun RewardCallout(reward: String, hadithRef: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(SabeelColors.Background)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Shield,
+            contentDescription = null,
+            tint = SabeelColors.AccentTeal,
+            modifier = Modifier
+                .size(17.dp)
+                .padding(top = 1.dp)
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            if (reward.isNotBlank()) {
+                Text(
+                    text = reward,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SabeelColors.TextPrimary
+                )
+            }
+            if (hadithRef.isNotBlank()) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "· ${item.defaultTarget.toLocalizedNumerals(language)}×",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            letterSpacing = 0.sp,
-                            fontWeight = FontWeight.SemiBold
+                        text = hadithRef,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.2.sp
                         ),
-                        color = SabeelColors.AccentTeal
-                    )
-                    Icon(
-                        imageVector = Icons.Outlined.KeyboardArrowDown,
-                        contentDescription = strings.wirdExpandRowA11y,
-                        tint = chevronTint,
-                        modifier = Modifier
-                            .size(18.dp)
-                            .graphicsLayer { rotationZ = chevronRotation }
+                        color = SabeelColors.TextSecondary
                     )
                 }
             }
-
-            // AnimatedVisibility: fade+expand on open, fade+shrink on close.
-            // Works correctly here because the outer Column (not a Row+IntrinsicSize)
-            // measures height from its children's actual layout height each frame.
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = androidx.compose.animation.expandVertically(
-                    animationSpec = SabeelMotion.Spring.CardExpand()
-                ) + androidx.compose.animation.fadeIn(
-                    animationSpec = tween(200)
-                ),
-                exit = androidx.compose.animation.shrinkVertically(
-                    animationSpec = SabeelMotion.Spring.CardExpand()
-                ) + androidx.compose.animation.fadeOut(
-                    animationSpec = tween(150)
-                )
-            ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(
-                    color = SabeelColors.AccentTeal.copy(alpha = 0.25f),
-                    thickness = 0.5.dp
-                )
-                Spacer(Modifier.height(6.dp))
-
-                // Transliteration + meaning
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    item.transliteration?.let {
-                        Text(
-                            it.get(language),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                letterSpacing = 0.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = SabeelColors.TextSecondary
-                        )
-                    }
-                    Text(
-                        item.meaning.get(language),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SabeelColors.TextPrimary,
-                        lineHeight = 18.sp
-                    )
-                }
-
-                // Reward box — text stays TextPrimary/TextSecondary for contrast.
-                // FIX 6: the stripe + border accent is now teal (accentColor),
-                // matching the card's expanded stripe; gold is milestone-only.
-                val reward = item.spiritualReward.get(language)
-                val hasReward = reward.isNotBlank()
-                val hasRef = item.hadithRef.isNotBlank()
-                if (hasReward || hasRef) {
-                    Spacer(Modifier.height(2.dp))
-                    // Reward box: drawBehind for the gold stripe (same fix as card stripe).
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(SabeelColors.SurfaceElevated)
-                            .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                            .drawBehind {
-                                drawRect(
-                                    color = accentColor,
-                                    size = androidx.compose.ui.geometry.Size(stripeWidthPx, size.height)
-                                )
-                            }
-                            .padding(start = 15.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        if (hasReward) {
-                            Text(
-                                text = reward,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = SabeelColors.TextPrimary,
-                                lineHeight = 18.sp
-                            )
-                        }
-                        if (hasRef) {
-                            Text(
-                                text = strings.dhikrRef.format(
-                                    localizeHadithRef(item.hadithRef, language)
-                                ),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                color = SabeelColors.TextSecondary,
-                                letterSpacing = 0.5.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(2.dp))
-
-                // Count Now button
-                Button(
-                    onClick = onCountNow,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SabeelColors.AccentTeal
-                    ),
-                    shape = RoundedCornerShape(14.dp),
-                    contentPadding = PaddingValues(vertical = 14.dp)
-                ) {
-                    Text(
-                        text = strings.dhikrCountNow,
-                        color = SabeelColors.OnAccentTeal,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-            } // Column (expanded body)
-            } // AnimatedVisibility
-        } // Card Column
+        }
+    }
 }
 
 
