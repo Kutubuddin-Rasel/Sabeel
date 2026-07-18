@@ -25,8 +25,8 @@ import com.kutubuddin.sabeel.ui.theme.SabeelColors
  * its parameters and reusable, unmodified, across every future sub-screen (OCP).
  *
  * Uses the auto-mirrored back arrow so it points the correct reading direction
- * under Urdu's RTL layout, matching the rest of the app's direction-aware
- * chrome (see DhikrLibraryScreen's LTR/RTL continue-arrow).
+ * matching the rest of the app's direction-aware
+ * chrome (see DhikrLibraryScreen's continue-arrow).
  */
 @Composable
 fun SabeelTopBar(
