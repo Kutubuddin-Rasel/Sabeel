@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.toImmutableList
+import androidx.compose.ui.platform.LocalConfiguration
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.kutubuddin.sabeel.domain.model.WirdProgress
@@ -82,6 +83,7 @@ fun WirdContent(
     Column(
         Modifier
             .fillMaxSize()
+            .background(SabeelColors.Background)
             .navigationBarsPadding()
     ) {
         SabeelTopBar(
@@ -117,11 +119,12 @@ fun WirdContent(
         )
 
         if (progress.items.isEmpty()) {
+            val screenHeight = LocalConfiguration.current.screenHeightDp.dp
             Column(
-                Modifier.fillMaxSize().padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(Modifier.height(screenHeight * 0.3f))
                 Text(strings.wirdEmpty, style = MaterialTheme.typography.bodyMedium, color = SabeelColors.TextSecondary)
                 Spacer(Modifier.height(6.dp))
                 Text(strings.wirdEmptyHint, style = MaterialTheme.typography.bodySmall, color = SabeelColors.TextHint)

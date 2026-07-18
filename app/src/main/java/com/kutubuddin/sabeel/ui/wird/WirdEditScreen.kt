@@ -78,7 +78,7 @@ fun WirdEditScreen(
 
     LaunchedEffect(state.rows.isEmpty()) {
         if (state.rows.isEmpty() && !hasAutoOpened) {
-            delay(50) // Prevent flash during initial DB load
+            delay(350) // Wait for 300ms screen enter transition to finish to prevent double-slide collision
             if (state.rows.isEmpty()) {
                 showPicker = true
                 hasAutoOpened = true
@@ -127,6 +127,7 @@ fun WirdEditContent(
     Column(
         Modifier
             .fillMaxSize()
+            .background(SabeelColors.Background)
             .navigationBarsPadding()
     ) {
         SabeelTopBar(
