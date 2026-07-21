@@ -1,5 +1,7 @@
 package com.kutubuddin.sabeel.domain.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * The countable runtime identity of the dhikr on the Count screen.
  *
@@ -12,6 +14,7 @@ package com.kutubuddin.sabeel.domain.model
  *
  * Persistence stays String-keyed (no Room migration): [key] is the stored id.
  */
+@Immutable
 data class ActiveDhikr(
     val key: String,
     val arabicText: String,

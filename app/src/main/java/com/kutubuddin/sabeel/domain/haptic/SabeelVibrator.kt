@@ -1,7 +1,7 @@
 package com.kutubuddin.sabeel.domain.haptic
 
 interface SabeelVibrator {
-    fun vibrate(durationMs: Long)
-    fun vibratePattern(pattern: LongArray, repeat: Int = -1)
+    fun vibrate(durationMs: Long, amplitude: Int = -1)
+    fun vibratePattern(pattern: LongArray, amplitudes: IntArray? = null, repeat: Int = -1)
     fun cancel()
 }
