@@ -14,10 +14,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Cures crippling fear and grants a strong sense of independence from creation",
-                bn = "তীব্র ভয় নিরাময় করে এবং সৃষ্টির প্রতি অমুখাপেক্ষিতার দৃঢ় অনুভূতি দান করে"
+                en = "Reflected upon by those working through fear, and recited for a grounded sense of independence from reliance on others.",
+                bn = "ভয় কাটিয়ে ওঠার চেষ্টায় এটি নিয়ে চিন্তা-ভাবনা করা হয়, এবং অন্যের ওপর নির্ভরতা থেকে মুক্তির দৃঢ় অনুভূতির জন্য পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -31,10 +31,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Brings self-sufficiency, ensuring you never have to beg or rely on others",
-                bn = "স্বনির্ভরতা নিয়ে আসে, নিশ্চিত করে যে আপনাকে কখনও অন্যের কাছে হাত পাততে হবে না"
+                en = "Recited in hope of self-sufficiency and freedom from needing to depend on others.",
+                bn = "স্বনির্ভরতা এবং অন্যের ওপর নির্ভরতার প্রয়োজন থেকে মুক্তির আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -48,10 +48,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Fulfills desires quickly and provides absolute triumph over formidable enemies",
-                bn = "আকাঙ্ক্ষাগুলো দ্রুত পূরণ করে এবং শক্তিশালী শত্রুদের বিরুদ্ধে সম্পূর্ণ বিজয় দান করে"
+                en = "Recited in hope of one's needs being met and strength against formidable difficulties.",
+                bn = "নিজের প্রয়োজন পূরণ এবং কঠিন প্রতিবন্ধকতার বিরুদ্ধে শক্তির আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -65,10 +65,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Awakens one heedless of truth and grants strength to accomplish difficult, demanding tasks",
-                bn = "অসতর্ক মানুষকে জাগ্রত করে এবং কঠিন কাজ সম্পন্ন করার শক্তি দেয়"
+                en = "Reflected upon for awareness and awakening, and recited for strength through difficult, demanding tasks.",
+                bn = "সচেতনতা ও জাগরণের জন্য এটি নিয়ে চিন্তা-ভাবনা করা হয়, এবং কঠিন ও দাবিদার কাজে শক্তির জন্য পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -82,10 +82,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Ensures success on the battlefield or in severe conflict, and grants a leading position",
-                bn = "যুদ্ধক্ষেত্রে বা তীব্র দ্বন্দ্বে সাফল্য নিশ্চিত করে এবং একটি শীর্ষস্থানীয় অবস্থান দান করে"
+                en = "Recited in hope of steadiness through serious conflict, and for standing among others.",
+                bn = "তীব্র দ্বন্দ্বের মধ্যে স্থিরতার আশায় এবং অন্যদের মাঝে মর্যাদার জন্য এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -99,10 +99,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Increases love for Allah, removes love for the worldly life, and protects from enemies",
-                bn = "আল্লাহর প্রতি ভালোবাসা বৃদ্ধি করে, পার্থিব জীবনের প্রতি আসক্তি দূর করে এবং শত্রুদের হাত থেকে রক্ষা করে"
+                en = "Reflected upon to deepen love for Allah and loosen attachment to worldly life, and recited in hope of protection from harm.",
+                bn = "আল্লাহর প্রতি ভালোবাসা গভীর করতে এবং পার্থিব জীবনের প্রতি আসক্তি কমাতে এটি নিয়ে চিন্তা-ভাবনা করা হয়, এবং ক্ষতি থেকে সুরক্ষার আশায় পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -116,10 +116,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Brings success in new ventures, grants safe travel, and helps conceive children",
-                bn = "নতুন উদ্যোগে সাফল্য আনে, ভ্রমণ নিরাপদ করে এবং সন্তান লাভে সাহায্য করে"
+                en = "Recited in hope of blessing in new ventures and safe travel — and, among some, in hope of children, alongside seeking appropriate medical guidance.",
+                bn = "নতুন উদ্যোগে বরকত এবং নিরাপদ ভ্রমণের আশায় এটি পাঠ করা হয় — এবং কিছু মানুষ, উপযুক্ত চিকিৎসা পরামর্শের পাশাপাশি, সন্তান লাভের আশায়ও পাঠ করেন।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -133,10 +133,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Grants a peaceful death, clears the heart of worldly desires, and forgives past sins",
-                bn = "শান্তিপূর্ণ মৃত্যু দান করে, অন্তরকে পার্থিব বাসনা থেকে মুক্ত করে এবং অতীতের পাপ ক্ষমা করে"
+                en = "Recited in hope of a peaceful ending, a heart free of worldly attachment, and Allah's forgiveness.",
+                bn = "শান্তিপূর্ণ পরিণতি, পার্থিব আসক্তিমুক্ত অন্তর এবং আল্লাহর ক্ষমার আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -150,10 +150,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Illuminates the heart, granting the reciter immense spiritual insight and vision",
-                bn = "অন্তরকে আলোকিত করে, পাঠকারীকে প্রচুর আধ্যাত্মিক অন্তর্দৃষ্টি এবং দৃষ্টি দান করে"
+                en = "Reflected upon for illumination of the heart and spiritual insight.",
+                bn = "অন্তরের আলোকসজ্জা এবং আধ্যাত্মিক অন্তর্দৃষ্টির জন্য এটি নিয়ে চিন্তা-ভাবনা করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -167,10 +167,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Reveals the hidden realities of things and establishes deep connection with Allah",
-                bn = "জিনিসগুলোর লুকানো বাস্তবতা প্রকাশ করে এবং আল্লাহর সাথে গভীর সংযোগ স্থাপন করে"
+                en = "Reflected upon for insight into hidden realities and a deeper connection with Allah.",
+                bn = "লুকানো বাস্তবতার অন্তর্দৃষ্টি এবং আল্লাহর সাথে গভীর সংযোগের জন্য এটি নিয়ে চিন্তা-ভাবনা করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -184,10 +184,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Protects one's home from all harm and brings safety from unexpected calamities",
-                bn = "মানুষের ঘরকে সমস্ত ক্ষতি থেকে রক্ষা করে এবং অপ্রত্যাশিত বিপদ থেকে নিরাপত্তা আনে"
+                en = "Recited in hope of protection for one's home and safety from unexpected calamity.",
+                bn = "নিজের ঘরের সুরক্ষা এবং অপ্রত্যাশিত বিপদ থেকে নিরাপত্তার আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -201,10 +201,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Solves complicated problems easily and ensures success against strong opposition",
-                bn = "জটিল সমস্যা সহজে সমাধান করে এবং প্রবল বিরোধিতার বিরুদ্ধে সাফল্য নিশ্চিত করে"
+                en = "Recited when facing complicated problems, in hope of a way through, even against strong opposition.",
+                bn = "জটিল সমস্যার মুখে, প্রবল বিরোধিতার মধ্যেও একটি পথ খুঁজে পাওয়ার আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -218,10 +218,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Makes children obedient and righteous, and grants protection from worldly misfortunes",
-                bn = "সন্তানদের বাধ্য এবং নেককার করে এবং পার্থিব দুর্ভাগ্য থেকে সুরক্ষা দান করে"
+                en = "Recited by parents in hope of righteousness in their children, and for protection from worldly misfortune.",
+                bn = "সন্তানদের নেককার হওয়ার আশায় এবং পার্থিব দুর্ভাগ্য থেকে সুরক্ষার জন্য বাবা-মায়েরা এটি পাঠ করেন।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -235,10 +235,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Makes sincere repentance easy, ensures acceptance, and successfully breaks bad habits",
-                bn = "আন্তরিক তওবা সহজ করে, গ্রহণযোগ্যতা নিশ্চিত করে এবং বদভ্যাস সফলভাবে দূর করে"
+                en = "Recited when seeking sincere repentance, in hope of its acceptance, and in the effort to leave bad habits behind.",
+                bn = "আন্তরিক তওবার সময়, তা কবুল হওয়ার আশায় এবং বদভ্যাস ত্যাগের প্রচেষ্টায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -252,10 +252,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Grants ultimate victory to the oppressed when all human efforts to secure justice have failed",
-                bn = "ন্যায়বিচার নিশ্চিত করার সমস্ত মানবিক প্রচেষ্টা ব্যর্থ হলে মজলুমকে চূড়ান্ত বিজয় দান করে"
+                en = "Recited by the oppressed in hope of justice when human means have been exhausted.",
+                bn = "মানবিক প্রচেষ্টা শেষ হয়ে গেলে ন্যায়বিচারের আশায় মজলুম ব্যক্তি এটি পাঠ করেন।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -269,10 +269,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Heals deep spiritual wounds, removes the heavy burden of guilt, and brings inner tranquility",
-                bn = "গভীর আধ্যাত্মিক ক্ষত নিরাময় করে, অপরাধবোধের ভারী বোঝা সরিয়ে দেয় এবং মানসিক প্রশান্তি আনে"
+                en = "Recited in hope of relief from deep guilt and inner tranquility through Allah's pardon.",
+                bn = "গভীর অপরাধবোধ থেকে মুক্তি এবং আল্লাহর ক্ষমার মাধ্যমে মানসিক প্রশান্তির আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -286,10 +286,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Softens harsh hearts, resolves bitter arguments, and develops immense empathy for creation",
-                bn = "কঠিন হৃদয় নরম করে, তিক্ত তর্ক মীমাংসা করে এবং সৃষ্টির প্রতি গভীর সহানুভূতি তৈরি করে"
+                en = "Reflected upon to soften harsh hearts and grow empathy for others.",
+                bn = "কঠিন হৃদয় নরম করতে এবং অন্যদের প্রতি সহানুভূতি বাড়াতে এটি নিয়ে চিন্তা-ভাবনা করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -303,10 +303,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Grants financial independence, high status among peers, and absolute respect",
-                bn = "আর্থিক স্বাধীনতা, সমবয়সীদের মধ্যে উচ্চ মর্যাদা এবং পরম সম্মান দান করে"
+                en = "Recited in hope of provision, standing among peers, and respect.",
+                bn = "রিজিক, সমবয়সীদের মাঝে মর্যাদা এবং সম্মানের আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -320,10 +320,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Guarantees acceptance of duas, brings honor in society, and grants immense wealth",
-                bn = "দোয়া কবুল হওয়ার নিশ্চয়তা দেয়, সমাজে সম্মান আনে এবং প্রচুর সম্পদ দান করে"
+                en = "Recited when making dua, in hope of its acceptance, honor, and provision.",
+                bn = "দোয়া করার সময় এটি পাঠ করা হয়, তা কবুল হওয়ার, সম্মান পাওয়ার এবং রিজিকের আশায়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -337,10 +337,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Protects against Shaytan’s whispers (waswasa) and brings inner balance and peace",
-                bn = "শয়তানের কুমন্ত্রণা (ওয়াসওয়াসা) থেকে রক্ষা করে এবং অভ্যন্তরীণ ভারসাম্য ও শান্তি নিয়ে আসে"
+                en = "Recited in hope of protection from whispers (waswasa), and for inner balance.",
+                bn = "কুমন্ত্রণা (ওয়াসওয়াসা) থেকে সুরক্ষার আশায় এবং অভ্যন্তরীণ ভারসাম্যের জন্য এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -354,10 +354,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Finds lost possessions quickly and reunites separated families or loved ones",
-                bn = "হারানো জিনিস দ্রুত খুঁজে বের করে এবং বিচ্ছিন্ন পরিবার বা প্রিয়জনদের পুনরায় একত্রিত করে"
+                en = "Recited by some when searching for something lost, and in hope of reunion with separated loved ones.",
+                bn = "হারানো জিনিস খুঁজতে কিছু মানুষ এটি পাঠ করেন, এবং বিচ্ছিন্ন প্রিয়জনদের সাথে পুনর্মিলনের আশায়ও পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -371,10 +371,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Eliminates all forms of worldly dependence and cures deep-seated material greed",
-                bn = "সমস্ত ধরণের পার্থিব নির্ভরতা দূর করে এবং গভীরভাবে প্রোথিত বস্তুবাদী লোভ নিরাময় করে"
+                en = "Reflected upon to loosen worldly dependence and ease material greed.",
+                bn = "পার্থিব নির্ভরতা কমাতে এবং বস্তুবাদী লোভ লাঘব করতে এটি নিয়ে চিন্তা-ভাবনা করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -388,10 +388,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Provides self-sufficiency in all matters, relieving financial and emotional stress",
-                bn = "সমস্ত বিষয়ে স্বনির্ভরতা প্রদান করে, আর্থিক এবং মানসিক চাপ উপশম করে"
+                en = "Recited in hope of sufficiency in one's affairs, and comfort amid financial and emotional strain.",
+                bn = "নিজের বিষয়ে যথেষ্টতার আশায় এবং আর্থিক ও মানসিক চাপের মধ্যে সান্ত্বনার জন্য এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -405,10 +405,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Secures family harmony, stops aggressive disputes, and repels physical danger",
-                bn = "পারিবারিক সম্প্রীতি সুরক্ষিত করে, আক্রমণাত্মক বিবাদ বন্ধ করে এবং শারীরিক বিপদ প্রতিহত করে"
+                en = "Recited in hope of harmony within the family and protection from harm.",
+                bn = "পারিবারিক সম্প্রীতি এবং ক্ষতি থেকে সুরক্ষার আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -422,10 +422,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Brings rapid elevation in spiritual ranks and ensures safety when traveling or feeling insecure",
-                bn = "আধ্যাত্মিক মর্যাদায় দ্রুত উন্নতি আনে এবং ভ্রমণের সময় বা নিরাপত্তাহীনতার সময় নিরাপত্তা নিশ্চিত করে"
+                en = "Reflected upon for spiritual growth through hardship, and recited in hope of safety while traveling or feeling unsettled.",
+                bn = "কষ্টের মধ্য দিয়ে আধ্যাত্মিক উন্নতির জন্য এটি নিয়ে চিন্তা-ভাবনা করা হয়, এবং ভ্রমণের সময় বা অস্থির অনুভূতির মধ্যে নিরাপত্তার আশায় পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -439,10 +439,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Guarantees success in any good action taken and removes profound sadness",
-                bn = "যেকোনো ভালো কাজে সাফল্যের নিশ্চয়তা দেয় এবং গভীর বিষণ্ণতা দূর করে"
+                en = "Recited in hope of success in one's good efforts, and comfort in times of deep sadness.",
+                bn = "নিজের ভালো প্রচেষ্টায় সাফল্যের আশায় এবং গভীর দুঃখের সময় সান্ত্বনার জন্য এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -456,10 +456,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Illuminates one’s heart with pure divine light, sharpens intellect, and brings inner peace",
-                bn = "অন্তরকে বিশুদ্ধ ঐশী আলো দিয়ে আলোকিত করে, বুদ্ধি তীক্ষ্ণ করে এবং মানসিক শান্তি নিয়ে আসে"
+                en = "Reflected upon as a source of light for the heart, clarity of mind, and inner peace.",
+                bn = "অন্তরের আলো, মনের স্বচ্ছতা এবং মানসিক শান্তির উৎস হিসেবে এটি নিয়ে চিন্তা-ভাবনা করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -473,10 +473,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Brings absolute spiritual knowledge and provides direction when feeling utterly lost",
-                bn = "পরম আধ্যাত্মিক জ্ঞান প্রদান করে এবং সম্পূর্ণ হারিয়ে যাওয়ার অনুভূতিতে পথ নির্দেশ করে"
+                en = "Recited in hope of guidance and direction when feeling lost.",
+                bn = "হারিয়ে যাওয়ার অনুভূতির মধ্যে দিকনির্দেশনার আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -490,10 +490,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Relieves severe misery, removes sorrow, and sparks groundbreaking ideas",
-                bn = "তীব্র দুর্দশা উপশম করে, দুঃখ দূর করে এবং যুগান্তকারী ধারণার জন্ম দেয়"
+                en = "Recited for comfort in times of deep sorrow, and reflected upon as a source of fresh inspiration.",
+                bn = "গভীর দুঃখের সময় সান্ত্বনার জন্য এটি পাঠ করা হয়, এবং নতুন অনুপ্রেরণার উৎস হিসেবে এ নিয়ে চিন্তা-ভাবনা করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -507,10 +507,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Acceptance of all good deeds, immunity from sudden disasters, and preservation of faith",
-                bn = "সমস্ত নেক আমলের গ্রহণযোগ্যতা, আকস্মিক বিপর্যয় থেকে মুক্তি এবং ঈমানের সংরক্ষণ দান করে"
+                en = "Recited in hope of acceptance of good deeds, protection from sudden calamity, and steadfastness in faith.",
+                bn = "নেক আমল কবুল হওয়ার, আকস্মিক বিপদ থেকে সুরক্ষার এবং ঈমানে দৃঢ়তার আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -524,10 +524,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Removes worldly worries, grants long life, and protects one from sudden affliction",
-                bn = "পার্থিব দুশ্চিন্তা দূর করে, দীর্ঘায়ু দান করে এবং হঠাৎ আসা বিপদ থেকে রক্ষা করে"
+                en = "Recited in hope of relief from worldly worry, a good life, and protection from sudden affliction.",
+                bn = "পার্থিব দুশ্চিন্তা থেকে মুক্তি, কল্যাণময় জীবন এবং আকস্মিক বিপদ থেকে সুরক্ষার আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -541,10 +541,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Provides the exact solution for unsolvable problems and ensures one’s plans succeed",
-                bn = "অমীমাংসিত সমস্যার সঠিক সমাধান দেয় এবং পরিকল্পনা সফল হওয়ার বিষয়টি নিশ্চিত করে"
+                en = "Recited when facing a difficult problem, in hope of the right way forward.",
+                bn = "কঠিন সমস্যার মুখে সঠিক পথের আশায় এটি পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         ),
         DhikrItem(
@@ -558,10 +558,10 @@ object AsmaUlHusnaCatalog3 {
             ),
             defaultTarget = 99,
             spiritualReward = LocalizedText(
-                en = "Eliminates anxiety in times of extreme hardship, rescues from pain, and builds tremendous endurance",
-                bn = "চরম কষ্টের সময় উদ্বেগ দূর করে, ব্যথা থেকে উদ্ধার করে এবং প্রচুর ধৈর্যশীলতা তৈরি করে"
+                en = "Reflected upon in times of hardship for patience, and recited in hope of relief and endurance.",
+                bn = "কষ্টের সময় ধৈর্যের জন্য এটি নিয়ে চিন্তা-ভাবনা করা হয়, এবং স্বস্তি ও সহনশীলতার আশায় পাঠ করা হয়।"
             ),
-            hadithRef = "Asma ul Husna",
+            hadithRef = "Popular tradition, not a hadith",
             category = DhikrCategory.ASMA_UL_HUSNA
         )
     )
