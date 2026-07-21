@@ -1,8 +1,8 @@
 package com.kutubuddin.sabeel.data.notifications
 
 import android.content.Context
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.kutubuddin.sabeel.domain.notifications.NotificationScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,16 +24,14 @@ class NotificationSchedulerImpl @Inject constructor(
     override fun scheduleDailyReminder(timeHHmm: String) {
         val delay = calculateInitialDelay(timeHHmm)
 
-        val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyReminderWorker>(
-            24, TimeUnit.HOURS
-        )
+        val dailyWorkRequest = OneTimeWorkRequestBuilder<DailyReminderWorker>()
             .setInitialDelay(delay.toMillis(), TimeUnit.MILLISECONDS)
             .addTag(WORK_TAG_DAILY_REMINDER)
             .build()
 
-        workManager.enqueueUniquePeriodicWork(
+        workManager.enqueueUniqueWork(
             WORK_TAG_DAILY_REMINDER,
-            ExistingPeriodicWorkPolicy.UPDATE,
+            ExistingWorkPolicy.REPLACE,
             dailyWorkRequest
         )
     }
@@ -48,7 +46,7 @@ class NotificationSchedulerImpl @Inject constructor(
         val minute = parts[1].toIntOrNull() ?: 30
 
         val now = ZonedDateTime.now(ZoneId.systemDefault())
-        var targetTime = now.with(LocalTime.of(hour, minute))
+        var targetTime = now.with(LocalTime.of(hour, minute)).withSecond(0).withNano(0)
 
         if (now.isAfter(targetTime) || now.isEqual(targetTime)) {
             // Target time has passed for today, schedule for tomorrow

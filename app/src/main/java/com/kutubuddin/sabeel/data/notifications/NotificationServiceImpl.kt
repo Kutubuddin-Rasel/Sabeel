@@ -11,7 +11,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
 import com.kutubuddin.sabeel.MainActivity
 import com.kutubuddin.sabeel.R
+import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.domain.notifications.NotificationService
+import com.kutubuddin.sabeel.ui.i18n.toLocalizedNumerals
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,7 +42,28 @@ class NotificationServiceImpl @Inject constructor(
         }
     }
 
-    override fun showStreakProtectorNotification(streakDays: Int) {
+    private object Copy {
+        val streakTitle =
+            LocalizedText(en = "Consistency Maintained", bn = "ধারাবাহিকতা বজায় রয়েছে")
+        val streakMessage = LocalizedText(
+            en = "Take a moment to protect your %1\$s-day streak.",
+            bn = "আপনার %1\$s দিনের ধারাবাহিকতা রক্ষা করতে কিছুক্ষণ সময় নিন।"
+        )
+        
+        val goalTitle = LocalizedText(en = "Daily Goal", bn = "দৈনিক লক্ষ্য")
+        val goalMessage = LocalizedText(
+            en = "You are %1\$s %2\$s away from finishing today's goal.",
+            bn = "আজকের লক্ষ্য পূরণে আর মাত্র %1\$s বার %2\$s বাকি।"
+        )
+        
+        val nudgeTitle = LocalizedText(en = "Evening Reflection", bn = "সন্ধ্যার স্মরণ")
+        val nudgeMessage = LocalizedText(
+            en = "Take a moment for your Daily Goal.",
+            bn = "আপনার দৈনিক লক্ষ্যের জন্য কিছু সময় বের করুন।"
+        )
+    }
+
+    override fun showStreakProtectorNotification(streakDays: Int, language: String) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -51,13 +74,13 @@ class NotificationServiceImpl @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = if (streakDays >= 7) "A full week of consistency! 💎" else "Keep your momentum! 🔥"
-        val message = "Take 2 minutes to protect your $streakDays-day streak."
+        val title = Copy.streakTitle.get(language)
+        val message = Copy.streakMessage.get(language).format(streakDays.toLocalizedNumerals(language))
 
         showNotification(NOTIFICATION_ID_STREAK, title, message, pendingIntent)
     }
 
-    override fun showDailyGoalFinisherNotification(dhikrName: String, remainingTarget: Int, dhikrKey: String) {
+    override fun showDailyGoalFinisherNotification(dhikrName: String, remainingTarget: Int, dhikrKey: String, language: String) {
         val deepLinkIntent = Intent(
             Intent.ACTION_VIEW,
             Uri.parse("sabeel://count?dhikrKey=$dhikrKey&target=$remainingTarget"),
@@ -73,13 +96,13 @@ class NotificationServiceImpl @Inject constructor(
             )
         }
 
-        val title = "Almost there! 🎯"
-        val message = "You're just $remainingTarget $dhikrName away from finishing today's goal."
+        val title = Copy.goalTitle.get(language)
+        val message = Copy.goalMessage.get(language).format(remainingTarget.toLocalizedNumerals(language), dhikrName)
 
         showNotification(NOTIFICATION_ID_GOAL, title, message, pendingIntent)
     }
 
-    override fun showGentleNudgeNotification() {
+    override fun showGentleNudgeNotification(language: String) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -90,15 +113,15 @@ class NotificationServiceImpl @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = "Evening reminder 🌙"
-        val message = "Take a moment for your Daily Goal."
+        val title = Copy.nudgeTitle.get(language)
+        val message = Copy.nudgeMessage.get(language)
 
         showNotification(NOTIFICATION_ID_NUDGE, title, message, pendingIntent)
     }
 
     private fun showNotification(id: Int, title: String, message: String, pendingIntent: PendingIntent?) {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_round) // Using launcher icon temporarily
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
