@@ -1,6 +1,10 @@
 package com.kutubuddin.sabeel.domain.model
 
 /** A wird item resolved for display with today's derived progress folded in. */
+import androidx.compose.runtime.Immutable
+import kotlinx.collections.immutable.ImmutableList
+
+@Immutable
 data class WirdProgressItem(
     val dhikrKey: String,
     val displayName: LocalizedText,
@@ -14,7 +18,8 @@ data class WirdProgressItem(
 }
 
 /** The whole wird's progress for today. */
-data class WirdProgress(val items: List<WirdProgressItem>) {
+@Immutable
+data class WirdProgress(val items: ImmutableList<WirdProgressItem>) {
     val completed: Int get() = items.count { it.isComplete }
     val total: Int get() = items.size
     val allComplete: Boolean get() = items.isNotEmpty() && items.all { it.isComplete }
@@ -27,9 +32,8 @@ data class WirdProgress(val items: List<WirdProgressItem>) {
 
 /**
  * The live, not-yet-saved round's contribution to an item's today count.
- * Adds the active count only when it belongs to this item AND the round is still
- * in progress (1 until target) — a just-completed round is already a saved session,
- * so counting it here would double it. Mirrors HomeViewModel.displayedToday.
+ * Adds the active delta (activeCount - startCount) when it belongs to this item.
+ * This guarantees no double-counting with the saved DB sessions.
  */
-fun liveContribution(itemKey: String, activeKey: String, activeCount: Int, activeTarget: Int): Int =
-    if (itemKey == activeKey && activeCount in 1 until activeTarget) activeCount else 0
+fun liveContribution(itemKey: String, activeKey: String, activeCount: Int, startCount: Int): Int =
+    if (itemKey == activeKey && activeCount > startCount) activeCount - startCount else 0
