@@ -6,6 +6,10 @@ package com.kutubuddin.sabeel.domain.model
  * A step is pure data — the counting engine ([TasbihViewModel.advance]) reads
  * [target] to decide when to move on, so adding a variant never touches engine code.
  */
+import androidx.compose.runtime.Immutable
+import kotlinx.collections.immutable.ImmutableList
+
+@Immutable
 data class DhikrStep(
     val arabicText: String,
     val displayName: LocalizedText,
@@ -19,8 +23,9 @@ data class DhikrStep(
  * replacement for the old hardcoded post-Salah state machine. The user counts
  * three (or four) distinct phrases, not one, and the tracker shows where they are.
  */
+@Immutable
 data class DhikrSequence(
     val key: String,
     val displayName: LocalizedText,
-    val steps: List<DhikrStep>
+    val steps: ImmutableList<DhikrStep>
 )

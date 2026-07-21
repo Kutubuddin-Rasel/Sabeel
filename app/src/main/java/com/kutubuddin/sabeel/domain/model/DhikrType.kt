@@ -5,6 +5,14 @@ package com.kutubuddin.sabeel.domain.model
  *
  * spiritualReward: Sahih-sourced benefit text displayed on the counting screen.
  * This is static, offline data — no network dependency.
+ *
+ * LEGACY NOTE: per ActiveDhikr's doc comment, the counting screen no longer
+ * hard-wires to this enum — it resolves ActiveDhikr from DhikrCatalog by
+ * String key instead, and DhikrCatalog.kt only reads `DhikrType.X.name` from
+ * here as a stable key constant. DhikrCatalog.kt is the source of truth for
+ * displayName/arabicText/defaultTarget/spiritualReward; the values below are
+ * kept in sync with it so nothing contradicts the catalog if this enum's
+ * other fields are ever read again.
  */
 enum class DhikrType(
     val displayName: String,
@@ -16,19 +24,19 @@ enum class DhikrType(
         displayName = "SubhanAllah",
         arabicText = "سُبْحَانَ اللَّهِ",
         defaultTarget = 33,
-        spiritualReward = "Glorified is Allah — removes sins as leaves fall from a tree"
+        spiritualReward = "Part of the after-prayer dhikr the Prophet ﷺ promised will never leave the one who recites it disappointed"
     ),
     ALHAMDULILLAH(
         displayName = "Alhamdulillah",
         arabicText = "الْحَمْدُ لِلَّهِ",
         defaultTarget = 33,
-        spiritualReward = "Fills the scales heavier than the heavens and the earth"
+        spiritualReward = "Fills the Scale on the Day of Judgment to overflowing"
     ),
     ALLAHU_AKBAR(
         displayName = "Allahu Akbar",
         arabicText = "اللَّهُ أَكْبَرُ",
         defaultTarget = 34,
-        spiritualReward = "The most beloved words to Allah — Allah is the Most Great"
+        spiritualReward = "Among the four words most beloved to Allah"
     ),
     ASTAGHFIRULLAH(
         displayName = "Astaghfirullah",
