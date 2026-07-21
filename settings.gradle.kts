@@ -18,4 +18,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Sabeel"
 include(":app")
-include(":benchmark")
