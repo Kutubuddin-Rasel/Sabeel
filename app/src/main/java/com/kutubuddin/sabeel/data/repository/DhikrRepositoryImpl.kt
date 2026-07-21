@@ -10,12 +10,16 @@ import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.domain.repository.DhikrRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineDispatcher
+import com.kutubuddin.sabeel.di.IoDispatcher
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class DhikrRepositoryImpl @Inject constructor(
-    private val customDhikrDao: CustomDhikrDao
+    private val customDhikrDao: CustomDhikrDao,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : DhikrRepository {
 
     /**
@@ -31,17 +35,19 @@ class DhikrRepositoryImpl @Inject constructor(
     override fun getCustomDhikr(): Flow<List<CustomDhikrEntity>> =
         customDhikrDao.getAllCustomDhikr()
 
-    override suspend fun saveCustomDhikr(dhikr: CustomDhikrEntity) =
+    override suspend fun saveCustomDhikr(dhikr: CustomDhikrEntity) = withContext(ioDispatcher) {
         customDhikrDao.insertCustomDhikr(dhikr)
+    }
 
-    override suspend fun deleteCustomDhikr(dhikr: CustomDhikrEntity) =
+    override suspend fun deleteCustomDhikr(dhikr: CustomDhikrEntity) = withContext(ioDispatcher) {
         customDhikrDao.deleteCustomDhikr(dhikr)
+    }
 
     private fun CustomDhikrEntity.toDhikrItem() = DhikrItem(
         key = id,
         arabicText = arabicText,
-        displayName = LocalizedText(en = displayName, ur = displayName, bn = displayName),
-        transliteration = transliteration?.let { LocalizedText(en = it, ur = it, bn = it) },
+        displayName = LocalizedText(en = displayName, bn = displayName),
+        transliteration = transliteration?.let { LocalizedText(en = it, bn = it) },
         meaning = DhikrMeaning(en = spiritualReward ?: displayName),
         defaultTarget = target,
         spiritualReward = LocalizedText(en = spiritualReward ?: ""),
