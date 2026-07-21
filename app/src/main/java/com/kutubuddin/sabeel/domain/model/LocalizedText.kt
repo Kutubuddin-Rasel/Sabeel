@@ -1,19 +1,19 @@
 package com.kutubuddin.sabeel.domain.model
 
+import androidx.compose.runtime.Immutable
+
 /**
- * A short piece of content available in the app's three languages.
+ * Encapsulates text available in multiple languages.
  *
- * Mirrors [DhikrMeaning] but is reusable for any localized copy (spiritual
- * rewards, sequence names, …). Blank translations fall back to English so a
- * partially-translated entry never renders empty.
+ * For features like custom dhikr that don't have translations yet,
+ * both fields can point to the same user-provided text.
  */
+@Immutable
 data class LocalizedText(
     val en: String,
-    val ur: String = "",
     val bn: String = ""
 ) {
     fun get(lang: String): String = when (lang) {
-        "ur" -> ur.ifBlank { en }
         "bn" -> bn.ifBlank { en }
         else -> en
     }
