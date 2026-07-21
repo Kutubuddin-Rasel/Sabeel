@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.kutubuddin.sabeel.domain.notifications.NotificationScheduler
 import com.kutubuddin.sabeel.domain.notifications.NotificationService
 import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
@@ -22,7 +23,8 @@ class DailyReminderWorker @AssistedInject constructor(
     private val sessionRepository: SessionRepository,
     private val streakObserver: StreakObserver,
     private val settingsRepository: SettingsRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val notificationScheduler: NotificationScheduler
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -38,10 +40,12 @@ class DailyReminderWorker @AssistedInject constructor(
         val wirdProgress = observeWirdProgress(today).first()
         val isDailyGoalComplete = wirdProgress.allComplete
         val hasDailyGoal = wirdProgress.total > 0
+        
+        val lang = settingsRepository.language.first()
 
         // Priority 1: Streak Protector
         if (countToday == 0 && currentStreak >= 3) {
-            notificationService.showStreakProtectorNotification(currentStreak)
+            notificationService.showStreakProtectorNotification(currentStreak, lang)
             return Result.success()
         }
 
@@ -53,11 +57,11 @@ class DailyReminderWorker @AssistedInject constructor(
                 val completedCount = sessionRepository.getCountsByKeyForDate(today).first()[nextIncompleteItem.dhikrKey] ?: 0
                 val remainingTarget = maxOf(0, nextIncompleteItem.target - completedCount)
                 
-                val lang = settingsRepository.language.first()
                 notificationService.showDailyGoalFinisherNotification(
                     dhikrName = nextIncompleteItem.displayName.get(lang),
                     remainingTarget = remainingTarget,
-                    dhikrKey = nextIncompleteItem.dhikrKey
+                    dhikrKey = nextIncompleteItem.dhikrKey,
+                    language = lang
                 )
             }
             return Result.success()
@@ -65,9 +69,13 @@ class DailyReminderWorker @AssistedInject constructor(
 
         // Priority 3: Gentle Nudge
         if (countToday == 0 && currentStreak < 3 && hasDailyGoal) {
-            notificationService.showGentleNudgeNotification()
+            notificationService.showGentleNudgeNotification(lang)
             return Result.success()
         }
+
+        // Schedule the next execution to prevent time drift
+        val timeHHmm = settingsRepository.dailyReminderTime.first()
+        notificationScheduler.scheduleDailyReminder(timeHHmm)
 
         return Result.success()
     }

@@ -15,6 +15,9 @@ interface SakinahDao {
     @Query("SELECT * FROM daily_targets WHERE id = :id")
     fun getDailyTargetFlow(id: String): Flow<DailyTargetEntity?>
 
+    @Query("SELECT * FROM daily_targets WHERE date = :date")
+    fun getDailyTargetsForDateFlow(date: String): Flow<List<DailyTargetEntity>>
+
     @Query("SELECT * FROM daily_targets WHERE id = :id")
     suspend fun getDailyTarget(id: String): DailyTargetEntity?
 
