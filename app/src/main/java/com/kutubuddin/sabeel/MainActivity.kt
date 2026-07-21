@@ -12,10 +12,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.Manifest
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.Lifecycle
@@ -24,16 +27,17 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.WirdRepository
-import com.kutubuddin.sabeel.service.PocketModeService
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.UiText
 import com.kutubuddin.sabeel.ui.i18n.layoutDirectionFor
 import com.kutubuddin.sabeel.ui.navigation.SabeelNavHost
+import com.kutubuddin.sabeel.ui.onboarding.OnboardingScreen
 import com.kutubuddin.sabeel.ui.tasbih.TasbihSideEffect
 import com.kutubuddin.sabeel.ui.tasbih.TasbihViewModel
 import com.kutubuddin.sabeel.ui.theme.SabeelTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import androidx.compose.animation.Crossfade
 import javax.inject.Inject
 
 /**
@@ -41,8 +45,6 @@ import javax.inject.Inject
  *
  * Responsibilities:
  * 1. Hosts the SabeelNavHost (DhikrSelection → Counting)
- * 2. Consumes service lifecycle side-effects from TasbihViewModel
- *    to start/stop PocketModeService as a foreground service
  *
  * SRP: Activity only handles Android lifecycle and side-effect plumbing.
  *      All business logic lives in TasbihViewModel.
@@ -61,6 +63,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: TasbihViewModel by viewModels()
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -69,8 +72,6 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { !isReady }
         
         enableEdgeToEdge()
-
-        observeServiceSideEffects()
 
         // Seed the default daily wird on first launch (idempotent — no-op if non-empty).
         lifecycleScope.launch { 
@@ -90,6 +91,10 @@ class MainActivity : ComponentActivity() {
             val language by settingsRepository.language.collectAsStateWithLifecycle(initialValue = "en")
             val strings = remember(language) { UiText.resolve(language) }
             val launchCount by settingsRepository.appLaunchCount.collectAsStateWithLifecycle(initialValue = 0)
+            val isOnboardingComplete by settingsRepository.isOnboardingComplete.collectAsStateWithLifecycle(initialValue = true) // Default true for legacy users? No, wait, if we want existing users to not see it, we could default true, but if they haven't set it... Actually, if it's not set, it defaults to false in Repository. So initialValue = false is correct for matching repo. Wait, let's use true as initial to prevent a flash of onboarding if they ALREADY completed it.
+            val isOnboardingState by settingsRepository.isOnboardingComplete.collectAsStateWithLifecycle(initialValue = null)
+            
+            val scope = rememberCoroutineScope()
 
             val permissionLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission()
@@ -109,37 +114,25 @@ class MainActivity : ComponentActivity() {
                 com.kutubuddin.sabeel.ui.theme.LocalDevicePerformance provides devicePerformanceState
             ) {
                 SabeelTheme(darkTheme = theme != "light") {
-                    SabeelNavHost(
-                        hapticEngine = hapticEngine,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * Listens for service lifecycle side-effects and starts/stops
-     * PocketModeService accordingly. This runs on the STARTED lifecycle
-     * state to avoid operating on a stopped activity.
-     */
-    private fun observeServiceSideEffects() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.effect.collect { effect ->
-                    when (effect) {
-                        is TasbihSideEffect.StartPocketModeService -> {
-                            val intent = Intent(this@MainActivity, PocketModeService::class.java)
-                            startForegroundService(intent)
+                    if (isOnboardingState != null) {
+                        Crossfade(targetState = isOnboardingState == true, label = "OnboardingCrossfade") { completed ->
+                            if (!completed) {
+                                OnboardingScreen(
+                                    currentLanguage = language,
+                                    onLanguageSelect = { newLang -> scope.launch { settingsRepository.setLanguage(newLang) } },
+                                    onFinish = { scope.launch { settingsRepository.setOnboardingComplete(true) } }
+                                )
+                            } else {
+                                SabeelNavHost(
+                                    hapticEngine = hapticEngine,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
-                        is TasbihSideEffect.StopPocketModeService -> {
-                            val intent = Intent(this@MainActivity, PocketModeService::class.java)
-                            stopService(intent)
-                        }
-                        else -> { /* All other effects consumed in TasbihScreen */ }
                     }
                 }
             }
         }
     }
+
 }

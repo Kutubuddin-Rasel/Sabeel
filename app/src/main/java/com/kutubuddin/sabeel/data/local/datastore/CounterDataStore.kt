@@ -22,10 +22,8 @@ class CounterDataStore @Inject constructor(
         val KEY_COUNTER_VALUE = intPreferencesKey("counter_value")
         val KEY_ACTIVE_DHIKR = stringPreferencesKey("active_dhikr")
         val KEY_ACTIVE_TARGET_OVERRIDE = intPreferencesKey("active_target_override")
-        val KEY_ACTIVE_STEP_INDEX = intPreferencesKey("active_step_index")
         val KEY_SMART_FLOW_ENABLED = booleanPreferencesKey("smart_flow_enabled")
         val KEY_SMART_FLOW_VARIANT = stringPreferencesKey("smart_flow_variant")
-        val KEY_POCKET_MODE_ACTIVE = booleanPreferencesKey("pocket_mode_active")
     }
 
     val counterValueFlow: Flow<Int> = dataStore.data.map { preferences ->
@@ -49,10 +47,6 @@ class CounterDataStore @Inject constructor(
         preferences[KEY_ACTIVE_TARGET_OVERRIDE]?.takeIf { it > 0 }
     }
 
-    val activeStepIndexFlow: Flow<Int> = dataStore.data.map { preferences ->
-        preferences[KEY_ACTIVE_STEP_INDEX] ?: 0
-    }
-
     val isSmartFlowEnabledFlow: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[KEY_SMART_FLOW_ENABLED] ?: true
     }
@@ -62,9 +56,6 @@ class CounterDataStore @Inject constructor(
         try { SmartFlowVariant.valueOf(name) } catch (e: Exception) { SmartFlowVariant.CLASSIC }
     }
 
-    val isPocketModeActiveFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[KEY_POCKET_MODE_ACTIVE] ?: false
-    }
 
     suspend fun incrementCounter() {
         dataStore.edit { preferences ->
@@ -118,15 +109,5 @@ class CounterDataStore @Inject constructor(
         }
     }
 
-    suspend fun setPocketModeActive(active: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[KEY_POCKET_MODE_ACTIVE] = active
-        }
-    }
 
-    suspend fun setStepIndex(index: Int) {
-        dataStore.edit { preferences ->
-            preferences[KEY_ACTIVE_STEP_INDEX] = index
-        }
-    }
 }
