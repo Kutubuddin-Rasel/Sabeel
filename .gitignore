@@ -9,6 +9,7 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+keystore.properties
 
 # Custom
 .leankg
