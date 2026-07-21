@@ -7,7 +7,6 @@ import com.kutubuddin.sabeel.data.repository.TasbihRepositoryImpl
 import com.kutubuddin.sabeel.data.repository.WirdGoalDiscoveryRepositoryImpl
 import com.kutubuddin.sabeel.data.repository.WirdRepositoryImpl
 import com.kutubuddin.sabeel.domain.repository.DhikrRepository
-import com.kutubuddin.sabeel.domain.repository.PocketModeSettings
 import com.kutubuddin.sabeel.domain.repository.SessionRepository
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
 import com.kutubuddin.sabeel.domain.repository.SmartFlowSettings
@@ -31,7 +30,7 @@ abstract class RepositoryModule {
     abstract fun bindTasbihRepository(impl: TasbihRepositoryImpl): TasbihRepository
 
     // ISP: the same Singleton impl, bound to each narrower slice so DIP consumers
-    // (HomeViewModel, ObserveWirdProgress, PocketModeService) can inject exactly
+    // (HomeViewModel, ObserveWirdProgress) can inject exactly
     // what they use instead of the full TasbihRepository surface.
     @Binds @Singleton
     abstract fun bindTasbihCounterObserver(impl: TasbihRepositoryImpl): TasbihCounterObserver
@@ -45,8 +44,6 @@ abstract class RepositoryModule {
     @Binds @Singleton
     abstract fun bindSmartFlowSettings(impl: TasbihRepositoryImpl): SmartFlowSettings
 
-    @Binds @Singleton
-    abstract fun bindPocketModeSettings(impl: TasbihRepositoryImpl): PocketModeSettings
 
     @Binds @Singleton
     abstract fun bindSessionRepository(impl: SessionRepositoryImpl): SessionRepository

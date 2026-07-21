@@ -8,11 +8,14 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.kutubuddin.sabeel.di.ApplicationScope
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
+import com.kutubuddin.sabeel.di.IoDispatcher
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -28,24 +31,27 @@ import javax.inject.Singleton
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
     @Named("settings") private val dataStore: DataStore<Preferences>,
-    @ApplicationScope private val scope: CoroutineScope
+    @ApplicationScope private val scope: CoroutineScope,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : SettingsRepository {
 
     companion object {
         val KEY_THEME            = stringPreferencesKey("settings_theme")
         val KEY_LANGUAGE         = stringPreferencesKey("settings_language")
         val KEY_HAPTICS          = stringPreferencesKey("settings_haptics")
-        val KEY_LEFT_HANDED      = booleanPreferencesKey("settings_left_handed")
         val KEY_TRANSLIT_ENABLED = booleanPreferencesKey("settings_translit")
-        val KEY_AUTO_RESET       = booleanPreferencesKey("settings_auto_reset")
-        val KEY_SOUND_ENABLED    = booleanPreferencesKey("settings_sound")
-        val KEY_SHOW_STREAKS     = booleanPreferencesKey("settings_show_streaks")
         val KEY_AUTO_PROGRESS_WIRD = booleanPreferencesKey("settings_auto_progress_wird")
         val KEY_SMART_FLOW_ENABLED = booleanPreferencesKey("smart_flow_enabled")
         val KEY_DAILY_REMINDER_ENABLED = booleanPreferencesKey("settings_daily_reminder_enabled")
         val KEY_DAILY_REMINDER_TIME = stringPreferencesKey("settings_daily_reminder_time")
         val KEY_APP_LAUNCH_COUNT = intPreferencesKey("app_launch_count")
-
+        val KEY_IS_ONBOARDING_COMPLETE = booleanPreferencesKey("is_onboarding_complete")
+        
+        val KEY_TOOLTIP_TASBIH = booleanPreferencesKey("tooltip_tasbih")
+        val KEY_TOOLTIP_HOME = booleanPreferencesKey("tooltip_home")
+        val KEY_TOOLTIP_WIRD = booleanPreferencesKey("tooltip_wird")
+        val KEY_TOOLTIP_WIRD_PICKER = booleanPreferencesKey("tooltip_wird_picker")
+        val KEY_TOOLTIP_LIBRARY = booleanPreferencesKey("tooltip_library")
         // Sharing config: 5-second upstream keep-alive after last collector drops.
         private val SHARING = SharingStarted.WhileSubscribed(5_000)
     }
@@ -63,24 +69,8 @@ class SettingsRepositoryImpl @Inject constructor(
         .map { it[KEY_HAPTICS] ?: "medium" }
         .stateIn(scope, SHARING, "medium")
 
-    override val leftHanded: StateFlow<Boolean> = dataStore.data
-        .map { it[KEY_LEFT_HANDED] ?: false }
-        .stateIn(scope, SHARING, false)
-
     override val translitEnabled: StateFlow<Boolean> = dataStore.data
         .map { it[KEY_TRANSLIT_ENABLED] ?: true }
-        .stateIn(scope, SHARING, true)
-
-    override val autoReset: StateFlow<Boolean> = dataStore.data
-        .map { it[KEY_AUTO_RESET] ?: false }
-        .stateIn(scope, SHARING, false)
-
-    override val soundEnabled: StateFlow<Boolean> = dataStore.data
-        .map { it[KEY_SOUND_ENABLED] ?: true }
-        .stateIn(scope, SHARING, true)
-
-    override val showStreaks: StateFlow<Boolean> = dataStore.data
-        .map { it[KEY_SHOW_STREAKS] ?: true }
         .stateIn(scope, SHARING, true)
 
     override val autoProgressWird: StateFlow<Boolean> = dataStore.data
@@ -103,23 +93,74 @@ class SettingsRepositoryImpl @Inject constructor(
         .map { it[KEY_APP_LAUNCH_COUNT] ?: 0 }
         .stateIn(scope, SHARING, 0)
 
-    override suspend fun setTheme(theme: String) = dataStore.edit { it[KEY_THEME] = theme }.let {}
-    override suspend fun setLanguage(lang: String) = dataStore.edit { it[KEY_LANGUAGE] = lang }.let {}
-    override suspend fun setHaptics(level: String) = dataStore.edit { it[KEY_HAPTICS] = level }.let {}
-    override suspend fun setLeftHanded(on: Boolean) = dataStore.edit { it[KEY_LEFT_HANDED] = on }.let {}
-    override suspend fun setTranslitEnabled(on: Boolean) = dataStore.edit { it[KEY_TRANSLIT_ENABLED] = on }.let {}
-    override suspend fun setAutoReset(on: Boolean) = dataStore.edit { it[KEY_AUTO_RESET] = on }.let {}
-    override suspend fun setSoundEnabled(on: Boolean) = dataStore.edit { it[KEY_SOUND_ENABLED] = on }.let {}
-    override suspend fun setShowStreaks(on: Boolean) = dataStore.edit { it[KEY_SHOW_STREAKS] = on }.let {}
-    override suspend fun setAutoProgressWird(on: Boolean) = dataStore.edit { it[KEY_AUTO_PROGRESS_WIRD] = on }.let {}
-    override suspend fun setSmartFlowEnabled(on: Boolean) = dataStore.edit { it[KEY_SMART_FLOW_ENABLED] = on }.let {}
-    override suspend fun setDailyReminderEnabled(on: Boolean) = dataStore.edit { it[KEY_DAILY_REMINDER_ENABLED] = on }.let {}
-    override suspend fun setDailyReminderTime(time: String) = dataStore.edit { it[KEY_DAILY_REMINDER_TIME] = time }.let {}
+    override val isOnboardingComplete: StateFlow<Boolean> = dataStore.data
+        .map { it[KEY_IS_ONBOARDING_COMPLETE] ?: false }
+        .stateIn(scope, SHARING, false)
 
-    override suspend fun incrementAppLaunchCount() {
+    override val hasSeenTasbihTooltip: StateFlow<Boolean> = dataStore.data
+        .map { it[KEY_TOOLTIP_TASBIH] ?: false }
+        .stateIn(scope, SHARING, false)
+
+    override val hasSeenHomeTooltip: StateFlow<Boolean> = dataStore.data
+        .map { it[KEY_TOOLTIP_HOME] ?: false }
+        .stateIn(scope, SHARING, false)
+
+    override val hasSeenWirdTooltip: StateFlow<Boolean> = dataStore.data
+        .map { it[KEY_TOOLTIP_WIRD] ?: false }
+        .stateIn(scope, SHARING, false)
+
+    override val hasSeenWirdPickerTooltip: StateFlow<Boolean> = dataStore.data
+        .map { it[KEY_TOOLTIP_WIRD_PICKER] ?: false }
+        .stateIn(scope, SHARING, false)
+
+    override val hasSeenLibraryTooltip: StateFlow<Boolean> = dataStore.data
+        .map { it[KEY_TOOLTIP_LIBRARY] ?: false }
+        .stateIn(scope, SHARING, false)
+
+    override suspend fun setTheme(theme: String) = withContext(ioDispatcher) { dataStore.edit { it[KEY_THEME] = theme }.let {} }
+    override suspend fun setLanguage(lang: String) = withContext(ioDispatcher) { dataStore.edit { it[KEY_LANGUAGE] = lang }.let {} }
+    override suspend fun setHaptics(level: String) = withContext(ioDispatcher) { dataStore.edit { it[KEY_HAPTICS] = level }.let {} }
+    override suspend fun setTranslitEnabled(on: Boolean) = withContext(ioDispatcher) { dataStore.edit { it[KEY_TRANSLIT_ENABLED] = on }.let {} }
+    override suspend fun setAutoProgressWird(on: Boolean) = withContext(ioDispatcher) { dataStore.edit { it[KEY_AUTO_PROGRESS_WIRD] = on }.let {} }
+    override suspend fun setSmartFlowEnabled(on: Boolean) = withContext(ioDispatcher) { dataStore.edit { it[KEY_SMART_FLOW_ENABLED] = on }.let {} }
+    override suspend fun setDailyReminderEnabled(on: Boolean) = withContext(ioDispatcher) { dataStore.edit { it[KEY_DAILY_REMINDER_ENABLED] = on }.let {} }
+    override suspend fun setDailyReminderTime(time: String) = withContext(ioDispatcher) { dataStore.edit { it[KEY_DAILY_REMINDER_TIME] = time }.let {} }
+
+    override suspend fun incrementAppLaunchCount() = withContext(ioDispatcher) {
         dataStore.edit { preferences ->
             val current = preferences[KEY_APP_LAUNCH_COUNT] ?: 0
             preferences[KEY_APP_LAUNCH_COUNT] = current + 1
         }
+        Unit
+    }
+
+    override suspend fun setOnboardingComplete(complete: Boolean) = withContext(ioDispatcher) {
+        dataStore.edit { it[KEY_IS_ONBOARDING_COMPLETE] = complete }
+        Unit
+    }
+
+    override suspend fun setHasSeenTasbihTooltip(seen: Boolean) = withContext(ioDispatcher) {
+        dataStore.edit { it[KEY_TOOLTIP_TASBIH] = seen }
+        Unit
+    }
+
+    override suspend fun setHasSeenHomeTooltip(seen: Boolean) = withContext(ioDispatcher) {
+        dataStore.edit { it[KEY_TOOLTIP_HOME] = seen }
+        Unit
+    }
+
+    override suspend fun setHasSeenWirdTooltip(seen: Boolean) = withContext(ioDispatcher) {
+        dataStore.edit { it[KEY_TOOLTIP_WIRD] = seen }
+        Unit
+    }
+
+    override suspend fun setHasSeenWirdPickerTooltip(seen: Boolean) = withContext(ioDispatcher) {
+        dataStore.edit { it[KEY_TOOLTIP_WIRD_PICKER] = seen }
+        Unit
+    }
+
+    override suspend fun setHasSeenLibraryTooltip(seen: Boolean) = withContext(ioDispatcher) {
+        dataStore.edit { it[KEY_TOOLTIP_LIBRARY] = seen }
+        Unit
     }
 }

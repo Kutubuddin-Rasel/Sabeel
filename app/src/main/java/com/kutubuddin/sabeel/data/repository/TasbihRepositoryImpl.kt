@@ -72,6 +72,9 @@ class TasbihRepositoryImpl @Inject constructor(
     private val _activeCount = MutableStateFlow(0)
     override val activeCount: Flow<Int> = _activeCount.asStateFlow()
 
+    private val _sessionStartCount = MutableStateFlow(0)
+    override val sessionStartCount: Flow<Int> = _sessionStartCount.asStateFlow()
+
     // Trigger for debounced database flush
     private val pendingSyncTrigger = MutableSharedFlow<Unit>(
         replay = 1, 
@@ -98,13 +101,13 @@ class TasbihRepositoryImpl @Inject constructor(
 
     override val isSmartFlowEnabled: Flow<Boolean> = counterDataStore.isSmartFlowEnabledFlow
     override val smartFlowVariant: Flow<SmartFlowVariant> = counterDataStore.smartFlowVariantFlow
-    override val isPocketModeActive: Flow<Boolean> = counterDataStore.isPocketModeActiveFlow
-    override val activeStepIndex: Flow<Int> = counterDataStore.activeStepIndexFlow
 
     init {
         // Seed initial count
         applicationScope.launch(ioDispatcher) {
-            _activeCount.value = counterDataStore.counterValueFlow.first()
+            val initial = counterDataStore.counterValueFlow.first()
+            _activeCount.value = initial
+            _sessionStartCount.value = initial
         }
 
         // Background debouncer (Write-Behind)
@@ -114,6 +117,37 @@ class TasbihRepositoryImpl @Inject constructor(
                 .collect {
                     flushToDisk()
                 }
+        }
+    }
+
+    @Volatile
+    private var lastStreakUpdateDate: String? = null
+
+    private suspend fun ensureStreakActive(date: String) {
+        if (lastStreakUpdateDate == date) return
+        withContext(ioDispatcher) {
+            val curStreak = sakinahDao.getStreak("current_streak")
+            val today = LocalDate.parse(date)
+            
+            if (curStreak == null) {
+                sakinahDao.insertStreak(StreakEntity("current_streak", 1, date, 1))
+            } else {
+                val lastActive = LocalDate.parse(curStreak.lastActiveDate)
+                val daysBetween = ChronoUnit.DAYS.between(lastActive, today)
+                if (daysBetween > 0L) {
+                    val newStreakCount = if (daysBetween == 1L) curStreak.count + 1 else 1
+                    val newLongest = maxOf(newStreakCount, curStreak.longestStreak)
+                    sakinahDao.insertStreak(
+                        StreakEntity(
+                            id = "current_streak",
+                            count = newStreakCount,
+                            lastActiveDate = date,
+                            longestStreak = newLongest
+                        )
+                    )
+                }
+            }
+            lastStreakUpdateDate = date
         }
     }
 
@@ -149,6 +183,7 @@ class TasbihRepositoryImpl @Inject constructor(
     override suspend fun incrementCount(date: String): Int {
         lastKnownDate.set(date)
         _activeCount.update { it + 1 }
+        ensureStreakActive(date)
         pendingSyncTrigger.tryEmit(Unit)
         return _activeCount.value
     }
@@ -159,8 +194,29 @@ class TasbihRepositoryImpl @Inject constructor(
         return _activeCount.value
     }
 
-    override suspend fun resetCount() {
+    override suspend fun resetCount(): Unit = withContext(ioDispatcher) {
+        val currentCount = _activeCount.value
+        val startCount = _sessionStartCount.value
+        val active = activeDhikr.value
+        val date = lastKnownDate.get()
+
+        val delta = currentCount - startCount
+        if (delta > 0) {
+            dhikrSessionDao.insertSession(
+                DhikrSessionEntity(
+                    dhikrKey   = active.key,
+                    count      = delta,
+                    target     = active.target,
+                    isComplete = false,
+                    dateKey    = date,
+                    endedAt    = System.currentTimeMillis()
+                )
+            )
+        }
+
+        counterDataStore.resetCounter()
         _activeCount.value = 0
+        _sessionStartCount.value = 0
         pendingSyncTrigger.tryEmit(Unit)
     }
 
@@ -177,37 +233,64 @@ class TasbihRepositoryImpl @Inject constructor(
 
         if (key != currentActiveKey) {
             // Save partial session if switching away
-            if (currentCount > 0) {
+            val delta = currentCount - _sessionStartCount.value
+            if (delta > 0) {
                 dhikrSessionDao.insertSession(
                     DhikrSessionEntity(
                         dhikrKey = currentActiveKey,
-                        count = currentCount,
+                        count = delta,
                         target = activeDhikr.value.target,
                         isComplete = false,
                         dateKey = date,
                         endedAt = System.currentTimeMillis()
                     )
                 )
+                
+                // DATA LOSS FIX: Also force a save to the daily goals table for the outgoing Dhikr.
+                // Otherwise, rapidly switching Dhikrs before the 1.5s debouncer fires causes lost counts.
+                sakinahDao.insertDailyTarget(
+                    DailyTargetEntity(
+                        id           = "${currentActiveKey}_$date",
+                        date         = date,
+                        dhikrType    = currentActiveKey,
+                        currentCount = currentCount,
+                        targetCount  = activeDhikr.value.target,
+                        isCompleted  = currentCount >= activeDhikr.value.target
+                    )
+                )
             }
             
+            val newTarget = targetOverride ?: DhikrCatalog.resolve(key).target
             if (targetOverride != null && targetOverride > 0) {
                 counterDataStore.setDhikrKeyWithTarget(key, targetOverride)
             } else {
                 counterDataStore.setDhikrKey(key)
             }
-            counterDataStore.setStepIndex(0) // Reset sequence whenever dhikr changes
-            counterDataStore.resetCounter()
-            _activeCount.value = 0
+            
+            // GLOBAL TODAY COUNT: Check if there's unfinished progress for this Dhikr today.
+            val targetId = "${key}_$date"
+            val dailyProgress = sakinahDao.getDailyTarget(targetId)
+            val resumedCount = dailyProgress?.currentCount ?: 0
+            
+            // Only resume if it's strictly less than the target. If they already hit the target, 
+            // they are doing a fresh extra session, so it should start at 0.
+            val startingCount = if (resumedCount in 1 until newTarget) resumedCount else 0
+            
+            counterDataStore.setCounter(startingCount)
+            _activeCount.value = startingCount
+            _sessionStartCount.value = startingCount
         } else {
             // Same Dhikr. Just update target if provided, but do NOT reset the count.
+            // UNLESS the user has already reached the target, which implies they want a fresh session!
+            if (currentCount > 0 && currentCount >= activeDhikr.value.target) {
+                counterDataStore.resetCounter()
+                _activeCount.value = 0
+                _sessionStartCount.value = 0
+            }
             if (targetOverride != null && targetOverride > 0) {
                 counterDataStore.setDhikrKeyWithTarget(key, targetOverride)
             }
         }
-    }
-
-    override suspend fun setStepIndex(index: Int) = withContext(ioDispatcher) {
-        counterDataStore.setStepIndex(index)
     }
 
     override suspend fun setSmartFlowEnabled(enabled: Boolean) = withContext(ioDispatcher) {
@@ -218,9 +301,6 @@ class TasbihRepositoryImpl @Inject constructor(
         counterDataStore.setSmartFlowVariant(variant)
     }
 
-    override suspend fun setPocketModeActive(active: Boolean) = withContext(ioDispatcher) {
-        counterDataStore.setPocketModeActive(active)
-    }
 
     /**
      * Executes the actual disk writes for the accumulated counts.
@@ -228,10 +308,26 @@ class TasbihRepositoryImpl @Inject constructor(
      */
     override suspend fun flushToDisk() = withContext(ioDispatcher) {
         val currentCount = _activeCount.value
+        val startCount = _sessionStartCount.value
         val active = activeDhikr.value
         val date = lastKnownDate.get()
         
         counterDataStore.setCounter(currentCount)
+
+        val delta = currentCount - startCount
+        if (delta > 0) {
+            dhikrSessionDao.insertSession(
+                DhikrSessionEntity(
+                    dhikrKey   = active.key,
+                    count      = delta,
+                    target     = active.target,
+                    isComplete = false,
+                    dateKey    = date,
+                    endedAt    = System.currentTimeMillis()
+                )
+            )
+            _sessionStartCount.value = currentCount
+        }
 
         sakinahDao.insertDailyTarget(
             DailyTargetEntity(
@@ -297,15 +393,19 @@ class TasbihRepositoryImpl @Inject constructor(
         // ── Persist session ───────────────────────────────────────────────────
         // Insert a completed session so HomeViewModel's sessionRepository flows
         // update in real-time without any manual trigger.
-        dhikrSessionDao.insertSession(
-            DhikrSessionEntity(
-                dhikrKey   = dhikrKey,
-                count      = targetCount,
-                target     = targetCount,
-                isComplete = true,
-                dateKey    = date,
-                endedAt    = System.currentTimeMillis()
+        val delta = targetCount - _sessionStartCount.value
+        if (delta > 0) {
+            dhikrSessionDao.insertSession(
+                DhikrSessionEntity(
+                    dhikrKey   = dhikrKey,
+                    count      = delta,
+                    target     = targetCount,
+                    isComplete = true,
+                    dateKey    = date,
+                    endedAt    = System.currentTimeMillis()
+                )
             )
-        )
+            _sessionStartCount.value = targetCount
+        }
     }
 }
