@@ -32,4 +32,8 @@ interface DhikrSessionDao {
     /** Sum of counts per dhikr for a date — powers derived wird progress. */
     @Query("SELECT dhikrKey AS dhikrKey, COALESCE(SUM(count), 0) AS total FROM dhikr_sessions WHERE dateKey = :dateKey GROUP BY dhikrKey")
     fun getCountsByKeyForDate(dateKey: String): Flow<List<KeyCountRow>>
+
+    /** Aggregated sessions for a date, sorted by most recent interaction. */
+    @Query("SELECT dhikrKey, COALESCE(SUM(count), 0) as totalCount, MAX(endedAt) as lastInteraction FROM dhikr_sessions WHERE dateKey = :dateKey GROUP BY dhikrKey ORDER BY lastInteraction DESC")
+    fun getAggregatedSessionsForDate(dateKey: String): Flow<List<AggregatedSessionRow>>
 }
