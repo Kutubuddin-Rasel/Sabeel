@@ -182,16 +182,19 @@ fun SabeelNavHost(
                     HomeScreen(
                         onResumeCounting = { key, target ->
                             if (key != null && target != null) {
-                                navController.navigate(SabeelTab.Count.startRoute + "?dhikrKey=$key&target=$target") {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            } else {
-                                navController.switchToCountTab()
+                                tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key, target, SessionOrigin.DAILY_GOAL))
                             }
+                            navController.switchToCountTab()
                         },
-                        onOpenWird = { navController.navigate(WirdRoutes.WIRD) }
+                        onResumeSession = { key ->
+                            tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key, origin = SessionOrigin.HOME))
+                            navController.switchToCountTab()
+                        },
+                        onOpenWird = { navController.navigate(WirdRoutes.WIRD) },
+                        showTooltip = !settingsState.hasSeenHomeTooltip,
+                        onTooltipDismiss = {
+                            settingsViewModel.processIntent(com.kutubuddin.sabeel.ui.settings.SettingsIntent.SetHasSeenHomeTooltip(true))
+                        }
                     )
                 }
 
@@ -235,7 +238,11 @@ fun SabeelNavHost(
                             navController.switchToCountTab()
                         },
                         onEdit = { navController.navigate(WirdRoutes.WIRD_EDIT) },
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        showTooltip = !settingsState.hasSeenWirdTooltip,
+                        onTooltipDismiss = {
+                            settingsViewModel.processIntent(com.kutubuddin.sabeel.ui.settings.SettingsIntent.SetHasSeenWirdTooltip(true))
+                        }
                     )
                 }
 
@@ -262,7 +269,11 @@ fun SabeelNavHost(
                     }
                 ) {
                     WirdEditScreen(
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        showTooltip = !settingsState.hasSeenWirdPickerTooltip,
+                        onTooltipDismiss = {
+                            settingsViewModel.processIntent(com.kutubuddin.sabeel.ui.settings.SettingsIntent.SetHasSeenWirdPickerTooltip(true))
+                        }
                     )
                 }
             }
@@ -303,20 +314,26 @@ fun SabeelNavHost(
                     val dhikrKeyArg = backStackEntry.arguments?.getString("dhikrKey")
                     val targetArg = backStackEntry.arguments?.getInt("target") ?: -1
                     LaunchedEffect(dhikrKeyArg, targetArg, homeState.wird.wirdItemKeys) {
-                        if (dhikrKeyArg != null && targetArg > 0) {
-                            val isItemInGoal = homeState.wird.wirdItemKeys.contains(dhikrKeyArg)
-                            if (isItemInGoal) {
-                                tasbihViewModel.processIntent(
-                                    TasbihIntent.SetDhikr(dhikrKeyArg, targetArg, SessionOrigin.DAILY_GOAL)
-                                )
-                            } else {
-                                val nextKey = homeState.wird.nextItemKey
-                                val nextTarget = homeState.wird.nextItemTarget
-                                if (nextKey != null && nextTarget != null) {
+                        if (dhikrKeyArg != null) {
+                            if (targetArg > 0) {
+                                val isItemInGoal = homeState.wird.wirdItemKeys.contains(dhikrKeyArg)
+                                if (isItemInGoal) {
                                     tasbihViewModel.processIntent(
-                                        TasbihIntent.SetDhikr(nextKey, nextTarget, SessionOrigin.DAILY_GOAL)
+                                        TasbihIntent.SetDhikr(dhikrKeyArg, targetArg, SessionOrigin.DAILY_GOAL)
                                     )
+                                } else {
+                                    val nextKey = homeState.wird.nextItemKey
+                                    val nextTarget = homeState.wird.nextItemTarget
+                                    if (nextKey != null && nextTarget != null) {
+                                        tasbihViewModel.processIntent(
+                                            TasbihIntent.SetDhikr(nextKey, nextTarget, SessionOrigin.DAILY_GOAL)
+                                        )
+                                    }
                                 }
+                            } else {
+                                tasbihViewModel.processIntent(
+                                    TasbihIntent.SetDhikr(dhikrKeyArg)
+                                )
                             }
                             backStackEntry.arguments?.remove("dhikrKey")
                             backStackEntry.arguments?.remove("target")
@@ -356,6 +373,10 @@ fun SabeelNavHost(
                                 launchSingleTop = true
                                 restoreState = true
                             }
+                        },
+                        showTooltip = !settingsState.hasSeenTasbihTooltip,
+                        onTooltipDismiss = {
+                            settingsViewModel.processIntent(com.kutubuddin.sabeel.ui.settings.SettingsIntent.SetHasSeenTasbihTooltip(true))
                         }
                     )
                 }
@@ -366,7 +387,11 @@ fun SabeelNavHost(
                     DhikrLibraryScreen(
                         tasbihViewModel = tasbihViewModel,
                         onCountNow = { navController.switchToCountTab() },
-                        onOpenGallery = { navController.navigate("asma_ul_husna_gallery") }
+                        onOpenGallery = { navController.navigate("asma_ul_husna_gallery") },
+                        showTooltip = !settingsState.hasSeenLibraryTooltip,
+                        onTooltipDismiss = {
+                            settingsViewModel.processIntent(com.kutubuddin.sabeel.ui.settings.SettingsIntent.SetHasSeenLibraryTooltip(true))
+                        }
                     )
                 }
                 // AsmaUlHusna is a sub-route of Dhikr — same sheet semantics as Wird.
