@@ -70,6 +70,8 @@ import kotlinx.collections.immutable.toImmutableList
 @Composable
 fun WirdEditScreen(
     onBack: () -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {},
     viewModel: WirdEditViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -93,12 +95,15 @@ fun WirdEditScreen(
         onRequestPicker = { showPicker = true },
         onDismissPicker = { showPicker = false },
         onAddDhikr = { key, target ->
+            if (showTooltip) onTooltipDismiss()
             viewModel.addDhikr(key, target)
             showPicker = false
         },
         onUpdateTarget = viewModel::updateTarget,
         onRemove = viewModel::remove,
-        onReorder = viewModel::reorder
+        onReorder = viewModel::reorder,
+        showTooltip = showTooltip,
+        onTooltipDismiss = onTooltipDismiss
     )
 }
 
@@ -118,7 +123,9 @@ fun WirdEditContent(
     onAddDhikr: (key: String, target: Int) -> Unit,
     onUpdateTarget: (key: String, target: Int) -> Unit,
     onRemove: (key: String) -> Unit,
-    onReorder: (keys: ImmutableList<String>) -> Unit
+    onReorder: (keys: ImmutableList<String>) -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {}
 ) {
     val strings = LocalStrings.current
 
@@ -425,11 +432,15 @@ fun WirdEditContent(
                 state.pickable.filter { it.category == DhikrCategory.ASMA_UL_HUSNA && it.key != "ASMA_ALL_99" }
             }
             // Search reaches the FULL pickable catalog (all 99 names included) —
-            // typing "Ar-Rahman" finds it immediately without ever expanding the
-            // gold toggle. This is the single highest-leverage fix: most users
-            // who want one specific name will type it rather than browse.
             val searchResults = remember(state.pickable, query) {
-                if (query.isBlank()) emptyList() else state.pickable.filter { it.matches(query) }
+                if (query.isBlank()) {
+                    emptyList()
+                } else {
+                    state.pickable.map { it to it.searchScore(query) }
+                        .filter { it.second > 0 }
+                        .sortedByDescending { it.second }
+                        .map { it.first }
+                }
             }
 
             LazyColumn(
@@ -449,6 +460,14 @@ fun WirdEditContent(
                         PickerSearchBar(
                             query = pickerQuery,
                             onQueryChange = { pickerQuery = it }
+                        )
+                        com.kutubuddin.sabeel.ui.components.SabeelTooltip(
+                            visible = showTooltip,
+                            text = if (state.language == "bn") "আপনার প্রতিদিনের লক্ষ্যের জন্য যে কোনো ধিকির যোগ করুন।" else "Add any dhikr for your daily goal.",
+                            position = com.kutubuddin.sabeel.ui.components.TooltipPosition.Top,
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .align(Alignment.CenterHorizontally)
                         )
                     }
                 }
@@ -616,7 +635,11 @@ private fun PickerRow(
             .clip(shape)
             .background(SabeelColors.Surface)
             .border(1.dp, SabeelColors.BorderIdle, shape)
-            .clickable { onAdd(item.key, item.defaultTarget) }
+            .clickable { 
+                // We don't have a direct onTooltipDismiss passed here, but clicking adds dhikr.
+                // The parent could handle dismiss, or we can just let onAdd trigger a dismiss in the parent.
+                onAdd(item.key, item.defaultTarget) 
+            }
             .padding(horizontal = 18.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
