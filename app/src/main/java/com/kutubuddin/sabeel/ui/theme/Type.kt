@@ -229,9 +229,15 @@ val arabicStyle = TextStyle(
     fontWeight = FontWeight.Normal,
     fontSize = 22.sp,
     lineHeight = 42.sp,
+    // FIX-1.1: Trim.Both strips vertical padding from the glyph cell on both edges.
+    // For Arabic with stacked tashkil diacritics this physically clips marks that
+    // extend above/below the base glyph — a trust failure on sacred text.
+    // Trim.None is the safe, OEM-consistent default (identical rendering on One UI,
+    // MIUI, and Stock Android). Alignment.Center keeps diacritics optically balanced
+    // within the line box without relying on the font-engine-specific Proportional calc.
     lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Proportional,
-        trim = LineHeightStyle.Trim.Both
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.None
     ),
     // FIX 11: keep font padding so tall tashkīl stacks aren't clipped at the
     // top of the line box (includeFontPadding = false would trim them).
