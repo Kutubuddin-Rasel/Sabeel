@@ -58,9 +58,12 @@ class DhikrViewModel @Inject constructor(
                 // Only keep ASMA_ALL_99 and other categories
                 allDhikr.filter { it.category != DhikrCategory.ASMA_UL_HUSNA || it.key == "ASMA_ALL_99" }
             } else {
-                allDhikr.filter { it.matches(query) }
+                allDhikr.map { it to it.searchScore(query) }
+                    .filter { it.second > 0 }
+                    .sortedByDescending { it.second }
+                    .map { it.first }
             }
-        }
+        }.flowOn(defaultDispatcher)
 
     // Group filtered list by category — done on collection thread, not main
     private val categorized = filteredDhikr.map { items ->

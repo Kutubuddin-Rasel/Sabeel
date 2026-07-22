@@ -71,6 +71,8 @@ fun DhikrLibraryScreen(
     tasbihViewModel: TasbihViewModel,
     onCountNow: () -> Unit,
     onOpenGallery: () -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {},
     viewModel: DhikrViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -82,7 +84,9 @@ fun DhikrLibraryScreen(
             tasbihViewModel.processIntent(TasbihIntent.SetDhikr(key))
             onCountNow() // Calls the parameter
         },
-        onOpenGallery = onOpenGallery
+        onOpenGallery = onOpenGallery,
+        showTooltip = showTooltip,
+        onTooltipDismiss = onTooltipDismiss
     )
 }
 
@@ -97,7 +101,9 @@ fun DhikrLibraryContent(
     onSearch: (String) -> Unit,
     onSelectDhikr: (String?) -> Unit,
     onCountNow: (key: String) -> Unit,
-    onOpenGallery: () -> Unit
+    onOpenGallery: () -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {}
 ) {
     val strings = LocalStrings.current
 
@@ -112,13 +118,23 @@ fun DhikrLibraryContent(
             .fillMaxSize()
             .background(SabeelColors.Background)
     ) {
-        SearchBar(
-            query = state.searchQuery,
-            onQueryChange = onSearch,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        )
+        Box {
+            SearchBar(
+                query = state.searchQuery,
+                onQueryChange = onSearch,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            )
+            com.kutubuddin.sabeel.ui.components.SabeelTooltip(
+                visible = showTooltip,
+                text = if (state.language == "bn") "পড়ার জন্য যে কোনো ধিকির নির্বাচন করুন।" else "Select any dhikr to start counting.",
+                position = com.kutubuddin.sabeel.ui.components.TooltipPosition.Bottom,
+                modifier = Modifier
+                    .padding(top = 70.dp)
+                    .align(Alignment.BottomCenter)
+            )
+        }
 
         if (state.categorized.isEmpty()) {
             EmptySearchResult(query = state.searchQuery)
@@ -136,7 +152,10 @@ fun DhikrLibraryContent(
                             modifier = Modifier.animateItem(),
                             item = item,
                             language = state.language,
-                            onSelect = { onSelectDhikr(item.key) }
+                            onSelect = { 
+                                if (showTooltip) onTooltipDismiss()
+                                onSelectDhikr(item.key) 
+                            }
                         )
                     }
                     if (category == com.kutubuddin.sabeel.domain.model.DhikrCategory.ASMA_UL_HUSNA && state.searchQuery.isBlank()) {
