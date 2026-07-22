@@ -32,6 +32,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -41,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalConfiguration
 import com.kutubuddin.sabeel.domain.haptic.HapticEngine
 import com.kutubuddin.sabeel.ui.i18n.LocalStrings
 import com.kutubuddin.sabeel.ui.i18n.localizeHadithRef
@@ -57,6 +59,12 @@ import com.kutubuddin.sabeel.ui.theme.SabeelMotion
 import kotlinx.coroutines.launch
 import com.kutubuddin.sabeel.domain.model.LocalizedText
 import com.kutubuddin.sabeel.domain.model.DhikrMeaning
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 
 /**
  * SMOOTH-03: Stable wrapper for the dhikr identity key used by AnimatedContent.
@@ -88,6 +96,8 @@ fun TasbihScreen(
     onContinueWird: (() -> Unit)? = null,
     onNavigateHome: () -> Unit = {},
     onNavigateLibrary: () -> Unit = {},
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -97,6 +107,21 @@ fun TasbihScreen(
 
     val currentDhikrKey = state.currentDhikr.key
     val wasDailyGoalCompleteBeforeSession = remember(currentDhikrKey) { isDailyGoalFinished }
+
+    // Instantly sync the in-memory counter to disk when leaving the screen or backgrounding the app.
+    // This bypasses the 1.5s write-behind debouncer so the Home screen immediately sees the latest count.
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP || event == Lifecycle.Event.ON_PAUSE) {
+                viewModel.processIntent(com.kutubuddin.sabeel.ui.tasbih.TasbihIntent.SyncProgress)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.processIntent(com.kutubuddin.sabeel.ui.tasbih.TasbihIntent.SyncProgress)
+        }
+    }
 
     LaunchedEffect(isDailyGoalFinished) {
         if (isDailyGoalFinished && !wasDailyGoalCompleteBeforeSession) {
@@ -122,7 +147,8 @@ fun TasbihScreen(
                             HapticType.RESET -> hapticEngine.playReset(effect.strength)
                         }
                     }
-                    is TasbihSideEffect.ShowSessionSummary -> showCelebration = true
+                    is TasbihSideEffect.NavigateToLibrary -> onNavigateLibrary()
+                    is TasbihSideEffect.NavigateToHome -> onNavigateHome()
                     is TasbihSideEffect.TriggerGoldenBloom -> triggerGoldenBloom = true
                     is TasbihSideEffect.AutoProgressDailyGoal -> onContinueWird?.invoke()
                     is TasbihSideEffect.ShowToast -> {}
@@ -149,6 +175,8 @@ fun TasbihScreen(
         onNavigateHome = onNavigateHome,
         onNavigateLibrary = onNavigateLibrary,
         showTransliteration = showTransliteration,
+        showTooltip = showTooltip,
+        onTooltipDismiss = onTooltipDismiss,
         modifier = modifier
     )
 }
@@ -165,6 +193,7 @@ fun TasbihScreen(
  *     these are already cheap Canvas + Text paints. Isolating them means Compose
  *     skips StaticDhikrInfo entirely on the 60fps hot path.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasbihContent(
     state: TasbihState,
@@ -182,6 +211,8 @@ fun TasbihContent(
     onContinueWird: (() -> Unit)? = null,
     onNavigateHome: () -> Unit = {},
     onNavigateLibrary: () -> Unit = {},
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
     showTransliteration: Boolean = true,
     language: String = "en"
@@ -199,69 +230,174 @@ fun TasbihContent(
     val rewardRef = state.displayedDhikr.hadithRef
         .takeIf { it.isNotBlank() }
         ?.let { localizeHadithRef(it, language) }
+    // OPT-B: Transient UI state — not persisted across process death intentionally.
+    var showRewardSheet by remember { mutableStateOf(false) }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
     ) {
+        // ── Zone geometry — computed once from actual device constraints ─────
+        // maxWidth/maxHeight come from BoxWithConstraints; maxHeight reflects
+        // the true Scaffold content area (Sabeel nav already excluded).
+        val circleRingH = (maxWidth.value * 0.76f).coerceIn(260f, 300f).dp + 24.dp
+        val statusBarH  = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val navBarH     = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        // textZoneMax: tallest the text zone can be without encroaching on
+        // the circle. Bottom reserved = navBarH + 106dp (bottom padding in
+        // BOTTOM ZONE — accounts for 2-line whisper 78dp + 12dp gap + 16dp)
+        // + circleRingH + 8dp (minimum breathing gap between text and circle).
+        val textZoneMax = (maxHeight - statusBarH - 10.dp - navBarH - 106.dp - circleRingH - 8.dp)
+            .coerceAtLeast(120.dp)
+
         // ── Layer 0: Living background ─────────────────────────────────────────
         FluidWaveBackground(count = state.count, target = state.target)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // FIX-1.2: Consume the status bar inset before applying breathing room.
+                // On Stock Android (Pixel/gesture nav) the system already handles this —
+                // windowInsetsPadding is a no-op. On One UI (M21) and MIUI (Redmi) the
+                // OEM does NOT auto-consume it, so the Arabic text would sit only 10dp
+                // from the physical status bar pixels without this.
+                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(horizontal = 24.dp)
                 .padding(top = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // TOP ZONE: Elastic and Scrollable Context
-            Column(
+            // ── TOP ZONE — dynamic max height ─────────────────────────────
+            // Wraps to actual text content, capped at textZoneMax computed
+            // from real device constraints via BoxWithConstraints above.
+            // This eliminates: the rigid clip boundary ("box shape" Flaw 2),
+            // the dead gap for short dhikrs (Flaw 3), and the hard text
+            // cut-off for long dhikrs (Flaw 4). Circle Y remains fixed
+            // (Flaw 5) because BOTTOM ZONE pins circle via padding(80dp).
+            val topScrollState = rememberScrollState()
+            Box(
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .heightIn(max = textZoneMax)
             ) {
-                // JANK-01: StaticDhikrInfo is its own recomposition scope.
-                StaticDhikrInfo(
-                    displayArabic = displayArabic,
-                    displayTransliteration = displayTransliteration,
-                    displayMeaning = displayMeaning,
-                    language = language,
-                    showTransliteration = showTransliteration
-                )
-                Spacer(modifier = Modifier.height(24.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(topScrollState),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // JANK-01: StaticDhikrInfo is its own recomposition scope.
+                    StaticDhikrInfo(
+                        displayArabic = displayArabic,
+                        displayTransliteration = displayTransliteration,
+                        displayMeaning = displayMeaning,
+                        language = language,
+                        showTransliteration = showTransliteration
+                    )
+                }
+                // Scroll affordance: fade the bottom edge when content overflows.
+                // Appears only when there is more content below the viewport —
+                // signals to the user that the text is scrollable.
+                if (topScrollState.canScrollForward) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(36.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                                    )
+                                )
+                            )
+                    )
+                }
             }
 
-            // BOTTOM ZONE: Anchored and Rigid Action
+            // ── BOTTOM ZONE (65% of usable height) ─────────────────────────
+            // Circle-only zone. The RewardWhisper is NOT a layout-flow child
+            // of this Column — it is absolutely pinned in the parent Box at
+            // Alignment.BottomCenter (see below). This decouples the whisper
+            // from the BOTTOM ZONE budget, making it always visible regardless
+            // of whether a SequenceTracker step-indicator is present.
+            //
+            // padding(bottom = 80.dp) reserves exactly the whisper slot:
+            //   52dp (whisper) + 12dp (gap between circle and whisper) + 16dp
+            //   (original breathing room above nav bar) = 80dp.
+            // This ensures the circle never overlaps the pinned whisper.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp),
+                    .weight(1f)                  // takes ALL height remaining after TOP ZONE
+                    .navigationBarsPadding()
+                    // FIX-B: was 80.dp (calculated for 1-line whisper 52dp).
+                    // Now 2-line bodyMedium whisper = 78dp.
+                    // Correct reservation: 78dp + 12dp gap + 16dp bottom = 106dp.
+                    // Old 80dp caused a 10dp circle/whisper overlap.
+                    .padding(bottom = 106.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Bottom
+                verticalArrangement = Arrangement.Top
             ) {
-                // JANK-01: CountingLayer owns the hot-path (every tap).
-                CountingLayer(
-                    count = state.count,
-                    target = state.target,
-                    stepIndex = state.stepIndex,
-                    stepCount = state.sequence?.steps?.size,
-                    triggerGoldenBloom = triggerGoldenBloom,
-                    onGoldenBloomEnd = onGoldenBloomEnd,
-                    onIncrement = onIncrement,
-                    onDecrement = onDecrement,
-                    onReset = onReset,
-                    language = language
-                )
+                Spacer(modifier = Modifier.weight(1f))
+                Box(contentAlignment = Alignment.TopCenter) {
+                    CountingLayer(
+                        count = state.count,
+                        target = state.target,
+                        stepIndex = state.stepIndex,
+                        stepCount = state.sequence?.steps?.size,
+                        triggerGoldenBloom = triggerGoldenBloom,
+                        onGoldenBloomEnd = onGoldenBloomEnd,
+                        onIncrement = {
+                            if (showTooltip) onTooltipDismiss()
+                            onIncrement()
+                        },
+                        onDecrement = onDecrement,
+                        onReset = onReset,
+                        language = language
+                    )
+                    
+                    com.kutubuddin.sabeel.ui.components.SabeelTooltip(
+                        visible = showTooltip,
+                        text = if (language == "bn") "কাউন্ট করতে এবং হ্যাপটিক ফিডব্যাক অনুভব করতে বৃত্তটিতে ট্যাপ করুন।" else "Tap the circle to count and feel the haptic feedback.",
+                        position = com.kutubuddin.sabeel.ui.components.TooltipPosition.Bottom,
+                        modifier = Modifier
+                            .offset(y = (-56).dp)
+                    )
+                }
+            }
+        }
 
-                Spacer(modifier = Modifier.height(20.dp))
-                
+        // ── RewardWhisper — pinned, always visible ──────────────────────────
+        // Absolute in parent BoxWithConstraints — immune to BOTTOM ZONE budget.
+        // Hidden during CompletionRest overlay so it doesn't overlap the rest card.
+        if (!showCelebration) {
+            RewardWhisper(
+                rewardText = rewardText,
+                onClick = { showRewardSheet = true },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp)
+            )
+        }
+
+        // ── Reward Detail Bottom Sheet ─────────────────────────────────────────
+        if (showRewardSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showRewardSheet = false },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
                 SpiritualRewardCard(
                     reward = rewardText,
                     reference = rewardRef,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 40.dp)
                 )
             }
         }
@@ -373,24 +509,124 @@ private fun CountingLayer(
     onReset: () -> Unit,
     language: String
 ) {
-    if (stepCount != null) {
-        SequenceTracker(
-            stepIndex = stepIndex,
-            stepCount = stepCount,
-            language = language,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-    }
+    // CIRCLE SIZE v3: Width-based formula — solves the "small circle" problem on M21.
+    //
+    // WHY WIDTH, NOT HEIGHT:
+    // Height-based (old): screenHeight × 0.30, coerceIn(240, 280)
+    //   M21  (780dp tall)  → 234dp → clamped to 240dp  ← felt small
+    //   Pixel 9 (924dp)    → 277dp                      ← OK but not ideal
+    //
+    // Width-based (new): screenWidth × 0.76, coerceIn(260, 300)
+    //   M21  (360dp wide)  → 274dp  ← noticeably bigger, feels right
+    //   Pixel 9 (411dp)    → 312dp → clamped to 300dp   ← premium feel
+    //   Redmi Note (360dp) → 274dp                       ← same as M21
+    //   Budget 5.5" (320dp)→ 243dp → clamped to 260dp   ← safe minimum
+    //
+    // BUDGET IMPACT on M21 (274dp circle → 298dp with ring):
+    //   298dp (circle) + 12dp (gap) + 52dp (whisper, 1-line) = 362dp
+    //   BOTTOM ZONE available on M21 ≈ 365dp → 3dp spare ✅
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    val adaptiveDiameter = (screenWidthDp * 0.76f).coerceIn(260f, 300f).dp
 
-    TasbihCircle(
-        count = count,
-        target = target,
-        language = language,
-        triggerGoldenBloom = triggerGoldenBloom,
-        onGoldenBloomEnd = onGoldenBloomEnd,
-        onTap = onIncrement,
-        onLongPress = onReset,
-        onDecrement = onDecrement,
-    )
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (stepCount != null) {
+            SequenceTracker(
+                stepIndex = stepIndex,
+                stepCount = stepCount,
+                language = language,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        TasbihCircle(
+            count = count,
+            target = target,
+            language = language,
+            diameter = adaptiveDiameter,
+            triggerGoldenBloom = triggerGoldenBloom,
+            onGoldenBloomEnd = onGoldenBloomEnd,
+            onTap = onIncrement,
+            onLongPress = onReset,
+            onDecrement = onDecrement,
+        )
+    }
+}
+
+// ── OPT-B: RewardWhisper ─────────────────────────────────────────────────────
+// A subtle, tappable "whisper" label below the counting circle.
+//
+// INVISIBLE INTERFACE philosophy:
+// The spiritual reward is contextual knowledge — it shouldn't compete with the
+// act of counting. This whisper is visible to the attentive eye, invisible to
+// those in flow. Tapping it opens a bottom sheet with the full reward text.
+//
+// HEIGHT BUDGET: ~74dp total
+//   8dp (top padding) + 18dp (eyebrow row) + 4dp (gap) + 36dp (2-line preview)
+//   + 8dp (bottom padding) = 74dp
+// M21 BOTTOM ZONE fit: 264dp (circle+ring) + 12dp + 74dp = 350dp < 355dp ✅
+@Composable
+private fun RewardWhisper(
+    rewardText: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (rewardText.isNullOrBlank()) return
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .pointerInput(Unit) { detectTapGestures { onClick() } }
+            // WHISPER v4: full-token colors (SageGreen at full opacity, TextSecondary
+            // for preview) — no more raw .copy(alpha) calls. bodyMedium (14sp) instead
+            // of bodySmall (12sp) for legible italic text on mid-range displays.
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .semantics {
+                contentDescription = "Spiritual reward. Tap to read full."
+                onClick(label = "Read spiritual reward") { onClick(); true }
+            }
+    ) {
+        // ── Eyebrow row ───────────────────────────────────────────────────────
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Spa,
+                contentDescription = null,
+                // FIX-D1: full token opacity. SageGreen is already a calm muted
+                // sage — copy(alpha=0.55f) was dropping it below readability.
+                tint = SabeelColors.SageGreen,
+                modifier = Modifier.size(9.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "SPIRITUAL REWARD",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    letterSpacing = 1.5.sp,
+                    // FIX-D1: SageGreen at full opacity (token already muted).
+                    color = SabeelColors.SageGreen
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // ── Reward preview — 2 lines, bodyMedium ─────────────────────────────
+        // FIX-D2: bodyMedium (14sp/20sp) replaces bodySmall (12sp/16sp) —
+        // italic at 12sp is too fine to read on M21 mid-range display.
+        // TextSecondary replaces CounterWhite.copy(alpha=0.40f) — the token
+        // is already theme-calibrated (dark: #A8B0A8, light: #4A5249) and
+        // avoids producing an out-of-system ghost-level colour.
+        Text(
+            text = rewardText,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontStyle = FontStyle.Italic,
+                color = SabeelColors.TextSecondary
+            ),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+    }
 }

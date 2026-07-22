@@ -62,7 +62,8 @@ sealed interface TasbihSideEffect {
     data class PlayHaptic(val type: HapticType, val strength: HapticStrength) : TasbihSideEffect
     object TriggerGoldenBloom : TasbihSideEffect
     object AutoProgressDailyGoal : TasbihSideEffect
-    object ShowSessionSummary : TasbihSideEffect
+    object NavigateToLibrary : TasbihSideEffect
+    object NavigateToHome : TasbihSideEffect
     data class ShowToast(val message: String) : TasbihSideEffect
 }
 
@@ -82,5 +83,6 @@ enum class HapticType {
  */
 enum class SessionOrigin {
     DAILY_GOAL,
-    LIBRARY
+    LIBRARY,
+    HOME
 }

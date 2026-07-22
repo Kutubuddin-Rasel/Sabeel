@@ -58,7 +58,11 @@ class TasbihViewModel @Inject constructor(
         observeRepositoryState()
         viewModelScope.launch {
             for (action in repoWriteChannel) {
-                action()
+                try {
+                    action()
+                } catch (e: Exception) {
+                    Log.e("TasbihViewModel", "Failed to execute repository action", e)
+                }
             }
         }
     }
@@ -71,7 +75,6 @@ class TasbihViewModel @Inject constructor(
                 repository.isSmartFlowEnabled,
                 repository.smartFlowVariant,
                 repository.streak,
-                repository.activeStepIndex,
                 settingsRepository.hapticsLevel   // THREAD-02: flow through state, not @Volatile field
             ) { values ->
                 val count = values[0] as Int
@@ -79,8 +82,7 @@ class TasbihViewModel @Inject constructor(
                 val smartFlow = values[2] as Boolean
                 val variant = values[3] as SmartFlowVariant
                 val streak = values[4] as? com.kutubuddin.sabeel.domain.model.Streak
-                val repoStepIndex = values[5] as Int
-                val hapticStrength = HapticStrength.fromSetting(values[6] as String)
+                val hapticStrength = HapticStrength.fromSetting(values[5] as String)
 
                 // A sequence is active only when the entry declares one AND the
                 // user has Smart Flow enabled; otherwise it counts as a single dhikr.
@@ -88,12 +90,28 @@ class TasbihViewModel @Inject constructor(
                     DhikrCatalog.sequenceFor(dhikr.sequenceKey) else null
 
                 _state.update { currentState ->
-                    val stepIndex = if (sequence != null)
-                        repoStepIndex.coerceIn(0, sequence.steps.lastIndex) else 0
-                    // Sequence step targets are catalog-fixed and intentionally ignore any active
-                    // target override; the override only shapes the single-dhikr `dhikr.target` fallback.
-                    val target = sequence?.steps?.get(stepIndex)?.target ?: dhikr.target
+                    var stepIndex = 0
+                    var localCount = count
+                    var target = dhikr.target
+
+                    if (sequence != null) {
+                        var remaining = count
+                        for ((index, step) in sequence.steps.withIndex()) {
+                            val isLockedTransition = currentState.isTransitioning && index == currentState.stepIndex
+                            
+                            if (remaining >= step.target && index < sequence.steps.lastIndex && !isLockedTransition) {
+                                remaining -= step.target
+                                stepIndex = index + 1
+                            } else {
+                                localCount = remaining
+                                target = step.target
+                                stepIndex = index
+                                break
+                            }
+                        }
+                    }
                     
+
                     val displayedDhikr = if (dhikr.key == "ASMA_ALL_99") {
                         val index = count.coerceIn(0, DhikrCatalog.asmaUlHusnaList.lastIndex)
                         val item = DhikrCatalog.asmaUlHusnaList[index]
@@ -112,7 +130,7 @@ class TasbihViewModel @Inject constructor(
                     }
 
                     currentState.copy(
-                        count = count,
+                        count = localCount,
                         currentDhikr = dhikr,
                         displayedDhikr = displayedDhikr,
                         sequence = sequence,
@@ -160,8 +178,7 @@ class TasbihViewModel @Inject constructor(
 
         if (currentState.isTransitioning) {
             // Tap buffering during the 600ms breathing room
-            val nextCount = currentState.count + 1
-            _state.update { it.copy(count = nextCount) }
+            // Let the repository increment it. The UI state will update automatically!
             _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.TICK, currentState.hapticStrength))
             val dateString = LocalDate.now().toString()
             repoWriteChannel.trySend { repository.incrementCount(dateString) }
@@ -173,55 +190,73 @@ class TasbihViewModel @Inject constructor(
         
         val isSmartFlow = currentState.isSmartFlowEnabled && sequence != null
         val isDailyGoal = currentState.sessionOrigin == SessionOrigin.DAILY_GOAL
+        val is99Names = currentState.currentDhikr.key == "ASMA_ALL_99"
 
         if (isTargetReached) {
             _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.THUD, currentState.hapticStrength))
             _effect.tryEmit(TasbihSideEffect.TriggerGoldenBloom)
             
+            val isLastStep = sequence == null || currentState.stepIndex == sequence.steps.lastIndex
             val completedKey = if (sequence != null) sequence.key else currentState.currentDhikr.key
-            val completedTarget = currentState.target
             val dateString = LocalDate.now().toString()
             
             repoWriteChannel.trySend {
                 repository.incrementCount(dateString)
-                repository.completeDhikrTarget(dateString, completedKey, completedTarget)
+                if (isLastStep) {
+                    repository.completeDhikrTarget(dateString, completedKey, currentState.currentDhikr.target)
+                }
             }
             
-            _state.update { it.copy(count = nextCount) }
-            
-            if (isSmartFlow || isDailyGoal) {
-                // Enter transition phase (600ms Breathing Room)
+            val isSmartFlowComplete = isSmartFlow && isLastStep
+            val isFixedEndDhikrComplete = isSmartFlowComplete || is99Names
+
+            if (isFixedEndDhikrComplete && !isDailyGoal) {
+                // Enter 1200ms transition phase for completion pop-back
+                _state.update { it.copy(isTransitioning = true) }
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(1200)
+                    if (isSmartFlowComplete) {
+                        val stateAfterDelay = _state.value
+                        val overTaps = stateAfterDelay.count - stateAfterDelay.target
+                        repoWriteChannel.send { repository.setCount(overTaps) }
+                    }
+                    if (currentState.sessionOrigin == SessionOrigin.LIBRARY) {
+                        _effect.emit(TasbihSideEffect.NavigateToLibrary)
+                    } else {
+                        _effect.emit(TasbihSideEffect.NavigateToHome)
+                    }
+                    _state.update { it.copy(isTransitioning = false) }
+                }
+            } else if (isSmartFlow || isDailyGoal) {
+                // Enter standard 600ms transition phase (auto-progress or next step)
                 _state.update { it.copy(isTransitioning = true) }
                 
                 viewModelScope.launch {
                     kotlinx.coroutines.delay(600)
                     
                     val stateAfterDelay = _state.value
-                    // Calculate any taps that happened during the 600ms window
-                    val remainder = stateAfterDelay.count - completedTarget
                     
-                    if (isSmartFlow && sequence != null) {
-                        val result = advance(sequence, stateAfterDelay.stepIndex, completedTarget - 1)
-                        if (result.sequenceCompleted) {
-                            _effect.emit(TasbihSideEffect.ShowSessionSummary)
-                            _state.update { it.copy(isTransitioning = false, count = remainder, stepIndex = 0, target = sequence.steps.first().target) }
-                            repoWriteChannel.send { 
-                                repository.setStepIndex(0)
-                                repository.setCount(remainder)
+                    if (isSmartFlow && !isLastStep) {
+                        // Enforce a strict boundary reset. We calculate the exact mathematical
+                        // target up to the completed step and force the global count to that number,
+                        // discarding any overflow taps made during the 600ms visual delay.
+                        val sequence = stateAfterDelay.sequence
+                        if (sequence != null) {
+                            var cumulativeTarget = 0
+                            for (i in 0..stateAfterDelay.stepIndex) {
+                                cumulativeTarget += sequence.steps[i].target
                             }
-                        } else {
-                            val nextTarget = sequence.steps[result.stepIndex].target
-                            _state.update { it.copy(isTransitioning = false, count = remainder, stepIndex = result.stepIndex, target = nextTarget) }
-                            repoWriteChannel.send { 
-                                repository.setStepIndex(result.stepIndex)
-                                repository.setCount(remainder)
-                            }
+                            repoWriteChannel.send { repository.setCount(cumulativeTarget) }
                         }
+                        
+                        // Advancing to next step! We just unlock the transition.
+                        _state.update { it.copy(isTransitioning = false) }
                     } else if (isDailyGoal) {
                         // Tell UI to request next daily goal item
                         _effect.emit(TasbihSideEffect.AutoProgressDailyGoal)
-                        _state.update { it.copy(isTransitioning = false, count = remainder) }
-                        repoWriteChannel.send { repository.setCount(remainder) }
+                        val overTaps = stateAfterDelay.count - stateAfterDelay.target
+                        repoWriteChannel.send { repository.setCount(overTaps) }
+                        _state.update { it.copy(isTransitioning = false) }
                     }
                 }
             } else {
@@ -230,7 +265,6 @@ class TasbihViewModel @Inject constructor(
             }
         } else {
             // Normal increment
-            _state.update { it.copy(count = nextCount) }
             _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.TICK, currentState.hapticStrength))
             val dateString = LocalDate.now().toString()
             val result = repoWriteChannel.trySend { repository.incrementCount(dateString) }
@@ -244,28 +278,12 @@ class TasbihViewModel @Inject constructor(
 
     private suspend fun handleDecrement() {
         val currentState = _state.value
-        val sequence = currentState.sequence
 
-        if (currentState.isSmartFlowEnabled && sequence != null && currentState.count == 0 && currentState.stepIndex > 0) {
-            val prevIndex = currentState.stepIndex - 1
-            val prevTarget = sequence.steps[prevIndex].target
-            val prevCount = prevTarget - 1
-            
-            _state.update { it.copy(stepIndex = prevIndex, count = prevCount, target = prevTarget) }
-            
-            _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.TICK, _state.value.hapticStrength))
-            repoWriteChannel.trySend {
-                repository.setStepIndex(prevIndex)
-                repository.setCount(prevCount)
-            }
-        } else {
-            _state.update { state ->
-                val newCount = maxOf(0, state.count - 1)
-                state.copy(count = newCount)
-            }
-            repoWriteChannel.trySend {
-                repository.decrementCount()
-            }
+        if (currentState.count == 0 && currentState.stepIndex == 0) return
+
+        _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.TICK, currentState.hapticStrength))
+        repoWriteChannel.trySend {
+            repository.decrementCount()
         }
     }
 
@@ -279,7 +297,6 @@ class TasbihViewModel @Inject constructor(
             _state.update { it.copy(count = 0, stepIndex = 0, target = sequence.steps.first().target) }
             _effect.tryEmit(TasbihSideEffect.PlayHaptic(HapticType.RESET, _state.value.hapticStrength))
             repoWriteChannel.trySend {
-                repository.setStepIndex(0)
                 repository.resetCount()
             }
         } else {
@@ -294,9 +311,9 @@ class TasbihViewModel @Inject constructor(
     // ─── Settings ─────────────────────────────────────────────────────────────
 
     private suspend fun handleSetDhikr(key: String, target: Int? = null, origin: SessionOrigin = SessionOrigin.LIBRARY, preserveCount: Boolean = false) {
-        // Reset the sequence cursor so a freshly-selected dhikr starts from step 1,
-        // and capture the session origin for context-aware completion UI.
-        _state.update { it.copy(stepIndex = 0, sessionOrigin = origin) }
+        // Capture the session origin for context-aware completion UI.
+        // We do not reset the step index here because it is dynamically calculated from the global count.
+        _state.update { it.copy(sessionOrigin = origin) }
         
         val currentCount = _state.value.count
         repoWriteChannel.send {
@@ -321,34 +338,5 @@ class TasbihViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "TasbihViewModel"
-        /**
-         * Pure state transition for one tap inside a [DhikrSequence].
-         *
-         * Given the current step and its within-step count, returns the next
-         * cursor position and whether a step / the whole sequence just completed.
-         * No Android or coroutine dependency, so it is unit-tested directly.
-         */
-        internal fun advance(seq: DhikrSequence, stepIndex: Int, stepCount: Int): SeqResult {
-            val target = seq.steps[stepIndex].target
-            val next = stepCount + 1
-            if (next < target) {
-                return SeqResult(stepIndex, next, stepCompleted = false, sequenceCompleted = false)
-            }
-            val isLast = stepIndex == seq.steps.lastIndex
-            return SeqResult(
-                stepIndex = if (isLast) stepIndex else stepIndex + 1,
-                stepCount = if (isLast) target else 0,
-                stepCompleted = true,
-                sequenceCompleted = isLast
-            )
-        }
     }
 }
-
-/** Outcome of one [TasbihViewModel.advance] tick. */
-data class SeqResult(
-    val stepIndex: Int,
-    val stepCount: Int,
-    val stepCompleted: Boolean,
-    val sequenceCompleted: Boolean
-)
