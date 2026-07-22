@@ -87,9 +87,16 @@ fun FluidWaveBackground(
         val alpha = if (colors.isLight) 0.12f else 0.16f
         listOf(colors.WaveLapis.copy(alpha = alpha), Color.Transparent)
     }
-    val accentGradientColors = remember(colors) {
-        val alpha = if (colors.isLight) 0.08f else 0.12f
-        listOf(colors.AccentTeal.copy(alpha = alpha), Color.Transparent)
+    // Progress-weighted accent alpha: starts at half intensity at count=0,
+    // rises to full at target. Prevents the top-of-screen glow from being
+    // disproportionately bright at past-target completion (Flaw 7 fix).
+    val accentAlpha = remember(count, target) {
+        val base = if (colors.isLight) 0.04f else 0.06f
+        val peak = if (colors.isLight) 0.08f else 0.12f
+        base + (peak - base) * (if (target > 0) (count.toFloat() / target).coerceIn(0f, 1f) else 0f)
+    }
+    val accentGradientColors = remember(accentAlpha) {
+        listOf(colors.AccentTeal.copy(alpha = accentAlpha), Color.Transparent)
     }
 
     Box(
@@ -127,7 +134,11 @@ fun FluidWaveBackground(
                     // radius pulses subtly. Replicates the "level filling" of the old morph
                     // at ~50× lower GPU cost.
                     if (accentBaseRadius > 0f) {
-                        val accentCenterY = h - (progress * h * 0.55f) - (h * 0.15f)
+                        // FIX-A: coefficient 0.55→0.30 caps the max rise at h×0.55 from top
+                        // (mid-screen / circle level). Old value (0.55) raised center to
+                        // h×0.30 (inside the text zone) at progress=1.0, creating the
+                        // "lit box" around the Arabic text at past-target completion.
+                        val accentCenterY = h - (progress * h * 0.30f) - (h * 0.15f)
                         
                         withTransform({
                             translate(left = w / 2f, top = accentCenterY)

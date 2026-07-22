@@ -75,7 +75,11 @@ fun SpiritualRewardCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                // FIX-1.4: Removed padding(horizontal = 24.dp) that was here.
+                // TasbihContent's outer Column already applies padding(horizontal = 24.dp)
+                // globally. Having it here too produced 48dp total on each side, reducing
+                // the text line width to 312dp on 360dp screens — causing unnecessary
+                // line wrapping, especially with One UI's font scale boost on the M21.
                 .semantics {  },  // Readable by TalkBack as plain text container
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -102,22 +106,28 @@ fun SpiritualRewardCard(
                 )
             }
             
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Main Reward Text (Poetic, Serif, Italic)
+            // Main Reward Text
+            // ARCH-FINAL: Reduced from headlineSmall (24sp / 34sp lineHeight) to
+            // bodyLarge (16sp / 24sp lineHeight). headlineSmall is a title scale —
+            // too large for supporting card text sharing the screen with a 304dp circle.
+            // At 34sp lineHeight, 3 lines = 102dp text; at 24sp, 3 lines = 72dp.
+            // This saves ~30dp, bringing the card height from ~214dp to ~142dp and
+            // making the BOTTOM ZONE content (480dp) fit within its 65% budget.
             Text(
                 text = rewardText,
-                style = MaterialTheme.typography.headlineSmall.copy(
+                style = MaterialTheme.typography.bodyLarge.copy(
                     fontFamily = FontFamily.Serif,
                     fontStyle = FontStyle.Italic,
-                    lineHeight = 34.sp
+                    lineHeight = 24.sp
                 ),
                 color = SabeelColors.CounterWhite.copy(alpha = 0.95f),
                 textAlign = TextAlign.Center
             )
             
             if (!ref.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 
                 // Minimalist Divider ( —   — )
                 Row(
@@ -129,7 +139,7 @@ fun SpiritualRewardCard(
                     Box(modifier = Modifier.width(18.dp).height(1.dp).background(SabeelColors.SageGreen.copy(alpha = 0.25f)))
                 }
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 
                 // Subdued Citation
                 Text(

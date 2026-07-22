@@ -27,9 +27,14 @@ fun OdometerCounter(
     // digit count (1 digit for a target of 3, 3 digits for a target of 100),
     // so the padding never implies a scale the target doesn't have.
     val padWidth = target.toString().length.coerceAtLeast(1)
-    // ASCII digits drive the roll animation (stable ordering); the localized
-    // glyph is substituted only at paint time inside the content lambda.
-    val countString = count.toString().padStart(padWidth, '0')
+    // FIX-POST-2 (Flaw 4): At count=0 (pre-tap resting state) the unconditional
+    // padStart rendered "00" for any target ≥ 10 — reads as a display error before
+    // any counting has begun. The padding serves animation stability at digit-boundary
+    // crossings (9→10), but at count=0 there is no boundary to protect. Skip padding
+    // at rest; resume padding from count=1 onward. The 0→1 width transition for
+    // 2-digit targets is animated gracefully by the key(index) slot mechanism below.
+    val countString = if (count == 0) "0"
+                      else count.toString().padStart(padWidth, '0')
     // Numbers read left-to-right in every language (Arabic-Indic digits too), so
     // pin the digit row to LTR — otherwise under the app-wide RTL direction a
     // two-digit count like ۱۲ would render mirrored as ۲۱.
