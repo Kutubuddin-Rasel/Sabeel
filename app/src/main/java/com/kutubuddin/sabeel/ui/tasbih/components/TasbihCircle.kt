@@ -80,9 +80,14 @@ fun TasbihCircle(
     val scope   = rememberCoroutineScope()
 
     // ── Hoist color tokens — read inside non-composable Canvas lambdas ────────
-    val arcTrackColor   = SabeelColors.ArcTrack
-    val arcStartColor   = SabeelColors.AccentTeal
-    val arcEndColor     = SabeelColors.AccentTealBright
+    // FIX-FLAW7: At past-target (count >= target), the full 360° arc was rendered
+    // at 100% brightness — visually jarring and compounded the box-shape glow.
+    // Drop arc alpha to 0.65f when past-target; circle still signals completion.
+    val isPastTarget  = target > 0 && count >= target
+    val arcAlpha      = if (isPastTarget) 0.65f else 1.0f
+    val arcTrackColor = SabeelColors.ArcTrack
+    val arcStartColor = SabeelColors.AccentTeal.copy(alpha = arcAlpha)
+    val arcEndColor   = SabeelColors.AccentTealBright.copy(alpha = arcAlpha)
 
     // ── Layer 2: arc sweep — spring-driven, phase-locked with odometer ────────
     val progress   = (count.toFloat() / target.toFloat()).coerceIn(0f, 1f)
@@ -118,10 +123,25 @@ fun TasbihCircle(
     val ringStroke = remember(ringStrokeWidth) { Stroke(width = ringStrokeWidth, cap = StrokeCap.Round) }
 
     val sweepGradient = remember(arcStartColor, arcEndColor) {
+        // FIX-3.2 (corrected): Same-endpoint sweep gradient — no seam artifact possible.
+        //
+        // The previous transparent-endpoint approach broke the ring at 100% count:
+        // the transparent stop at 1.0f created a visible gap at 3 o'clock when the
+        // full 360° arc was drawn (sweep = 360°).
+        //
+        // Root cause of the original seam: 2-stop gradient jumps from arcEndColor
+        // back to arcStartColor at the 0°/360° junction (3 o'clock). On Mali GPUs
+        // (Redmi/MIUI) the sub-pixel AA doesn't smooth this — visible sharp line.
+        //
+        // Correct fix: make BOTH endpoints the same color (arcStartColor). There is
+        // now zero color difference at the seam junction on either side. The gradient
+        // flows:  arcStartColor (3 o'clock) → arcEndColor (9 o'clock) → arcStartColor
+        // (3 o'clock). No jump, no gap, no artifact — at any count value including 33/33.
         Brush.sweepGradient(
             colorStops = arrayOf(
-                0.0f to arcStartColor,
-                1.0f to arcEndColor
+                0.0f  to arcStartColor,  // 3 o'clock — seam START (matches end)
+                0.5f  to arcEndColor,    // 9 o'clock — gradient peak brightness
+                1.0f  to arcStartColor   // 3 o'clock — seam END (same as start = no jump)
             )
         )
     }
@@ -151,10 +171,17 @@ fun TasbihCircle(
     val goldEndColor   = SabeelColors.GoldLuminous
     
     val bloomGradient = remember(goldStartColor, goldEndColor) {
+        // FIX-POST-2 (Flaw 3): Same-endpoint bloom gradient — no seam artifact.
+        // The original 2-stop version (goldStartColor → goldEndColor) creates a hard
+        // color jump at the 360°/0° seam when bloomSweep reaches 360° on milestone
+        // completion. Same bug pattern as the progress arc seam we already fixed.
+        // Same fix: make both endpoints goldStartColor so there is zero color difference
+        // at the junction — on any GPU, at any sweep angle including the full 360° bloom.
         Brush.sweepGradient(
             colorStops = arrayOf(
-                0.0f to goldStartColor,
-                1.0f to goldEndColor
+                0.0f to goldStartColor,  // 3 o'clock — seam START (matches end)
+                0.5f to goldEndColor,    // 9 o'clock — peak gold brightness
+                1.0f to goldStartColor   // 3 o'clock — seam END (same as start = no jump)
             )
         )
     }
