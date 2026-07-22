@@ -12,7 +12,6 @@ interface TasbihCounterMutator {
     suspend fun resetCount()
     suspend fun setCount(value: Int)
     suspend fun setDhikr(key: String, targetOverride: Int? = null)
-    suspend fun setStepIndex(index: Int)
     suspend fun completeDhikrTarget(date: String, dhikrKey: String, targetCount: Int)
     suspend fun flushToDisk()
 }

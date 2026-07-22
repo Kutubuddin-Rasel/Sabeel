@@ -12,6 +12,6 @@ import kotlinx.coroutines.flow.Flow
  */
 interface TasbihCounterObserver {
     val activeCount: Flow<Int>
-    val activeStepIndex: Flow<Int>
     val activeDhikr: Flow<ActiveDhikr>
+    val sessionStartCount: Flow<Int>
 }

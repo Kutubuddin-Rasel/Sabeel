@@ -8,7 +8,6 @@ package com.kutubuddin.sabeel.domain.repository
  * Every other consumer depends on exactly the narrower interface it uses:
  *  - [com.kutubuddin.sabeel.ui.home.HomeViewModel] → [TasbihCounterObserver] + [StreakObserver]
  *  - [com.kutubuddin.sabeel.domain.usecase.ObserveWirdProgress] → [TasbihCounterObserver]
- *  - [com.kutubuddin.sabeel.service.PocketModeService] → [TasbihCounterMutator]
  *
  * [com.kutubuddin.sabeel.data.repository.TasbihRepositoryImpl] is the single
  * concrete implementation and is bound to each interface token in
@@ -19,5 +18,4 @@ interface TasbihRepository :
     TasbihCounterObserver,
     TasbihCounterMutator,
     StreakObserver,
-    SmartFlowSettings,
-    PocketModeSettings
+    SmartFlowSettings
