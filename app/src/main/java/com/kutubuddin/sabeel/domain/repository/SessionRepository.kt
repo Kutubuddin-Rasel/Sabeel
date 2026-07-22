@@ -12,4 +12,7 @@ interface SessionRepository {
 
     /** Map of dhikrKey → total counted for the given date. */
     fun getCountsByKeyForDate(dateKey: String): Flow<Map<String, Int>>
+
+    /** Aggregated sessions for a date, sorted by most recent interaction. */
+    fun getAggregatedSessionsForDate(dateKey: String): Flow<List<com.kutubuddin.sabeel.data.local.db.dao.AggregatedSessionRow>>
 }
