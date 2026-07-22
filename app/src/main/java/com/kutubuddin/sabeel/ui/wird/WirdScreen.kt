@@ -44,6 +44,8 @@ fun WirdScreen(
     onCountItem: (key: String, target: Int) -> Unit,
     onEdit: () -> Unit,
     onBack: () -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {},
     viewModel: WirdViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.state.collectAsStateWithLifecycle()
@@ -55,7 +57,9 @@ fun WirdScreen(
             viewModel.onWirdEditEntryUsed()
             onEdit()
         },
-        onBack = onBack
+        onBack = onBack,
+        showTooltip = showTooltip,
+        onTooltipDismiss = onTooltipDismiss
     )
 }
 
@@ -76,7 +80,9 @@ fun WirdContent(
     language: String,
     onCountItem: (key: String, target: Int) -> Unit,
     onEdit: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {}
 ) {
     val strings = LocalStrings.current
 
@@ -92,26 +98,40 @@ fun WirdContent(
             backContentDescription = strings.a11yBack,
             actions = {
                 if (progress.items.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .defaultMinSize(minWidth = 44.dp, minHeight = 44.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .clickable(onClick = onEdit)
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Edit,
-                            contentDescription = null,
-                            tint = SabeelColors.AccentTeal,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = strings.wirdEditCta,
-                            color = SabeelColors.AccentTeal,
-                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                    Box(contentAlignment = Alignment.TopCenter) {
+                        Row(
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .defaultMinSize(minWidth = 44.dp, minHeight = 44.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .clickable(onClick = {
+                                    if (showTooltip) onTooltipDismiss()
+                                    onEdit()
+                                })
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Edit,
+                                contentDescription = null,
+                                tint = SabeelColors.AccentTeal,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = strings.wirdEditCta,
+                                color = SabeelColors.AccentTeal,
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                        
+                        com.kutubuddin.sabeel.ui.components.SabeelTooltip(
+                            visible = showTooltip,
+                            text = if (language == "bn") "আপনার উর্দ পরিবর্তন করতে 'এডিট' এ ক্লিক করুন।" else "Click 'Edit' to change your daily wird.",
+                            position = com.kutubuddin.sabeel.ui.components.TooltipPosition.Bottom, // pointer at top
+                            modifier = Modifier
+                                .offset(y = 56.dp)
+                                .padding(end = 12.dp)
                         )
                     }
                 }
@@ -129,15 +149,26 @@ fun WirdContent(
                 Spacer(Modifier.height(6.dp))
                 Text(strings.wirdEmptyHint, style = MaterialTheme.typography.bodySmall, color = SabeelColors.TextHint)
                 Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = onEdit,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(strings.wirdAddDhikr, color = SabeelColors.Background, fontWeight = FontWeight.Bold)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    com.kutubuddin.sabeel.ui.components.SabeelTooltip(
+                        visible = showTooltip,
+                        text = if (language == "bn") "আপনার প্রতিদিনের লক্ষ্যের জন্য ধিকির যোগ করতে এখানে ক্লিক করুন।" else "Click here to add dhikr for your daily goal.",
+                        position = com.kutubuddin.sabeel.ui.components.TooltipPosition.Bottom, // pointer at bottom, pointing down to button
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Button(
+                        onClick = {
+                            if (showTooltip) onTooltipDismiss()
+                            onEdit()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SabeelColors.AccentTeal),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(strings.wirdAddDhikr, color = SabeelColors.Background, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         } else {
