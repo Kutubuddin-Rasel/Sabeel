@@ -151,23 +151,29 @@ fun SettingsSegmentRow(
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (option.icon != null) {
-                    Icon(
-                        imageVector = option.icon,
-                        contentDescription = option.display,
-                        modifier = Modifier.size(20.dp),
-                        tint = if (isSelected) SabeelColors.OnAccentTeal else SabeelColors.TextSecondary
-                    )
-                } else {
-                    Text(
-                        text = option.display,
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
-                        ),
-                        color = if (isSelected) SabeelColors.OnAccentTeal else SabeelColors.TextSecondary,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (option.icon != null) {
+                        Icon(
+                            imageVector = option.icon,
+                            contentDescription = option.display,
+                            modifier = Modifier.size(18.dp),
+                            tint = if (isSelected) SabeelColors.OnAccentTeal else SabeelColors.TextSecondary
+                        )
+                    }
+                    if (option.display.isNotEmpty()) {
+                        Text(
+                            text = option.display,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+                            ),
+                            color = if (isSelected) SabeelColors.OnAccentTeal else SabeelColors.TextSecondary,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
