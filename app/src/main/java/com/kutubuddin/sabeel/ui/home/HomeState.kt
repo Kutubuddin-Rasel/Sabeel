@@ -19,7 +19,7 @@ data class HomeState(
     val currentStreak: Int = 0,
     val totalAllTime: Int = 0,
     val totalSessionCount: Int = 0,
-    val resumeSession: ResumeSession? = null,
+    val heroState: HomeHeroState = HomeHeroState.None,
     val greeting: GreetingType = GreetingType.DEFAULT,
     val language: String = "en",
     // JANK-04: date label owned by ViewModel and refreshed by a midnight-aligned ticker.
@@ -28,14 +28,24 @@ data class HomeState(
     val todayLabel: String = ""
 )
 
-/** Non-null only when the user has an in-progress (incomplete) session. */
+/** Represents the dynamic primary action (Hero CTA) on the Home Screen. */
 @Immutable
-data class ResumeSession(
-    val dhikrKey: String,
-    val displayName: LocalizedText,
-    val lastCount: Int,
-    val target: Int
-)
+sealed interface HomeHeroState {
+    /** The user has a session to resume or a goal to continue. */
+    data class Resume(
+        val dhikrKey: String,
+        val displayName: LocalizedText,
+        val lastCount: Int,
+        val target: Int,
+        val isDailyGoal: Boolean
+    ) : HomeHeroState
+
+    /** The user has no Daily Goal set up. */
+    object SetupGoal : HomeHeroState
+
+    /** The goal is finished and no active library sessions exist. */
+    object None : HomeHeroState
+}
 
 /**
  * UI-safe projection of [com.kutubuddin.sabeel.data.local.db.entity.DhikrSessionEntity].
@@ -47,7 +57,6 @@ data class ResumeSession(
  */
 @Immutable
 data class SessionSummary(
-    val id: Long,
     val dhikrKey: String,
     val displayName: LocalizedText,
     val count: Int,

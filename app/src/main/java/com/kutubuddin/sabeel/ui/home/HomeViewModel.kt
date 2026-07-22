@@ -93,7 +93,7 @@ class HomeViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     private val sessionGroup = _today.flatMapLatest { today ->
         combine(
-            sessionRepository.getSessionsForDate(today).map { list -> list.map { it.toSummary() } },
+            sessionRepository.getAggregatedSessionsForDate(today).map { list -> list.map { it.toSummary() } },
             sessionRepository.getTotalCountForDate(today),
             // OPT-04: distinctUntilChanged — allTime only changes after a debounced flush,
             // not on every tap. Filtering duplicate emissions avoids rebuilding HomeState
@@ -127,17 +127,14 @@ class HomeViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     private val counterGroup = _today.flatMapLatest { today ->
         combine(
-            observeWirdProgress(today).map { it.toSummary() },
-            // OPT-04: debounce(300ms) — activeCount is updated on every tap (atomic in-memory).
-            // Without debounce the entire 9-flow combine + HomeState rebuild runs 33 times
-            // per dhikr target completion. 300ms is imperceptible lag on the Home tab;
-            // the Tasbih screen itself reads the atomic _activeCount directly and is instant.
-            counterObserver.activeCount.debounce(300L),
-            counterObserver.sessionStartCount.debounce(300L),
+            observeWirdProgress(today),
+            // OPT-04: We rely entirely on the DB for totals. This prevents double-counting and 
+            // flickers because the DB is guaranteed to be accurate by the time the Home tab is visible.
+            counterObserver.activeCount,
             counterObserver.activeDhikr,
             streakObserver.streak
-        ) { wird, lastCount, startCount, lastDhikr, streak ->
-            listOf<Any?>(wird, lastCount, startCount, lastDhikr, streak)
+        ) { wird, lastCount, lastDhikr, streak ->
+            listOf<Any?>(wird, lastCount, lastDhikr, streak)
         }
     }
 
@@ -154,32 +151,47 @@ class HomeViewModel @Inject constructor(
         val totalSessions = s[3] as Int
         val language      = s[4] as String
 
-        val wird        = c[0] as WirdSummary
+        val wirdProgress = c[0] as com.kutubuddin.sabeel.domain.model.WirdProgress
+        val wird = wirdProgress.toSummary()
         val lastCount   = c[1] as Int
-        val startCount  = c[2] as Int
-        val lastDhikr   = c[3] as ActiveDhikr
-        val streak      = c[4] as? Streak
+        val lastDhikr   = c[2] as ActiveDhikr
+        val streak      = c[3] as? Streak
 
         val greeting = resolveGreeting()
         val target = lastDhikr.target
 
-        val resume = if (lastCount > 0) {
-            ResumeSession(
-                dhikrKey = lastDhikr.key,
-                displayName = lastDhikr.displayName,
-                lastCount = lastCount,
-                target = target
-            )
-        } else null
+        val nextGoalItem = wirdProgress.items.firstOrNull { !it.isComplete }
+        val heroState = when {
+            nextGoalItem != null -> {
+                HomeHeroState.Resume(
+                    dhikrKey = nextGoalItem.dhikrKey,
+                    displayName = nextGoalItem.displayName,
+                    lastCount = nextGoalItem.countToday,
+                    target = nextGoalItem.target,
+                    isDailyGoal = true
+                )
+            }
+            lastCount > 0 -> {
+                HomeHeroState.Resume(
+                    dhikrKey = lastDhikr.key,
+                    displayName = lastDhikr.displayName,
+                    lastCount = lastCount,
+                    target = target,
+                    isDailyGoal = false
+                )
+            }
+            wirdProgress.items.isEmpty() -> HomeHeroState.SetupGoal
+            else -> HomeHeroState.None
+        }
 
         HomeState(
             todaysSessions    = sessions.toImmutableList(),
-            totalToday        = displayedToday(totalToday, lastCount, startCount),
+            totalToday        = displayedToday(totalToday),
             wird              = wird,
             currentStreak     = displayedStreak(streak?.count ?: 0, lastCount),
-            totalAllTime      = displayedAllTime(totalAllTime, lastCount, startCount),
+            totalAllTime      = displayedAllTime(totalAllTime),
             totalSessionCount = totalSessions,
-            resumeSession     = resume,
+            heroState         = heroState,
             greeting          = greeting,
             language          = language,
             todayLabel        = todayLabel
@@ -201,11 +213,9 @@ class HomeViewModel @Inject constructor(
     }
 
     companion object {
-        internal fun displayedToday(savedToday: Int, activeCount: Int, startCount: Int): Int =
-            savedToday + if (activeCount > startCount) (activeCount - startCount) else 0
+        internal fun displayedToday(savedToday: Int): Int = savedToday
 
-        internal fun displayedAllTime(savedAllTime: Int, activeCount: Int, startCount: Int): Int =
-            savedAllTime + if (activeCount > startCount) (activeCount - startCount) else 0
+        internal fun displayedAllTime(savedAllTime: Int): Int = savedAllTime
 
         internal fun displayedStreak(streakCount: Int, activeCount: Int): Int =
             if (streakCount == 0 && activeCount > 0) 1 else streakCount
@@ -213,11 +223,10 @@ class HomeViewModel @Inject constructor(
 
     private fun resolveGreeting(): GreetingType = greetingTypeForHour(LocalTime.now().hour)
 
-    private fun DhikrSessionEntity.toSummary(): SessionSummary = SessionSummary(
-        id          = id,
+    private fun com.kutubuddin.sabeel.data.local.db.dao.AggregatedSessionRow.toSummary(): SessionSummary = SessionSummary(
         dhikrKey    = dhikrKey,
         displayName = DhikrCatalog.displayNameFor(dhikrKey),
-        count       = count,
-        isComplete  = isComplete
+        count       = totalCount,
+        isComplete  = false // We can omit this or compute if needed.
     )
 }

@@ -21,6 +21,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Spa
@@ -77,14 +78,20 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     onResumeCounting: (String?, Int?) -> Unit,
+    onResumeSession: (String) -> Unit,
     onOpenWird: () -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     HomeContent(
         state = state,
         onResumeCounting = onResumeCounting,
-        onOpenWird = onOpenWird
+        onResumeSession = onResumeSession,
+        onOpenWird = onOpenWird,
+        showTooltip = showTooltip,
+        onTooltipDismiss = onTooltipDismiss
     )
 }
 
@@ -98,7 +105,10 @@ fun HomeScreen(
 fun HomeContent(
     state: HomeState,
     onResumeCounting: (String?, Int?) -> Unit,
-    onOpenWird: () -> Unit
+    onResumeSession: (String) -> Unit,
+    onOpenWird: () -> Unit,
+    showTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {}
 ) {
     var isSessionsExpanded by rememberSaveable { mutableStateOf(true) }
 
@@ -141,19 +151,9 @@ fun HomeContent(
         // the required data (like resumeSession) at the moment the state is determined.
         // This prevents NPEs when AnimatedContent recomposes outgoing content with
         // a newer, null state.
-        val heroCardState = when {
-            state.resumeSession != null -> HeroCardState.Resume(state.resumeSession)
-            !state.wird.isEmpty && state.wird.completed == state.wird.total -> HeroCardState.GoalComplete
-            !state.wird.isEmpty && state.wird.nextItemName != null -> HeroCardState.SmartPlay(
-                nextItemName = state.wird.nextItemName,
-                nextItemKey = state.wird.nextItemKey,
-                nextItemTarget = state.wird.nextItemTarget
-            )
-            else -> HeroCardState.HeroStart(hasProgressToday = state.todaysSessions.isNotEmpty())
-        }
         item(key = "hero_card") {
             AnimatedContent(
-                targetState = heroCardState,
+                targetState = state.heroState,
                 transitionSpec = {
                     fadeIn(tween(SabeelMotion.Duration.HeroCardCrossfadeIn)) togetherWith
                         fadeOut(tween(SabeelMotion.Duration.HeroCardCrossfadeOut))
@@ -162,25 +162,16 @@ fun HomeContent(
                 label = "home_hero_card"
             ) { cardState ->
                 when (cardState) {
-                    is HeroCardState.Resume -> ResumeCard(
-                        session = cardState.session,
+                    is HomeHeroState.Resume -> HomeHeroCard(
+                        state = cardState,
                         language = state.language,
-                        onClick = { onResumeCounting(cardState.session.dhikrKey, cardState.session.target) }
+                        onClick = { onResumeCounting(cardState.dhikrKey, cardState.target) }
                     )
-                    HeroCardState.GoalComplete -> GoalCompleteCard(
+                    HomeHeroState.SetupGoal -> SetupGoalCard(
+                        onClick = onOpenWird
+                    )
+                    HomeHeroState.None -> GoalCompleteCard(
                         onStart = { onResumeCounting(null, null) }
-                    )
-                    is HeroCardState.SmartPlay -> SmartPlayCard(
-                        nextItemName = cardState.nextItemName.get(state.language),
-                        onStart = { onResumeCounting(cardState.nextItemKey, cardState.nextItemTarget) }
-                    )
-                    is HeroCardState.HeroStart -> HeroStartCard(
-                        onStart = { onResumeCounting(null, null) },
-                        // IX-09: this card used to read "Begin today's dhikr" even
-                        // right after finishing the first session of the day (no
-                        // *in-progress* session to resume, but clearly not a
-                        // zero-progress day either). Acknowledge it instead.
-                        hasProgressToday = cardState.hasProgressToday
                     )
                 }
             }
@@ -188,11 +179,24 @@ fun HomeContent(
 
         // ── Stats (demoted below the hero) ────────────────────────────────────
         item(key = "streak_goal_card") {
-            StreakGoalCard(
-                state = state,
-                onOpenWird = onOpenWird,
-                modifier = Modifier.animateItem()
-            )
+            val strings = LocalStrings.current
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                StreakGoalCard(
+                    state = state,
+                    onOpenWird = {
+                        if (showTooltip) onTooltipDismiss()
+                        onOpenWird()
+                    },
+                    modifier = Modifier.animateItem()
+                )
+                
+                com.kutubuddin.sabeel.ui.components.SabeelTooltip(
+                    visible = showTooltip,
+                    text = if (state.language == "bn") "আপনার প্রতিদিনের লক্ষ্য সেট করতে 'আপনার প্রতিদিনের উর্দ সেট করুন'-এ ক্লিক করুন।" else "Click 'Set your daily wird' to set your daily goal.",
+                    position = com.kutubuddin.sabeel.ui.components.TooltipPosition.Bottom, // pointer at top
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
         }
 
         // ── Today's Sessions ──────────────────────────────────────────────────
@@ -215,12 +219,14 @@ fun HomeContent(
             if (isSessionsExpanded) {
                 items(
                     items = state.todaysSessions,
-                    key = { session -> session.id }
+                    key = { session -> session.dhikrKey }
                 ) { session ->
                     SessionRow(
                         session = session,
                         language = state.language,
-                        modifier = Modifier.animateItem()
+                        modifier = Modifier
+                            .animateItem()
+                            .clickable { onResumeSession(session.dhikrKey) }
                     )
                 }
             }
@@ -271,8 +277,16 @@ fun HomeContent(
 }
 
 @Composable
-private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> Unit) {
+private fun HomeHeroCard(state: HomeHeroState.Resume, language: String, onClick: () -> Unit) {
     val strings = LocalStrings.current
+    
+    val icon = if (state.isDailyGoal) Icons.Outlined.TrackChanges else Icons.Filled.PlayArrow
+    val title = if (state.isDailyGoal) {
+        if (state.lastCount == 0) strings.homeStartGoal else strings.homeContinueGoal
+    } else {
+        strings.homeResume
+    }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -287,25 +301,25 @@ private fun ResumeCard(session: ResumeSession, language: String, onClick: () -> 
         Column {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(
-                    imageVector = Icons.Filled.PlayArrow,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = SabeelColors.AccentTeal,
                     modifier = Modifier.size(16.dp)
                 )
-                Text(strings.homeResume, style = MaterialTheme.typography.labelMedium, color = SabeelColors.AccentTeal)
+                Text(title, style = MaterialTheme.typography.labelMedium, color = SabeelColors.AccentTeal)
             }
             Spacer(Modifier.height(2.dp))
             Text(
-                text = session.displayName.get(language),
+                text = state.displayName.get(language),
                 style = MaterialTheme.typography.titleMedium,
                 color = SabeelColors.TextPrimary
             )
         }
         ProgressFractionText(
-            count = session.lastCount,
-            target = session.target,
+            count = state.lastCount,
+            target = state.target,
             language = language,
-            isComplete = session.lastCount >= session.target,
+            isComplete = state.lastCount >= state.target,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             normalColor = SabeelColors.AccentTeal,
             completeColor = SabeelColors.AccentTeal
@@ -510,6 +524,38 @@ private fun FirstTimeEncouragementCard(modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+private fun SetupGoalCard(onClick: () -> Unit) {
+    val strings = LocalStrings.current
+    AccentCard(onClick = onClick, accentColor = SabeelColors.AccentTeal) {
+        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = strings.homeSetupGoalSubtitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SabeelColors.TextPrimary
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null,
+                        tint = SabeelColors.AccentTeal,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = strings.homeSetupGoalTitle,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = SabeelColors.AccentTeal
+                    )
+                }
+            }
+        }
+    }
+}
+
 // Delegated to shared SabeelSectionHeader — kept as a local alias for zero call-site churn
 @Composable
 private fun SectionHeader(text: String, modifier: Modifier = Modifier) = SabeelSectionHeader(text = text, modifier = modifier, letterSpacing = 1.5.dp)
@@ -517,82 +563,7 @@ private fun SectionHeader(text: String, modifier: Modifier = Modifier) = SabeelS
 // Delegated to shared CollapsibleSectionHeader — kept as a local alias for zero call-site churn
 @Composable
 private fun CollapsibleSectionHeader(text: String, isExpanded: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) =
-    com.kutubuddin.sabeel.ui.components.CollapsibleSectionHeader(text, isExpanded, onClick, modifier)
-
-@Composable
-private fun HeroStartCard(onStart: () -> Unit, hasProgressToday: Boolean = false) {
-    val strings = LocalStrings.current
-    AccentCard(onClick = onStart, accentColor = SabeelColors.AccentTeal) {
-        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = if (hasProgressToday) strings.homeContinueToday else strings.homeBeginToday,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = SabeelColors.TextPrimary
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        tint = SabeelColors.AccentTeal,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = strings.homeStartCounting,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = SabeelColors.AccentTeal
-                    )
-                }
-            }
-        }
-    }
-}
-
-private sealed class HeroCardState {
-    data class Resume(val session: ResumeSession) : HeroCardState()
-    object GoalComplete : HeroCardState()
-    data class SmartPlay(
-        val nextItemName: LocalizedText,
-        val nextItemKey: String?,
-        val nextItemTarget: Int?
-    ) : HeroCardState()
-    data class HeroStart(val hasProgressToday: Boolean) : HeroCardState()
-}
-
-@Composable
-private fun SmartPlayCard(nextItemName: String, onStart: () -> Unit) {
-    val strings = LocalStrings.current
-    AccentCard(onClick = onStart, accentColor = SabeelColors.AccentTeal) {
-        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = strings.homeSmartPlayNext.format(nextItemName),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = SabeelColors.TextPrimary
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        tint = SabeelColors.AccentTeal,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = strings.homeStartCounting,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = SabeelColors.AccentTeal
-                    )
-                }
-            }
-        }
-    }
-}
+    CollapsibleSectionHeader(text, isExpanded, onClick, modifier)
 
 @Composable
 private fun GoalCompleteCard(onStart: () -> Unit) {
