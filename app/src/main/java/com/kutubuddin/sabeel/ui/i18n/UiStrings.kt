@@ -52,6 +52,10 @@ data class UiStrings(
     val homeStreakStart: String,            // shown instead of "0 days" when currentStreak == 0
     val homeContinueToday: String,          // hero card headline once ≥1 session exists today
     val homeSmartPlayNext: String,          // template: "Next: %1$s"
+    val homeContinueGoal: String,
+    val homeStartGoal: String,
+    val homeSetupGoalTitle: String,
+    val homeSetupGoalSubtitle: String,
     val homeGoalCompleteTitle: String,
     val homeGoalCompleteAction: String,
     val homeFirstTimeEncouragement: String, // replaces the All-Time "0 / 0" stat row pre-first-session

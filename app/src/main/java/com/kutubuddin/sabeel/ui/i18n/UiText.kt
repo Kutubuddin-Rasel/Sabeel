@@ -74,6 +74,13 @@ object UiText {
     val homeContinueToday = LocalizedText(en = "Continue today's dhikr", bn = "আজকের যিকির চালিয়ে যান")
     
     val homeSmartPlayNext = LocalizedText(en = "Next: %1\$s", bn = "পরবর্তী: %1\$s")
+    
+    // Unified Hero Card CTA Strings
+    val homeContinueGoal = LocalizedText(en = "Continue Daily Goal", bn = "দৈনন্দিন আমল চালিয়ে যান")
+    val homeStartGoal = LocalizedText(en = "Start Daily Goal", bn = "দৈনন্দিন আমল শুরু করুন")
+    val homeSetupGoalTitle = LocalizedText(en = "Set Daily Goal", bn = "দৈনন্দিন আমল সেট করুন")
+    val homeSetupGoalSubtitle = LocalizedText(en = "Start your spiritual routine", bn = "আপনার ইবাদতের রুটিন শুরু করুন")
+    
     val homeGoalCompleteTitle = LocalizedText(en = "Alhamdulillah, Daily Goal Complete \uD83C\uDF89", bn = "আলহামদুলিল্লাহ, দৈনিক লক্ষ্য সম্পন্ন \uD83C\uDF89")
     val homeGoalCompleteAction = LocalizedText(en = "Keep Going", bn = "চালিয়ে যান")
 
@@ -86,27 +93,27 @@ object UiText {
     )
 
     // ── Daily Wird ──────────────────────────────────
-    val wirdTitle = LocalizedText(en = "Today's Wird", bn = "আজকের ওয়ির্দ")
+    val wirdTitle = LocalizedText(en = "Today's Goal", bn = "আজকের আমল")
     // NOTE: replaces the old `wirdSetup` ("Set up") now that Home's empty
     // state is a full self-explanatory card instead of a bare label next to
     // a separate Edit chip. ur/bn below are my best-effort drafts, not a
     // native-speaker review — worth a check before shipping, same as any
     // new string here.
     val wirdSetupTitle = LocalizedText(
-        en = "Set your daily wird",
-        bn = "আপনার দৈনিক ওয়ির্দ নির্ধারণ করুন"
+        en = "Set your daily goal",
+        bn = "আপনার দৈনন্দিন আমল সেট করুন"
     )
     val wirdSetupSubtitle = LocalizedText(
         en = "Choose the dhikr you want to complete each day.",
         bn = "প্রতিদিন সম্পন্ন করতে চান এমন যিকির নির্বাচন করুন।"
     )
     val wirdDoneOf = LocalizedText(en = "%1\$s of %2\$s done", bn = "%2\$s এর মধ্যে %1\$s সম্পন্ন")
-    val wirdEditTitle = LocalizedText(en = "Edit Wird", bn = "ওয়ির্দ সম্পাদনা করুন")
-    val wirdEmpty = LocalizedText(en = "Your wird is empty", bn = "আপনার ওয়ির্দ খালি")
+    val wirdEditTitle = LocalizedText(en = "Edit Goal", bn = "আমল পরিবর্তন করুন")
+    val wirdEmpty = LocalizedText(en = "Your daily goal is empty", bn = "আপনার দৈনন্দিন আমল খালি")
     val wirdEmptyHint = LocalizedText(en = "Add adhkar to build your daily routine", bn = "দৈনিক রুটিন গড়তে আযকার যোগ করুন")
     val wirdAddDhikr = LocalizedText(en = "Add dhikr", bn = "যিকর যোগ করুন")
     val wirdReorder = LocalizedText(en = "Reorder", bn = "ক্রম বদলান")
-    val wirdRemove = LocalizedText(en = "Remove from wird", bn = "ওয়ির্দ থেকে সরান")
+    val wirdRemove = LocalizedText(en = "Remove from daily goal", bn = "আমল থেকে সরান")
     val wirdTargetA11y = LocalizedText(en = "Target", bn = "লক্ষ্য")
     val wirdDone = LocalizedText(en = "Done", bn = "সম্পন্ন")
     val wirdEditCta = LocalizedText(en = "Edit", bn = "সম্পাদনা")
@@ -115,15 +122,15 @@ object UiText {
         bn = "আপনার দৈনিক লক্ষ্য নির্ধারণ করুন"
     )
     val wirdGoalHintBody = LocalizedText(
-        en = "Tap Edit next to Today's Wird to add or change dhikr targets.",
-        bn = "যিকিরের লক্ষ্য যোগ বা পরিবর্তন করতে আজকের ওয়ির্দের পাশে সম্পাদনা-এ ট্যাপ করুন।"
+        en = "Tap Edit next to Today's Goal to add or change dhikr targets.",
+        bn = "যিকিরের লক্ষ্য যোগ বা পরিবর্তন করতে আজকের আমলের পাশে সম্পাদনা-এ ট্যাপ করুন।"
     )
 
     // Best-effort ur/bn drafts, not a native-speaker review, same caveat as
     // wirdSetupTitle above.
     // FIX 8: intention framing, not "tasks". Best-effort ur/bn drafts.
-    val wirdBeginToday = LocalizedText(en = "Your wird awaits", bn = "আপনার ওয়ির্দ অপেক্ষা করছে")
-    val wirdComplete = LocalizedText(en = "Today's wird, complete", bn = "আজকের ওয়ির্দ সম্পূর্ণ")
+    val wirdBeginToday = LocalizedText(en = "Your goal awaits", bn = "আপনার আমল অপেক্ষা করছে")
+    val wirdComplete = LocalizedText(en = "Today's goal, complete", bn = "আজকের আমল সম্পূর্ণ")
     val wirdInProgress = LocalizedText(en = "%1\$s of %2\$s remembered", bn = "%2\$s-এর মধ্যে %1\$s সম্পন্ন")
     val wirdRingCaptionTarget = LocalizedText(en = "total reps today", bn = "আজকের মোট লক্ষ্য")
     val wirdOverflowRounds = LocalizedText(en = "completed %1\$s times over", bn = "%1\$s বার সম্পন্ন")
@@ -169,8 +176,8 @@ object UiText {
     val settingsTranslit = LocalizedText(en = "Show Transliteration", bn = "উচ্চারণ দেখান")
     val settingsTranslitDesc = LocalizedText(en = "Romanized pronunciation under Arabic", bn = "আরবির নিচে ইংরেজি উচ্চারণ")
 
-    val settingsAutoProgressWird = LocalizedText(en = "Wird Auto-Progression", bn = "ওয়ির্দ স্বয়ংক্রিয় অগ্রগতি")
-    val settingsAutoProgressWirdDesc = LocalizedText(en = "Automatically transition to the next Dhikr in your daily Wird", bn = "স্বয়ংক্রিয়ভাবে আপনার দৈনন্দিন ওয়ির্দের পরবর্তী যিকিরে যান")
+    val settingsAutoProgressWird = LocalizedText(en = "Daily Goal Auto-Progression", bn = "দৈনন্দিন আমল স্বয়ংক্রিয় অগ্রগতি")
+    val settingsAutoProgressWirdDesc = LocalizedText(en = "Automatically transition to the next Dhikr in your daily goal", bn = "স্বয়ংক্রিয়ভাবে আপনার দৈনন্দিন আমলের পরবর্তী যিকিরে যান")
     val settingsSmartFlow = LocalizedText(en = "Smart Flow Sequence", bn = "স্মার্ট ফ্লো সিকোয়েন্স")
     val settingsSmartFlowDesc = LocalizedText(en = "Automatically transition through multi-step Dhikrs (e.g., Tasbih after Salah)", bn = "স্বয়ংক্রিয়ভাবে বহু-ধাপ যিকিরে (যেমন, নামাজের পর তাসবিহ) অগ্রসর হন")
     val settingsAdvanced = LocalizedText(en = "Advanced", bn = "উন্নত সেটিংস")
@@ -204,12 +211,12 @@ object UiText {
 
     // ── Dhikr Library: Asma ul Husna gallery card ──────
     val exploreGalleryTitle = LocalizedText(
-        en = "Explore Individual Names",
-        bn = "পৃথকভাবে নাম অন্বেষণ করুন"
+        en = "Individual Names of Allah",
+        bn = "আল্লাহর গুণবাচক নামসমূহ"
     )
     val exploreGallerySubtitle = LocalizedText(
-        en = "Recite any of the 99 Names individually",
-        bn = "আল্লাহর ৯৯টি নামের যেকোনো একটি পৃথকভাবে পড়ুন"
+        en = "Recite and reflect on each beautiful name individually",
+        bn = "আল্লাহর সুন্দর নামগুলো আলাদাভাবে পাঠ ও অনুধাবন করুন"
     )
 
     fun resolve(lang: String) = UiStrings(
@@ -245,6 +252,10 @@ object UiText {
         homeStreakStart = homeStreakStart.get(lang),
         homeContinueToday = homeContinueToday.get(lang),
         homeSmartPlayNext = homeSmartPlayNext.get(lang),
+        homeContinueGoal = homeContinueGoal.get(lang),
+        homeStartGoal = homeStartGoal.get(lang),
+        homeSetupGoalTitle = homeSetupGoalTitle.get(lang),
+        homeSetupGoalSubtitle = homeSetupGoalSubtitle.get(lang),
         homeGoalCompleteTitle = homeGoalCompleteTitle.get(lang),
         homeGoalCompleteAction = homeGoalCompleteAction.get(lang),
         homeFirstTimeEncouragement = homeFirstTimeEncouragement.get(lang),
