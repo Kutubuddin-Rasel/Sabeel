@@ -312,17 +312,6 @@ fun SettingsContent(
         item {
             SabeelSettingsCard {
                 SettingsBaseRow(
-                    title = strings.settingsFont,
-                    showDivider = false,
-                    action = {
-                        Text(
-                            text = "KFGQPC Uthmanic",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = SabeelColors.TextSecondary
-                        )
-                    }
-                )
-                SettingsBaseRow(
                     title = strings.settingsVersion,
                     action = {
                         Text(

@@ -12,7 +12,13 @@ data class SettingsState(
     val isSmartFlowEnabled: Boolean = true,
     val dailyReminderEnabled: Boolean = true,
     val dailyReminderTime: String = "20:30",
-    val isOnboardingComplete: Boolean = false
+    val isOnboardingComplete: Boolean = false,
+    
+    val hasSeenTasbihTooltip: Boolean = false,
+    val hasSeenHomeTooltip: Boolean = false,
+    val hasSeenWirdTooltip: Boolean = false,
+    val hasSeenWirdPickerTooltip: Boolean = false,
+    val hasSeenLibraryTooltip: Boolean = false
 )
 
 sealed class SettingsIntent {
@@ -25,4 +31,10 @@ sealed class SettingsIntent {
     data class SetDailyReminderEnabled(val on: Boolean) : SettingsIntent()
     data class SetDailyReminderTime(val time: String) : SettingsIntent()
     data class SetOnboardingComplete(val complete: Boolean) : SettingsIntent()
+    
+    data class SetHasSeenTasbihTooltip(val seen: Boolean) : SettingsIntent()
+    data class SetHasSeenHomeTooltip(val seen: Boolean) : SettingsIntent()
+    data class SetHasSeenWirdTooltip(val seen: Boolean) : SettingsIntent()
+    data class SetHasSeenWirdPickerTooltip(val seen: Boolean) : SettingsIntent()
+    data class SetHasSeenLibraryTooltip(val seen: Boolean) : SettingsIntent()
 }

@@ -25,18 +25,27 @@ class SettingsViewModel @Inject constructor(
         combine(
             repository.translitEnabled, repository.autoProgressWird, repository.isSmartFlowEnabled,
             repository.dailyReminderEnabled, repository.isOnboardingComplete
+        ) { args: Array<Boolean> -> args.toList() },
+        combine(
+            repository.hasSeenTasbihTooltip, repository.hasSeenHomeTooltip, repository.hasSeenWirdTooltip,
+            repository.hasSeenWirdPickerTooltip, repository.hasSeenLibraryTooltip
         ) { args: Array<Boolean> -> args.toList() }
-    ) { strings, booleans ->
+    ) { strings, booleans1, booleans2 ->
         SettingsState(
             theme           = strings[0],
             language        = strings[1],
             hapticsLevel    = strings[2],
             dailyReminderTime = strings[3],
-            translitEnabled = booleans[0],
-            autoProgressWird = booleans[1],
-            isSmartFlowEnabled = booleans[2],
-            dailyReminderEnabled = booleans[3],
-            isOnboardingComplete = booleans[4]
+            translitEnabled = booleans1[0],
+            autoProgressWird = booleans1[1],
+            isSmartFlowEnabled = booleans1[2],
+            dailyReminderEnabled = booleans1[3],
+            isOnboardingComplete = booleans1[4],
+            hasSeenTasbihTooltip = booleans2[0],
+            hasSeenHomeTooltip = booleans2[1],
+            hasSeenWirdTooltip = booleans2[2],
+            hasSeenWirdPickerTooltip = booleans2[3],
+            hasSeenLibraryTooltip = booleans2[4]
         )
     }.stateIn(
         scope = viewModelScope,
@@ -67,6 +76,12 @@ class SettingsViewModel @Inject constructor(
                 }
             }
             is SettingsIntent.SetOnboardingComplete -> repository.setOnboardingComplete(intent.complete)
+            
+            is SettingsIntent.SetHasSeenTasbihTooltip -> repository.setHasSeenTasbihTooltip(intent.seen)
+            is SettingsIntent.SetHasSeenHomeTooltip -> repository.setHasSeenHomeTooltip(intent.seen)
+            is SettingsIntent.SetHasSeenWirdTooltip -> repository.setHasSeenWirdTooltip(intent.seen)
+            is SettingsIntent.SetHasSeenWirdPickerTooltip -> repository.setHasSeenWirdPickerTooltip(intent.seen)
+            is SettingsIntent.SetHasSeenLibraryTooltip -> repository.setHasSeenLibraryTooltip(intent.seen)
         }
     }
 }
