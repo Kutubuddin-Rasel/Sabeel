@@ -482,7 +482,7 @@ private fun SequenceStepRow(number: Int, step: DhikrStep, language: String) {
             text = step.displayName.get(language),
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
             color = SabeelColors.TextPrimary,
-            modifier = Modifier.weight(0.35f)
+            modifier = Modifier.weight(0.5f)
         )
 
         Text(
@@ -492,7 +492,7 @@ private fun SequenceStepRow(number: Int, step: DhikrStep, language: String) {
             style = arabicStyle.copy(fontSize = 19.sp, lineHeight = 30.sp),
             modifier = Modifier
                 .padding(horizontal = 4.dp)
-                .weight(0.65f)
+                .weight(0.5f)
         )
 
         CountPill(target = step.target, language = language)
