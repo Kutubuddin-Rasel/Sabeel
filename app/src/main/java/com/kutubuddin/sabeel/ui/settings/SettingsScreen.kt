@@ -138,7 +138,6 @@ fun SettingsContent(
                     ),
                     selected = state.hapticsLevel,
                     onSelect = { level ->
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onIntent(SettingsIntent.SetHaptics(level))
                     }
                 )

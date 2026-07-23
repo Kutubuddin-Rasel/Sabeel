@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kutubuddin.sabeel.domain.notifications.NotificationScheduler
 import com.kutubuddin.sabeel.domain.repository.SettingsRepository
+import com.kutubuddin.sabeel.domain.haptic.HapticEngine
+import com.kutubuddin.sabeel.domain.haptic.HapticStrength
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
-    private val notificationScheduler: NotificationScheduler
+    private val notificationScheduler: NotificationScheduler,
+    private val hapticEngine: HapticEngine
 ) : ViewModel() {
 
     val state: StateFlow<SettingsState> = combine(
@@ -57,7 +60,10 @@ class SettingsViewModel @Inject constructor(
         when (intent) {
             is SettingsIntent.SetTheme    -> repository.setTheme(intent.theme)
             is SettingsIntent.SetLanguage -> repository.setLanguage(intent.lang)
-            is SettingsIntent.SetHaptics  -> repository.setHaptics(intent.level)
+            is SettingsIntent.SetHaptics  -> {
+                repository.setHaptics(intent.level)
+                hapticEngine.playIncrementTick(HapticStrength.fromSetting(intent.level))
+            }
             is SettingsIntent.SetTranslit -> repository.setTranslitEnabled(intent.on)
             is SettingsIntent.SetAutoProgressWird -> repository.setAutoProgressWird(intent.on)
             is SettingsIntent.SetSmartFlowEnabled -> repository.setSmartFlowEnabled(intent.on)
