@@ -16,10 +16,10 @@ enum class HapticStrength(val tick: Float, val click: Float, val thud: Float) {
 
     companion object {
         fun fromSetting(value: String): HapticStrength = when (value.lowercase()) {
-            "off"    -> OFF
-            "light"  -> LIGHT
-            "strong" -> STRONG
-            else     -> MEDIUM   // "medium" + any unknown
+            "off"                   -> OFF
+            "light", "low"          -> LIGHT
+            "strong", "high", "max" -> STRONG
+            else                    -> MEDIUM   // "medium" + any unknown
         }
     }
 }
