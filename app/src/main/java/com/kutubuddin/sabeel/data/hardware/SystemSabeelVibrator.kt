@@ -25,35 +25,59 @@ class SystemSabeelVibrator @Inject constructor(
         }
     }
 
+    override fun hasAmplitudeControl(): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.hasAmplitudeControl() == true
+            } else {
+                false
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
     override fun vibrate(durationMs: Long, amplitude: Int) {
         val vibrator = this.vibrator ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val safeAmplitude = if (vibrator.hasAmplitudeControl()) amplitude else VibrationEffect.DEFAULT_AMPLITUDE
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(durationMs, safeAmplitude)
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(durationMs)
+        if (!vibrator.hasVibrator()) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val safeAmplitude = if (hasAmplitudeControl() && amplitude != -1) amplitude else VibrationEffect.DEFAULT_AMPLITUDE
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(durationMs, safeAmplitude)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(durationMs)
+            }
+        } catch (_: Throwable) {
+            // Silently swallow OEM driver framework bugs
         }
     }
 
     override fun vibratePattern(pattern: LongArray, amplitudes: IntArray?, repeat: Int) {
         val vibrator = this.vibrator ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val effect = if (amplitudes != null && amplitudes.size == pattern.size && vibrator.hasAmplitudeControl()) {
-                VibrationEffect.createWaveform(pattern, amplitudes, repeat)
+        if (!vibrator.hasVibrator()) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val effect = if (amplitudes != null && amplitudes.size == pattern.size && hasAmplitudeControl()) {
+                    VibrationEffect.createWaveform(pattern, amplitudes, repeat)
+                } else {
+                    VibrationEffect.createWaveform(pattern, repeat)
+                }
+                vibrator.vibrate(effect)
             } else {
-                VibrationEffect.createWaveform(pattern, repeat)
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, repeat)
             }
-            vibrator.vibrate(effect)
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(pattern, repeat)
+        } catch (_: Throwable) {
+            // Silently swallow OEM driver framework bugs
         }
     }
 
     override fun cancel() {
-        vibrator?.cancel()
+        try {
+            vibrator?.cancel()
+        } catch (_: Throwable) {}
     }
 }
