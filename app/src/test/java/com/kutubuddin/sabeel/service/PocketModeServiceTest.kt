@@ -113,14 +113,14 @@ class PocketModeServiceTest {
         serviceController.create().startCommand(0, 0)
         val service = serviceController.get()
 
-        val field = PocketModeService::class.java.getDeclaredField("mediaSession")
+        val field = service.javaClass.getDeclaredField("mediaSession")
         field.isAccessible = true
 
         val sessionAfterFirst = field.get(service)
         assertNotNull("mediaSession must be non-null after first setup", sessionAfterFirst)
 
         // Call setupMediaSession() a second time — idempotency guard must block it
-        val setupMethod = PocketModeService::class.java.getDeclaredMethod("setupMediaSession")
+        val setupMethod = service.javaClass.getDeclaredMethod("setupMediaSession")
         setupMethod.isAccessible = true
         setupMethod.invoke(service)
 
