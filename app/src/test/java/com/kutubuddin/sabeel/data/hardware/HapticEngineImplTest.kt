@@ -4,14 +4,15 @@ import android.content.Context
 import android.os.Build
 import android.os.Vibrator
 import androidx.test.core.app.ApplicationProvider
+import com.kutubuddin.sabeel.domain.haptic.HapticStrength
 import com.kutubuddin.sabeel.domain.haptic.SabeelVibrator
+import io.mockk.every
 import io.mockk.mockk
-import org.junit.Assert.assertTrue
+import io.mockk.verify
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -33,22 +34,43 @@ class HapticEngineImplTest {
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.Q])
-    fun testPlayIncrementTick_legacySDK_vibratesOneShot() {
-        hapticEngine.playIncrementTick()
-        io.mockk.verify(exactly = 1) { sabeelVibrator.vibrate(15L) }
+    fun testPlayIncrementTick_offStrength_doesNotVibrate() {
+        hapticEngine.playIncrementTick(HapticStrength.OFF)
+        verify(exactly = 0) { sabeelVibrator.vibrate(any(), any()) }
     }
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.Q])
-    fun testPlayMilestoneClick_legacySDK_vibratesOneShot() {
-        hapticEngine.playMilestoneClick()
-        io.mockk.verify(exactly = 1) { sabeelVibrator.vibrate(45L) }
+    fun testPlayIncrementTick_withAmplitudeControl_vibratesWithScaledAmplitude() {
+        every { sabeelVibrator.hasAmplitudeControl() } returns true
+        hapticEngine.playIncrementTick(HapticStrength.MEDIUM)
+        verify(exactly = 1) { sabeelVibrator.vibrate(durationMs = 24L, amplitude = 165) }
     }
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.Q])
-    fun testPlayCompletionThud_legacySDK_vibratesWaveform() {
-        hapticEngine.playCompletionThud()
-        io.mockk.verify(exactly = 1) { sabeelVibrator.vibratePattern(longArrayOf(0, 80, 50, 80)) }
+    fun testPlayIncrementTick_withoutAmplitudeControl_vibratesPwmDuration() {
+        every { sabeelVibrator.hasAmplitudeControl() } returns false
+        hapticEngine.playIncrementTick(HapticStrength.LIGHT)
+        verify(exactly = 1) { sabeelVibrator.vibrate(durationMs = 10L, amplitude = -1) }
+
+        hapticEngine.playIncrementTick(HapticStrength.STRONG)
+        verify(exactly = 1) { sabeelVibrator.vibrate(durationMs = 45L, amplitude = -1) }
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.Q])
+    fun testPlayMilestoneClick_withoutAmplitudeControl_vibratesPwmDuration() {
+        every { sabeelVibrator.hasAmplitudeControl() } returns false
+        hapticEngine.playMilestoneClick(HapticStrength.MEDIUM)
+        verify(exactly = 1) { sabeelVibrator.vibrate(durationMs = 40L, amplitude = -1) }
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.Q])
+    fun testPlayCompletionThud_withoutAmplitudeControl_vibratesPattern() {
+        every { sabeelVibrator.hasAmplitudeControl() } returns false
+        hapticEngine.playCompletionThud(HapticStrength.MEDIUM)
+        verify(exactly = 1) { sabeelVibrator.vibratePattern(pattern = longArrayOf(0, 50, 40, 50), amplitudes = null) }
     }
 }

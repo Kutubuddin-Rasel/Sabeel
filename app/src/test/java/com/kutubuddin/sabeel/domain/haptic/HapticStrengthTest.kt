@@ -9,8 +9,10 @@ class HapticStrengthTest {
     fun fromSetting_mapsKnownLevels() {
         assertEquals(HapticStrength.OFF, HapticStrength.fromSetting("off"))
         assertEquals(HapticStrength.LIGHT, HapticStrength.fromSetting("light"))
+        assertEquals(HapticStrength.LIGHT, HapticStrength.fromSetting("low"))
         assertEquals(HapticStrength.MEDIUM, HapticStrength.fromSetting("medium"))
         assertEquals(HapticStrength.STRONG, HapticStrength.fromSetting("strong"))
+        assertEquals(HapticStrength.STRONG, HapticStrength.fromSetting("high"))
     }
 
     @Test
