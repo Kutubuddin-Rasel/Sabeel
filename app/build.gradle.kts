@@ -15,11 +15,11 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.kutubuddin.sabeel"
+    namespace = "com.kitalonlabs.sabeel"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.kutubuddin.sabeel"
+        applicationId = "com.kitalonlabs.sabeel"
         minSdk = 29
         //noinspection OldTargetApi
         targetSdk = 36

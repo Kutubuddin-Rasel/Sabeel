@@ -1,0 +1,138 @@
+package com.kitalonlabs.sabeel
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.kitalonlabs.sabeel.domain.haptic.HapticEngine
+import com.kitalonlabs.sabeel.domain.repository.SettingsRepository
+import com.kitalonlabs.sabeel.domain.repository.WirdRepository
+import com.kitalonlabs.sabeel.ui.i18n.LocalStrings
+import com.kitalonlabs.sabeel.ui.i18n.UiText
+import com.kitalonlabs.sabeel.ui.i18n.layoutDirectionFor
+import com.kitalonlabs.sabeel.ui.navigation.SabeelNavHost
+import com.kitalonlabs.sabeel.ui.onboarding.OnboardingScreen
+import com.kitalonlabs.sabeel.ui.tasbih.TasbihSideEffect
+import com.kitalonlabs.sabeel.ui.tasbih.TasbihViewModel
+import com.kitalonlabs.sabeel.ui.theme.SabeelTheme
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import androidx.compose.animation.Crossfade
+import javax.inject.Inject
+
+/**
+ * Single-Activity host for the Sabeel app.
+ *
+ * Responsibilities:
+ * 1. Hosts the SabeelNavHost (DhikrSelection → Counting)
+ *
+ * SRP: Activity only handles Android lifecycle and side-effect plumbing.
+ *      All business logic lives in TasbihViewModel.
+ */
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var hapticEngine: HapticEngine
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    @Inject
+    lateinit var wirdRepository: WirdRepository
+
+    private val viewModel: TasbihViewModel by viewModels()
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        super.onCreate(savedInstanceState)
+        
+        var isReady = false
+        splashScreen.setKeepOnScreenCondition { !isReady }
+        
+        enableEdgeToEdge()
+
+        // Seed the default daily wird on first launch (idempotent — no-op if non-empty).
+        lifecycleScope.launch { 
+            wirdRepository.seedDefaultIfEmpty()
+            settingsRepository.incrementAppLaunchCount()
+            isReady = true
+        }
+
+        setContent {
+            // Drive the theme from the SAVED setting, not isSystemInDarkTheme(),
+            // so the Settings Dark/Light toggle is a real, instant choice.
+            val theme by settingsRepository.theme.collectAsStateWithLifecycle(initialValue = "dark")
+
+            // App language drives ALL chrome (via LocalStrings), numerals, and
+            // text direction — off the SAVED setting, not the system locale. A
+            // language change is a pure recomposition; no Activity recreation.
+            val language by settingsRepository.language.collectAsStateWithLifecycle(initialValue = "en")
+            val strings = remember(language) { UiText.resolve(language) }
+            val launchCount by settingsRepository.appLaunchCount.collectAsStateWithLifecycle(initialValue = 0)
+            val isOnboardingComplete by settingsRepository.isOnboardingComplete.collectAsStateWithLifecycle(initialValue = true) // Default true for legacy users? No, wait, if we want existing users to not see it, we could default true, but if they haven't set it... Actually, if it's not set, it defaults to false in Repository. So initialValue = false is correct for matching repo. Wait, let's use true as initial to prevent a flash of onboarding if they ALREADY completed it.
+            val isOnboardingState by settingsRepository.isOnboardingComplete.collectAsStateWithLifecycle(initialValue = null)
+            
+            val scope = rememberCoroutineScope()
+
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { /* permission granted or denied */ }
+
+            LaunchedEffect(launchCount) {
+                if (launchCount == 2 && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+
+            val devicePerformanceState = com.kitalonlabs.sabeel.ui.theme.rememberDevicePerformanceState()
+
+            CompositionLocalProvider(
+                LocalStrings provides strings,
+                LocalLayoutDirection provides layoutDirectionFor(language),
+                com.kitalonlabs.sabeel.ui.theme.LocalDevicePerformance provides devicePerformanceState
+            ) {
+                SabeelTheme(darkTheme = theme != "light") {
+                    if (isOnboardingState != null) {
+                        Crossfade(targetState = isOnboardingState == true, label = "OnboardingCrossfade") { completed ->
+                            if (!completed) {
+                                OnboardingScreen(
+                                    currentLanguage = language,
+                                    onLanguageSelect = { newLang -> scope.launch { settingsRepository.setLanguage(newLang) } },
+                                    onFinish = { scope.launch { settingsRepository.setOnboardingComplete(true) } }
+                                )
+                            } else {
+                                SabeelNavHost(
+                                    hapticEngine = hapticEngine,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
